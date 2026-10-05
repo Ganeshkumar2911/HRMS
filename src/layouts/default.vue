@@ -24,9 +24,10 @@ const handleTokenRefreshed = () => {
   wsStore.connect(authToken.getAccessToken());
 };
 
-onMounted(() => {
+onMounted(async () => {
   window.addEventListener("auth:token-refreshed", handleTokenRefreshed);
-  authStore.initSession();
+  // Finish session bootstrap so later navigations see loaded permissions.
+  await authStore.initSession();
 });
 
 onBeforeUnmount(() => {

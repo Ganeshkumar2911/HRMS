@@ -10,26 +10,21 @@ const SCOPE_WEIGHTS = {
 };
 
 export const usePermissionsStore = defineStore("permissions", () => {
-  // ─── 1. Primary State ──────────────────────────────────
   const permissions = ref([]);
   const roles = ref([]);
 
-  // ─── 2. In-Flight Tracking ─────────────────────────────
   const inFlight = {
     permissions: false,
   };
   let pendingPermissionsRequest = null;
 
-  // ─── 3. isFetched Tracking ─────────────────────────────
   const isFetched = ref({
     permissions: false,
   });
 
-  // ─── 4. Loading & Error Flags ──────────────────────────
   const loading = ref(false);
   const error = ref(null);
 
-  // ─── 5. Reset Helper ───────────────────────────────────
   const resetFetchedFlags = () => {
     isFetched.value = {
       permissions: false,
@@ -44,10 +39,10 @@ export const usePermissionsStore = defineStore("permissions", () => {
     localStorage.removeItem("user_role");
   };
 
-  // ─── Permission Check: can(code) ───────────────────────
   const can = (code) => {
     if (!code) return true;
     return permissions.value.some((permission) => {
+      if (!permission?.code) return false;
       if (permission.code === "*" || permission.code === code) return true;
       if (permission.code.endsWith(".*")) {
         const prefix = permission.code.slice(0, -2);
@@ -57,7 +52,6 @@ export const usePermissionsStore = defineStore("permissions", () => {
     });
   };
 
-  // ─── Scope Resolver: scopeOf(code) ─────────────────────
   const scopeOf = (code) => {
     let highestScope = null;
     let highestWeight = 0;
@@ -111,39 +105,64 @@ export const usePermissionsStore = defineStore("permissions", () => {
     );
   };
 
-  // ─── Fetch Permissions (GET /users/me/permissions) ─────
-  const fetchMyPermissions = (force = false) => {
-    if (isFetched.value.permissions && !force) return Promise.resolve(permissions.value);
-    if (pendingPermissionsRequest) return pendingPermissionsRequest;
+  const fetchMyPermissions = async (force = false) => {
+    if (isFetched.value.permissions && !force) {
+      return permissions.value;
+    }
+
+    if (pendingPermissionsRequest) {
+      try {
+        await pendingPermissionsRequest;
+      } catch (_) {
+        // Previous attempt failed — fall through to retry when needed.
+      }
+      if (isFetched.value.permissions && !force) {
+        return permissions.value;
+      }
+    }
 
     inFlight.permissions = true;
     loading.value = true;
     error.value = null;
-
-    const successHandler = (res) => {
-      const list = Array.isArray(res?.permissions) ? res.permissions : [];
-      permissions.value = list;
-      localStorage.setItem("user_permissions", JSON.stringify(list));
-      isFetched.value.permissions = true;
-    };
-
-    const failureHandler = (err) => {
-      error.value = err?.message || "Failed to load permissions";
-    };
-
-    const finallyHandler = () => {
-      inFlight.permissions = false;
-      loading.value = false;
-      pendingPermissionsRequest = null;
-    };
+    let succeeded = false;
 
     pendingPermissionsRequest = apiRequest(urls.KEYS.GET, urls.users.myPermissions, {
       isTokenRequired: true,
-      onSuccess: successHandler,
-      onFailure: failureHandler,
-      onFinally: finallyHandler,
+      onSuccess: (res) => {
+        const list = Array.isArray(res?.permissions) ? res.permissions : [];
+        permissions.value = list;
+        localStorage.setItem("user_permissions", JSON.stringify(list));
+        isFetched.value.permissions = true;
+        succeeded = true;
+      },
+      onFailure: (err) => {
+        error.value = err?.message || "Failed to load permissions";
+      },
+      onFinally: () => {
+        inFlight.permissions = false;
+        loading.value = false;
+        pendingPermissionsRequest = null;
+      },
+    }).then((result) => {
+      if (!succeeded) {
+        return Promise.reject(new Error(error.value || "Failed to load permissions"));
+      }
+      return result;
     });
+
     return pendingPermissionsRequest;
+  };
+
+  const ensurePermissionsLoaded = async () => {
+    if (isFetched.value.permissions && permissions.value.length > 0) {
+      return permissions.value;
+    }
+    try {
+      await fetchMyPermissions(true);
+    } catch (_) {
+      // Caller decides whether missing codes are fatal.
+    }
+    return permissions.value;
   };
 
   return {
@@ -161,5 +180,6 @@ export const usePermissionsStore = defineStore("permissions", () => {
     canAccessArea,
     hasAdminAccess,
     fetchMyPermissions,
+    ensurePermissionsLoaded,
   };
 });

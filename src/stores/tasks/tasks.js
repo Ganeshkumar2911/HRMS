@@ -52,6 +52,7 @@ export const useTasksStore = defineStore("tasks", () => {
   const loading = ref(false);
   const actionLoading = ref(false);
   const detailLoading = ref(false);
+  const assigneesLoading = ref(false);
   const error = ref(null);
 
   const resetFetchedFlags = () => {
@@ -59,7 +60,7 @@ export const useTasksStore = defineStore("tasks", () => {
   };
 
   const fetchSummary = (force = false) => {
-    if (inFlight.summary) return Promise.resolve(summary.value);
+    if (inFlight.summary && !force) return Promise.resolve(summary.value);
     if (isFetched.value.summary && !force) return Promise.resolve(summary.value);
 
     inFlight.summary = true;
@@ -89,7 +90,7 @@ export const useTasksStore = defineStore("tasks", () => {
   };
 
   const fetchTasks = (params = {}, force = false) => {
-    if (inFlight.tasks) return Promise.resolve(tasks.value);
+    if (inFlight.tasks && !force) return Promise.resolve(tasks.value);
     if (isFetched.value.tasks && !force) return Promise.resolve(tasks.value);
 
     inFlight.tasks = true;
@@ -133,6 +134,7 @@ export const useTasksStore = defineStore("tasks", () => {
     }
 
     inFlight.assignees = true;
+    assigneesLoading.value = true;
 
     return apiRequest(urls.KEYS.GET, urls.users.search, {
       isTokenRequired: true,
@@ -145,6 +147,7 @@ export const useTasksStore = defineStore("tasks", () => {
       },
       onFinally: () => {
         inFlight.assignees = false;
+        assigneesLoading.value = false;
       },
     });
   };
@@ -221,6 +224,7 @@ export const useTasksStore = defineStore("tasks", () => {
     loading,
     actionLoading,
     detailLoading,
+    assigneesLoading,
     error,
     resetFetchedFlags,
     fetchSummary,

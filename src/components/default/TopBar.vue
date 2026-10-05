@@ -164,7 +164,7 @@
           ref="notificationsDropdownRef"
         >
           <button
-            @click="isNotificationsOpen = !isNotificationsOpen"
+            @click="toggleNotificationsDropdown"
             type="button"
             class="btn-icon relative p-1.5 text-secondary-text hover:text-primary-text rounded-lg hover:bg-background transition-colors cursor-pointer"
             title="Notifications"
@@ -559,5 +559,12 @@ const handleNotificationClick = (item) => {
     return;
   }
   router.push("/notifications").catch(() => {});
+};
+
+const toggleNotificationsDropdown = () => {
+  isNotificationsOpen.value = !isNotificationsOpen.value;
+  if (!isNotificationsOpen.value) return;
+  notificationsStore.fetchUnreadCount(true).catch(() => {});
+  notificationsStore.fetchNotifications({ limit: 5, offset: 0 }, true).catch(() => {});
 };
 </script>

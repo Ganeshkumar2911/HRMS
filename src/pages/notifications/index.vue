@@ -95,7 +95,10 @@ const openNotification = async (item) => {
 
 const loadMore = () => {
   const nextOffset = store.listOffset + store.listLimit;
-  store.fetchNotifications({ offset: nextOffset, limit: store.listLimit }, true);
+  store.fetchNotifications(
+    { offset: nextOffset, limit: store.listLimit, append: true },
+    true
+  );
 };
 
 onMounted(() => {

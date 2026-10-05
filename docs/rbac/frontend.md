@@ -9,3 +9,5 @@
 | Bootstrap | `GET users/me/permissions` → `stores/rbac/permissions.js` |
 
 Create/update with `permission_assignments: [{ code, scope }]`. Scope picker only for `employee.*`, `attendance.*`, `leave_request.*`, `leave_balance.*`.
+
+`RoleOut.is_system`: Admin is `true`. Holders get every code from `GET users/me/permissions` (backend capability bypass). Do not offer delete/rename for system roles.

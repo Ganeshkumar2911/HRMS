@@ -79,10 +79,11 @@ export const useNotificationsStore = defineStore("notifications", () => {
       offset: params.offset ?? 0,
       ...(params.unread_only != null ? { unread_only: params.unread_only } : {}),
     };
+    const append = Boolean(params.append);
 
     const successHandler = (res) => {
       const rows = Array.isArray(res) ? res : [];
-      notifications.value = rows;
+      notifications.value = append ? [...notifications.value, ...rows] : rows;
       listOffset.value = query.offset;
       hasMore.value = rows.length >= query.limit;
       isFetched.value.notifications = true;
@@ -179,13 +180,15 @@ export const useNotificationsStore = defineStore("notifications", () => {
       const item = payload?.notification || payload?.data || payload;
       if (!item || typeof item !== "object" || item.event === "notification.created") return;
 
-      unreadCount.value += 1;
       const exists = notifications.value.some((row) => row.id && row.id === item.id);
-      if (!exists) {
-        notifications.value.unshift({
-          ...item,
-          is_read: item.is_read ?? false,
-        });
+      if (exists) return;
+
+      notifications.value.unshift({
+        ...item,
+        is_read: item.is_read ?? false,
+      });
+      if (!(item.is_read ?? false)) {
+        unreadCount.value += 1;
       }
       snackbar.show(item.title || "New notification received", "info");
     });
