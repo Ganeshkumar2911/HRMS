@@ -1,0 +1,312 @@
+@import url("https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,300..900;1,300..900&display=swap");
+@import "tailwindcss";
+
+@theme {
+  /* Core */
+  --color-background: #f8fafc;
+  --color-card-background: #ffffff;
+
+  /* Primary (Muted Slate) */
+  --color-primary: #475569;
+  --color-primary-hover: #334155;
+
+  /* Secondary */
+  --color-secondary: #334155;
+
+  /* Navbar */
+  --color-navbar: #ffffff;
+
+  /* Text */
+  --color-primary-text: #334155;
+  --color-secondary-text: #64748b;
+
+  /* Border */
+  --color-primary-border: #e2e8f0;
+
+  /* Accent */
+  --color-accent: #64748b;
+
+  /* btn colors */
+  --color-btn-text-primary: #ffffff;
+
+  /* Status (Muted) */
+  --color-primary-green: #10b981;
+  --color-primary-yellow: #f59e0b;
+  --color-primary-red: #ef4444;
+  --color-primary-blue: #3b82f6;
+}
+
+.dark {
+  --color-background: #0f172a;
+  --color-card-background: #1e293b;
+
+  --color-primary: #94a3b8;
+  --color-primary-hover: #cbd5e1;
+
+  --color-secondary: #e2e8f0;
+  --color-navbar: #1e293b;
+
+  --color-primary-text: #f1f5f9;
+  --color-secondary-text: #94a3b8;
+
+  /* btn colors */
+  --color-btn-text-primary: #0f172a;
+
+  --color-primary-border: #334155;
+
+  --color-accent: #94a3b8;
+
+  --color-primary-green: #059669;
+  --color-primary-yellow: #d97706;
+  --color-primary-red: #dc2626;
+  --color-primary-blue: #2563eb;
+}
+
+body {
+  font-family: "Red Hat Display", sans-serif;
+}
+
+/* ─── Global Button & Interactive Cursors ────────────────────────────── */
+button,
+[type="button"],
+[type="reset"],
+[type="submit"] {
+  cursor: pointer;
+}
+
+button:disabled,
+[type="button"]:disabled,
+[type="reset"]:disabled,
+[type="submit"]:disabled {
+  cursor: not-allowed;
+}
+
+.title-text {
+  @apply font-semibold text-[19px];
+}
+
+.sub-text {
+  @apply text-[13px];
+}
+
+.normal-text {
+  @apply text-[16px] font-medium;
+}
+
+.mid-text {
+  @apply text-[14px];
+}
+
+.btn-primary {
+  @apply flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition-all active:scale-95 cursor-pointer sm:flex-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
+}
+
+.btn-secondary {
+  @apply flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-background hover:bg-card-background text-secondary-text hover:text-primary-text text-xs font-semibold border border-primary-border transition-all active:scale-95 cursor-pointer sm:flex-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
+}
+
+.btn-success {
+  @apply flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-green/10 text-primary-green border border-primary-green/20 hover:bg-primary-green hover:text-white text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
+}
+
+.btn-danger {
+  @apply flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-red/10 text-primary-red border border-primary-red/20 hover:bg-primary-red hover:text-white text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
+}
+
+.btn-warning {
+  @apply flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-yellow/10 text-primary-yellow border border-primary-yellow/20 hover:bg-primary-yellow hover:text-white text-xs font-bold transition-all active:scale-95 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
+}
+
+.btn-icon {
+  @apply inline-flex items-center justify-center p-1.5 rounded-lg text-secondary-text hover:text-primary-text hover:bg-background border border-transparent hover:border-primary-border transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
+}
+
+.input-field {
+  @apply w-full border border-primary-border rounded-lg bg-background text-primary-text text-sm placeholder-secondary-text/50 outline-none transition-all duration-150;
+}
+
+.input-field:focus {
+  outline: none;
+  box-shadow: none;
+  /* remove glow */
+  border-color: var(--color-primary);
+  /* optional */
+}
+
+/* Glass-morphism card */
+.glass-card {
+  @apply bg-white/80 dark:bg-card-background/80 backdrop-blur-sm border border-gray-200 dark:border-primary-border shadow-md rounded-2xl p-5;
+}
+
+/* ─── Hide Number Input Spinners Globally ────────────────────────────── */
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* ─── Custom Modern Scrollbar ────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.7);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+}
+
+.dark * {
+  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Edge */
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  /* IE & old Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+/* Child row styling for tree hierarchy visualization */
+.bg-child-row {
+  background-color: rgba(167, 130, 149, 0.08);
+}
+
+.bg-child-row-hover {
+  background-color: rgba(167, 130, 149, 0.12);
+}
+
+.dark .bg-child-row {
+  background-color: rgba(167, 130, 149, 0.15);
+}
+
+.dark .bg-child-row-hover {
+  background-color: rgba(167, 130, 149, 0.25);
+}
+
+/* ─── Custom Professional Checkbox ───────────────────────────────────── */
+input[type="checkbox"],
+.custom-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  border-radius: 5px;
+  border: 1.5px solid #cbd5e1;
+  background-color: #ffffff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  vertical-align: middle;
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.dark input[type="checkbox"],
+.dark .custom-checkbox {
+  border: 1.5px solid #475569;
+  background-color: #1e293b;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+input[type="checkbox"]:hover,
+.custom-checkbox:hover {
+  border-color: var(--color-primary);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(2, 26, 108, 0.1);
+}
+
+.dark input[type="checkbox"]:hover,
+.dark .custom-checkbox:hover {
+  border-color: var(--color-primary);
+  background-color: #1e293b;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+input[type="checkbox"]:focus-visible,
+.custom-checkbox:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(2, 26, 108, 0.18);
+}
+
+.dark input[type="checkbox"]:focus-visible,
+.dark .custom-checkbox:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+input[type="checkbox"]:checked,
+.custom-checkbox:checked {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='%23ffffff' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2.5-2.5a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E") !important;
+  background-size: 100% 100% !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+}
+
+input[type="checkbox"]:indeterminate,
+.custom-checkbox:indeterminate {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='%23ffffff' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' d='M3.5 8a1 1 0 011-1h7a1 1 0 110 2h-7a1 1 0 01-1-1z' clip-rule='evenodd'/%3E%3C/svg%3E") !important;
+  background-size: 100% 100% !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) !important;
+}
+
+input[type="checkbox"]:disabled,
+.custom-checkbox:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  border-color: var(--color-primary-border);
+  background-color: var(--color-background);
+}
+
+.material-symbols-rounded {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
