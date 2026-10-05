@@ -74,8 +74,11 @@ const reload = () => {
 
 watch([() => hrms.hrmsMonth, () => hrms.hrmsYear], reload);
 
-onMounted(() => {
-  if (scope.value === "SELF" && auth.currentEmployee?.id) {
+onMounted(async () => {
+  if (!auth.currentEmployee?.id) {
+    await auth.fetchCurrentEmployee();
+  }
+  if (auth.currentEmployee?.id) {
     employeeId.value = auth.currentEmployee.id;
   }
   reload();
