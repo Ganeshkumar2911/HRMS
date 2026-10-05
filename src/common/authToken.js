@@ -1,8 +1,6 @@
 const ACCESS_TOKEN_KEY = "accessToken";
 const REFRESH_TOKEN_KEY = "refreshToken";
 const USER_KEY = "currentUser";
-const ROLE_KEY = "role";
-const USER_ID_KEY = "user_id";
 
 const authToken = {
   /**
@@ -30,9 +28,6 @@ const authToken = {
     }
     if (user) {
       localStorage.setItem(USER_KEY, JSON.stringify(user));
-      if (user.id) {
-        localStorage.setItem(USER_ID_KEY, String(user.id));
-      }
     }
   },
 
@@ -70,23 +65,18 @@ const authToken = {
   setUser: (user) => {
     if (user) {
       localStorage.setItem(USER_KEY, JSON.stringify(user));
-      if (user.id) {
-        localStorage.setItem(USER_ID_KEY, String(user.id));
-      }
     } else {
       localStorage.removeItem(USER_KEY);
     }
   },
 
   /**
-   * Remove authentication tokens & user session without clearing custom environment overrides
+   * Clear authentication tokens and user state
    */
   removeToken: () => {
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(ROLE_KEY);
-    localStorage.removeItem(USER_ID_KEY);
   },
 };
 

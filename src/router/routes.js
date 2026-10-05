@@ -104,19 +104,7 @@ const routes = [
   },
   {
     path: "/auth",
-    component: AuthLayout,
-    children: [
-      {
-        path: "login",
-        redirect: "/login",
-      },
-      {
-        path: "dev-login",
-        name: "DevLogin",
-        component: () => import("@/pages/auth/dev-login.vue"),
-        meta: { requiresAuth: false, title: "Developer Login" },
-      },
-    ],
+    redirect: "/login",
   },
 
   // ── Fallback 404 Route ────────────────────────────────────

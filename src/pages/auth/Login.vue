@@ -8,7 +8,6 @@ const showPassword = ref(false);
 const form = reactive({
   email: "",
   password: "",
-  rememberMe: false,
 });
 
 const errors = reactive({
@@ -31,9 +30,6 @@ const validate = () => {
 
   if (!form.password) {
     errors.password = "Password is required.";
-    valid = false;
-  } else if (form.password.length < 6) {
-    errors.password = "Password must be at least 6 characters.";
     valid = false;
   }
 
@@ -124,14 +120,6 @@ const handleLogin = async () => {
         <p v-if="errors.password" class="text-[11px] text-primary-red mt-1">{{ errors.password }}</p>
       </div>
 
-      <!-- Remember & Forgot -->
-      <div class="flex items-center justify-between text-xs pt-1">
-        <label class="flex items-center gap-2 text-secondary-text cursor-pointer select-none">
-          <input v-model="form.rememberMe" type="checkbox" class="custom-checkbox" />
-          <span>Remember this session</span>
-        </label>
-      </div>
-
       <!-- Submit Button -->
       <button
         type="submit"
@@ -144,16 +132,10 @@ const handleLogin = async () => {
     </form>
 
     <!-- Footer Links -->
-    <div class="mt-6 pt-4 border-t border-primary-border/60 flex flex-col items-center gap-2 text-xs">
-      <div class="text-secondary-text">
-        Don't have an account?
-        <router-link to="/signup" class="text-primary hover:underline font-semibold ml-1">
-          Create account
-        </router-link>
-      </div>
-
-      <router-link to="/auth/dev-login" class="text-[11px] text-secondary-text hover:text-primary-text transition-colors">
-        Switch to Developer Environment Override &rarr;
+    <div class="mt-6 pt-4 border-t border-primary-border/60 text-center text-xs text-secondary-text">
+      Don't have an account?
+      <router-link to="/signup" class="text-primary hover:underline font-semibold ml-1">
+        Create account
       </router-link>
     </div>
   </div>

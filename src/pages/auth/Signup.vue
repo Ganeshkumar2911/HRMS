@@ -29,6 +29,9 @@ const validate = () => {
   if (!form.name.trim()) {
     errors.name = "Full name is required.";
     valid = false;
+  } else if (form.name.trim().length > 255) {
+    errors.name = "Name cannot exceed 255 characters.";
+    valid = false;
   }
 
   if (!form.email) {
@@ -42,8 +45,11 @@ const validate = () => {
   if (!form.password) {
     errors.password = "Password is required.";
     valid = false;
-  } else if (form.password.length < 6) {
-    errors.password = "Password must be at least 6 characters.";
+  } else if (form.password.length < 8) {
+    errors.password = "Password must be at least 8 characters.";
+    valid = false;
+  } else if (form.password.length > 128) {
+    errors.password = "Password cannot exceed 128 characters.";
     valid = false;
   }
 

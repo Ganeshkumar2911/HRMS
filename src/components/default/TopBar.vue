@@ -290,16 +290,6 @@
               <span>Permissions &amp; Scopes</span>
             </button>
 
-            <!-- Dev Console -->
-            <router-link
-              to="/auth/dev-login"
-              @click="isProfileOpen = false"
-              class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-secondary-text hover:text-primary-text hover:bg-background transition-colors"
-            >
-              <span class="material-symbols-rounded text-base">terminal</span>
-              <span>Dev Console</span>
-            </router-link>
-
             <div class="my-1 border-t border-primary-border/60"></div>
 
             <!-- Sign Out -->
