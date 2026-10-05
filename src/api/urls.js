@@ -22,6 +22,30 @@ const urls = {
     detail: (id) => `admin/users/${id}`,
   },
 
+  // ── Chat Module ──────────────────────────────────────────
+  conversations: {
+    list: "conversations",
+    create: "conversations",
+    detail: (id) => `conversations/${id}`,
+    rename: (id) => `conversations/${id}`,
+    archive: (id) => `conversations/${id}`,
+    members: (id) => `conversations/${id}/members`,
+    addMember: (id) => `conversations/${id}/members`,
+    removeMember: (convId, userId) => `conversations/${convId}/members/${userId}`,
+    messages: (id) => `conversations/${id}/messages`,
+  },
+
+  messages: {
+    detail: (id) => `messages/${id}`,
+    edit: (id) => `messages/${id}`,
+    delete: (id) => `messages/${id}`,
+  },
+
+  attachments: {
+    uploadUrl: "attachments/upload-url",
+    upload: (id) => `attachments/${id}/upload`,
+  },
+
   // ── HRMS Module ──────────────────────────────────────────
   hrms: {
     employeeProfile: "hrms/employees/me/profile",
@@ -58,13 +82,6 @@ const urls = {
     unreadCount: "notifications/unread-count",
     markRead: (id) => `notifications/${id}/read`,
     markAllRead: "notifications/read-all",
-  },
-
-  // ── Chat Module ──────────────────────────────────────────
-  chat: {
-    conversations: "chat/conversations",
-    messages: (conversationId) => `chat/conversations/${conversationId}/messages`,
-    createConversation: "chat/conversations",
   },
 
   // ── Audit Module ─────────────────────────────────────────

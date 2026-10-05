@@ -13,13 +13,13 @@
                sm:left-auto sm:right-5 sm:bottom-auto sm:top-5 sm:min-w-[220px] sm:max-w-[320px]"
         :class="colorClasses"
       >
-        <component :is="icon" :size="17" class="shrink-0" />
+        <span class="material-symbols-rounded text-[18px] shrink-0">{{ iconName }}</span>
         <span class="text-[13px] font-medium flex-1">{{ snackbar.message }}</span>
         <button
           class="shrink-0 opacity-60 hover:opacity-100 transition-opacity"
           @click="snackbar.hide()"
         >
-          <span class="material-symbols-outlined" >close</span>
+          <span class="material-symbols-outlined">close</span>
         </button>
       </div>
     </Transition>
@@ -40,10 +40,10 @@ const colorClasses = computed(() => ({
   info:    'bg-[#0F0F0F] border border-[#4fc3f7]/40 text-[#7dd3fc]',
 }[snackbar.color] ?? 'bg-[#0F0F0F] border border-white/10 text-white'))
 
-const icon = computed(() => ({
-  success: CheckCircle,
-  error:   XCircle,
-  warning: AlertTriangle,
-  info:    Info,
-}[snackbar.color] ?? Info))
+const iconName = computed(() => ({
+  success: 'check_circle',
+  error:   'error',
+  warning: 'warning',
+  info:    'info',
+}[snackbar.color] ?? 'info'))
 </script>

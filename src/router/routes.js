@@ -23,6 +23,12 @@ const routes = [
         meta: { title: "Chat", requiresAuth: true },
       },
       {
+        path: "chat/:conversationId",
+        name: "ChatThread",
+        component: () => import("@/pages/chat/index.vue"),
+        meta: { title: "Chat Thread", requiresAuth: true },
+      },
+      {
         path: "tasks",
         name: "Tasks",
         component: () => import("@/pages/tasks/index.vue"),
