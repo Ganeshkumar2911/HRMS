@@ -84,7 +84,7 @@
             </div>
 
             <!-- Text Content -->
-            <p class="leading-relaxed whitespace-pre-wrap break-words">
+            <p class="leading-relaxed whitespace-pre-wrap wrap-break-word">
               {{ message.content }}
             </p>
 

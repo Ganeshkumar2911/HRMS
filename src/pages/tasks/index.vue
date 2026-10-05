@@ -57,7 +57,7 @@
     </div>
 
     <!-- Tasks Workspace Canvas -->
-    <div class="bg-card-background border border-primary-border/70 rounded-xl min-h-[420px] flex flex-col items-center justify-center p-8 text-center">
+    <div class="bg-card-background border border-primary-border/70 rounded-xl min-h-105 flex flex-col items-center justify-center p-8 text-center">
       <div class="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4">
         <span class="material-symbols-rounded text-3xl">checklist</span>
       </div>

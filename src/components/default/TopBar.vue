@@ -1,6 +1,6 @@
 <template>
   <header class="w-full bg-card-background border-b border-primary-border/60 sticky top-0 z-40 transition-colors duration-200">
-    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
+    <div class="max-w-400 mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
       
       <!-- ── Left: Brand & Navigation ────────────────────────── -->
       <div class="flex items-center gap-6">
@@ -157,7 +157,7 @@
             <!-- Red Unread Badge -->
             <span
               v-if="notificationsStore.unreadCount > 0"
-              class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-primary-red text-white text-[10px] font-bold flex items-center justify-center shadow-xs"
+              class="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-primary-red text-white text-[10px] font-bold flex items-center justify-center shadow-xs"
             >
               {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
             </span>

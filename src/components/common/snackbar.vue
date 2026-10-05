@@ -8,9 +8,9 @@
     >
       <div
         v-if="snackbar.visible"
-        class="fixed z-[9999] flex items-center backdrop-blur-md gap-3 px-4 py-3 rounded-xl shadow-lg
+        class="fixed z-9999 flex items-center backdrop-blur-md gap-3 px-4 py-3 rounded-xl shadow-lg
                left-4 right-4 bottom-5
-               sm:left-auto sm:right-5 sm:bottom-auto sm:top-5 sm:min-w-[220px] sm:max-w-[320px]"
+               sm:left-auto sm:right-5 sm:bottom-auto sm:top-5 sm:min-w-55 sm:max-w-[320px]"
         :class="colorClasses"
       >
         <span class="material-symbols-rounded text-[18px] shrink-0">{{ iconName }}</span>
