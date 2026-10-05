@@ -1,0 +1,35 @@
+<template>
+  <div class="min-h-screen w-full flex flex-col bg-background text-primary-text transition-colors duration-200">
+    <!-- Top App Shell Bar -->
+    <TopBar />
+
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full max-w-400 mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto no-scrollbar">
+      <router-view />
+    </main>
+  </div>
+</template>
+
+<script setup>
+import { onMounted, onBeforeUnmount } from "vue";
+import TopBar from "@/components/default/TopBar.vue";
+import { useAuthStore } from "@/stores/auth/auth";
+import { useWsStore } from "@/stores/ws/ws";
+import authToken from "@/common/authToken";
+
+const authStore = useAuthStore();
+const wsStore = useWsStore();
+
+const handleTokenRefreshed = () => {
+  wsStore.connect(authToken.getAccessToken());
+};
+
+onMounted(() => {
+  window.addEventListener("auth:token-refreshed", handleTokenRefreshed);
+  authStore.initSession();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("auth:token-refreshed", handleTokenRefreshed);
+});
+</script>
