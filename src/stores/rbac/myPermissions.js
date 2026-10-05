@@ -1,13 +1,7 @@
-import { defineStore } from 'pinia';
+import { usePermissionsStore } from "./permissions";
 
-export const useMyPermissionsStore = defineStore('myPermissions', {
-  state: () => ({
-    permissions: [],
-  }),
-  actions: {
-    fetchMyPermissions(retry = false) {
-      // Placeholder for fetching permissions
-      this.permissions = ['ALL'];
-    }
-  }
-});
+/**
+ * Backward-compatibility wrapper for useMyPermissionsStore
+ */
+export const useMyPermissionsStore = usePermissionsStore;
+export default usePermissionsStore;

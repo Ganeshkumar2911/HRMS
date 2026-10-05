@@ -2,23 +2,103 @@ import DefaultLayout from "@/layouts/default.vue";
 import AuthLayout from "@/layouts/auth.vue";
 
 const routes = [
+  // ── Protected Shell Routes ────────────────────────────────
   {
     path: "/",
     component: DefaultLayout,
+    meta: { requiresAuth: true },
     children: [
       {
-        path: "dashboard",
-        name: "Dashboard",
-        component: () => import("@/pages/dashboard/Dashboard.vue"),
+        path: "",
+        redirect: "/chat",
       },
       {
-        path: "vendor/transfers",
-        name: "VendorTransfers",
-        component: () => import("@/pages/dashboard/VendorTransfers.vue"),
+        path: "dashboard",
+        redirect: "/chat",
       },
+      {
+        path: "chat",
+        name: "Chat",
+        component: () => import("@/pages/chat/index.vue"),
+        meta: { title: "Chat", requiresAuth: true },
+      },
+      {
+        path: "tasks",
+        name: "Tasks",
+        component: () => import("@/pages/tasks/index.vue"),
+        meta: { title: "Tasks", requiresAuth: true },
+      },
+      {
+        path: "notifications",
+        name: "Notifications",
+        component: () => import("@/pages/notifications/index.vue"),
+        meta: { title: "Notifications", requiresAuth: true },
+      },
+      {
+        path: "hrms",
+        name: "HRMS",
+        component: () => import("@/pages/hrms/index.vue"),
+        meta: {
+          title: "HRMS",
+          requiresAuth: true,
+          requiredPermission: "employee.view",
+        },
+      },
+      {
+        path: "admin/users",
+        name: "AdminUsers",
+        component: () => import("@/pages/admin/users/index.vue"),
+        meta: {
+          title: "Users Management",
+          requiresAuth: true,
+          requiredPermission: "user.view",
+        },
+      },
+      {
+        path: "admin/roles",
+        name: "AdminRoles",
+        component: () => import("@/pages/admin/roles/index.vue"),
+        meta: {
+          title: "Roles & Permissions",
+          requiresAuth: true,
+          requiredPermission: "role.assign",
+        },
+      },
+      {
+        path: "admin/audit",
+        name: "AdminAudit",
+        component: () => import("@/pages/admin/audit/index.vue"),
+        meta: {
+          title: "Audit Trail",
+          requiresAuth: true,
+          requiredPermission: "audit.view",
+        },
+      },
+    ],
+  },
+
+  // ── Unauthenticated Auth Routes ───────────────────────────
+  {
+    path: "/login",
+    component: AuthLayout,
+    children: [
       {
         path: "",
-        redirect: "/dashboard",
+        name: "Login",
+        component: () => import("@/pages/auth/Login.vue"),
+        meta: { requiresAuth: false, title: "Sign In" },
+      },
+    ],
+  },
+  {
+    path: "/signup",
+    component: AuthLayout,
+    children: [
+      {
+        path: "",
+        name: "Signup",
+        component: () => import("@/pages/auth/Signup.vue"),
+        meta: { requiresAuth: false, title: "Create Account" },
       },
     ],
   },
@@ -28,15 +108,21 @@ const routes = [
     children: [
       {
         path: "login",
-        name: "Login",
-        component: () => import("@/pages/auth/Login.vue"),
+        redirect: "/login",
       },
       {
         path: "dev-login",
         name: "DevLogin",
         component: () => import("@/pages/auth/dev-login.vue"),
+        meta: { requiresAuth: false, title: "Developer Login" },
       },
     ],
+  },
+
+  // ── Fallback 404 Route ────────────────────────────────────
+  {
+    path: "/:pathMatch(.*)*",
+    redirect: "/chat",
   },
 ];
 

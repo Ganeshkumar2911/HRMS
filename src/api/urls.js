@@ -1,38 +1,76 @@
 const urls = {
-  KEYS:{
-    GET: 'get',
-    POST: 'post',
-    PUT: 'put',
-    DELETE: 'delete',
+  KEYS: {
+    GET: "get",
+    POST: "post",
+    PUT: "put",
+    DELETE: "delete",
+    PATCH: "patch",
   },
-  auth: {
-    login: '/login',
-  },
-  admins: {
-    list: '/superadmin/admins',
-    create: '/superadmin/create-admin',
-  },
-  wallet: {
-    list: '/superadmin/wallets',
-    update: '/superadmin/wallet/update',
-    transactions: '/superadmin/wallet/transactions',
-  },
-  plans: {
-    list: '/plans',
-    create: '/plans',
-    update: '/plans',
-    delete: '/plans',
-  },
-  paymentRequests: {
-    approve: '/payment-requests/approve',
-    reject: '/payment-requests/reject',
-  },
-  vendorTransfers: {
-    list: '/vendor/transfers',
-    submit: '/vendor/transfers', // we will append /id/submit in the component
-    reject: '/vendor/transfers', // we will append /id/reject in the component
-    update: '/vendor/transfers', // we will append /id in the component
-  }
-}
 
-export default urls
+  // ── Auth Module ──────────────────────────────────────────
+  auth: {
+    login: "auth/login",
+    signup: "auth/signup",
+    refresh: "auth/refresh",
+    logout: "auth/logout",
+  },
+
+  // ── Users Module ─────────────────────────────────────────
+  users: {
+    me: "users/me",
+    list: "admin/users",
+    detail: (id) => `admin/users/${id}`,
+  },
+
+  // ── HRMS Module ──────────────────────────────────────────
+  hrms: {
+    employeeProfile: "hrms/employees/me/profile",
+    employees: "hrms/employees",
+    employeeDetail: (id) => `hrms/employees/${id}`,
+    departments: "hrms/departments",
+    attendance: "hrms/attendance",
+    leaveRequests: "hrms/leave-requests",
+    leaveBalances: "hrms/leave-balances",
+  },
+
+  // ── RBAC / Roles Module ──────────────────────────────────
+  roles: {
+    list: "roles",
+    detail: (id) => `roles/${id}`,
+    create: "roles",
+    update: (id) => `roles/${id}`,
+    assign: "roles/assign",
+    permissions: "roles/permissions",
+  },
+
+  // ── Tasks Module ─────────────────────────────────────────
+  tasks: {
+    list: "tasks",
+    summary: "tasks/summary",
+    create: "tasks",
+    detail: (id) => `tasks/${id}`,
+    update: (id) => `tasks/${id}`,
+  },
+
+  // ── Notifications Module ─────────────────────────────────
+  notifications: {
+    list: "notifications",
+    unreadCount: "notifications/unread-count",
+    markRead: (id) => `notifications/${id}/read`,
+    markAllRead: "notifications/read-all",
+  },
+
+  // ── Chat Module ──────────────────────────────────────────
+  chat: {
+    conversations: "chat/conversations",
+    messages: (conversationId) => `chat/conversations/${conversationId}/messages`,
+    createConversation: "chat/conversations",
+  },
+
+  // ── Audit Module ─────────────────────────────────────────
+  audit: {
+    list: "audit",
+  },
+};
+
+export default urls;

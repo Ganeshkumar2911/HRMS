@@ -2,16 +2,47 @@ import axios from "axios";
 import authToken from "../common/authToken";
 import router from "../router";
 
-// ─── Constants
+// ─── Base URL Resolution ──────────────────────────────────────────
 
-const getBaseURL = () => {
+export const getBaseOrigin = () => {
   const customUrl = localStorage.getItem("custom_base_url");
   if (customUrl) {
-    const base = customUrl.endsWith("/") ? customUrl.slice(0, -1) : customUrl;
-    return `${base}/admin/`;
+    return customUrl.trim().replace(/\/+$/, "");
   }
-  return `https://admin.panthercapitals.com/admin/`;
+  const envUrl = import.meta.env?.VITE_API_URL;
+  if (envUrl) {
+    return envUrl.trim().replace(/\/+$/, "");
+  }
+  return typeof window !== "undefined" ? window.location.origin : "http://localhost:8000";
 };
+
+export const getBaseURL = () => {
+  const origin = getBaseOrigin();
+  if (origin.endsWith("/api/v1")) {
+    return `${origin}/`;
+  }
+  return `${origin}/api/v1/`;
+};
+
+export const getWsURL = (token = "") => {
+  const origin = getBaseOrigin();
+  let wsProto = "ws:";
+  let host = "";
+
+  try {
+    const parsed = new URL(origin);
+    wsProto = parsed.protocol === "https:" ? "wss:" : "ws:";
+    host = parsed.host;
+  } catch (_) {
+    wsProto = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss:" : "ws:";
+    host = typeof window !== "undefined" ? window.location.host : "localhost:8000";
+  }
+
+  const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
+  return `${wsProto}//${host}/ws${tokenParam}`;
+};
+
+// ─── Constants ────────────────────────────────────────────────────
 
 const DEFAULT_TIMEOUT = 2 * 60 * 1000;
 const MAX_RETRY_ATTEMPTS = 2;
@@ -19,7 +50,7 @@ const RETRYABLE_STATUS_CODES = [502, 503, 504];
 const NO_BODY_METHODS = ["get", "delete", "head", "options"];
 const ALLOWED_METHODS = ["get", "post", "patch", "put", "delete"];
 
-// ─── Request Deduplication (takeLatest)
+// ─── Request Deduplication (takeLatest) ───────────────────────────
 
 const pendingRequests = new Map();
 
@@ -36,24 +67,23 @@ const cancelPreviousRequest = (requestKey) => {
 
 const cleanupRequest = (requestKey, controller) => {
   const current = pendingRequests.get(requestKey);
-
   if (current?.abortController === controller) {
     pendingRequests.delete(requestKey);
   }
 };
 
-// ─── Axios Instance
+// ─── Axios Instance ───────────────────────────────────────────────
 
 const axiosInstance = axios.create({
   timeout: DEFAULT_TIMEOUT,
 });
 
-// ─── Request Interceptor
+// ─── Request Interceptor ──────────────────────────────────────────
 
 axiosInstance.interceptors.request.use(
   (config) => {
     if (config.isTokenRequired !== false) {
-      const { accessToken } = authToken.getToken();
+      const accessToken = authToken.getAccessToken();
       if (accessToken) {
         config.headers["Authorization"] = `Bearer ${accessToken}`;
       }
@@ -63,7 +93,7 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ─── Response Interceptor
+// ─── Token Refresh Coordination ───────────────────────────────────
 
 let isRefreshing = false;
 let refreshSubscribers = [];
@@ -77,26 +107,109 @@ const onTokenRefreshed = (newToken) => {
   refreshSubscribers = [];
 };
 
+const onTokenRefreshFailed = (err) => {
+  refreshSubscribers.forEach((callback) => callback(null, err));
+  refreshSubscribers = [];
+};
+
+// ─── Response Interceptor ─────────────────────────────────────────
+
 axiosInstance.interceptors.response.use(
   (response) => response,
 
   async (error) => {
     const originalRequest = error.config;
 
-    // ── 401: logout (no refresh)
-    if (error.response?.status === 401) {
-      authToken.removeToken();
-      localStorage.removeItem('role')
-      router.push({ name: "login" });
-      return Promise.reject(error);
+    // ── 401 Handling: Token Refresh Cycle
+    if (error.response?.status === 401 && originalRequest) {
+      const requestUrl = originalRequest.url || "";
+      const isAuthEndpoint =
+        requestUrl.includes("auth/login") ||
+        requestUrl.includes("auth/signup") ||
+        requestUrl.includes("auth/refresh") ||
+        requestUrl.includes("auth/logout");
+
+      // Don't refresh if the failure came from an auth route itself
+      if (isAuthEndpoint) {
+        return Promise.reject(error);
+      }
+
+      // Check if this request already retried once
+      if (originalRequest._retry) {
+        authToken.removeToken();
+        router.push({ name: "Login" }).catch(() => {
+          window.location.href = "/auth/login";
+        });
+        return Promise.reject(error);
+      }
+
+      const refreshToken = authToken.getRefreshToken();
+      if (!refreshToken) {
+        authToken.removeToken();
+        router.push({ name: "Login" }).catch(() => {
+          window.location.href = "/auth/login";
+        });
+        return Promise.reject(error);
+      }
+
+      // If refresh is already in-flight, wait for it
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh((newToken, refreshErr) => {
+            if (refreshErr || !newToken) {
+              return reject(refreshErr || error);
+            }
+            originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+            resolve(axiosInstance(originalRequest));
+          });
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshResponse = await axios.post(
+          `${getBaseURL()}auth/refresh`,
+          { refresh_token: refreshToken },
+          {
+            headers: { "Content-Type": "application/json" },
+            timeout: 15000,
+          }
+        );
+
+        const data = refreshResponse.data;
+        const newAccessToken = data.access_token;
+        const newRefreshToken = data.refresh_token || refreshToken;
+
+        authToken.setTokens({
+          access_token: newAccessToken,
+          refresh_token: newRefreshToken,
+          user: data.user,
+        });
+
+        onTokenRefreshed(newAccessToken);
+
+        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+        return axiosInstance(originalRequest);
+      } catch (refreshErr) {
+        onTokenRefreshFailed(refreshErr);
+        authToken.removeToken();
+        router.push({ name: "Login" }).catch(() => {
+          window.location.href = "/auth/login";
+        });
+        return Promise.reject(refreshErr);
+      } finally {
+        isRefreshing = false;
+      }
     }
 
     // ── Retry on transient server errors
     const shouldRetry =
       RETRYABLE_STATUS_CODES.includes(error.response?.status) &&
-      (originalRequest._retryCount ?? 0) < MAX_RETRY_ATTEMPTS;
+      (originalRequest?._retryCount ?? 0) < MAX_RETRY_ATTEMPTS;
 
-    if (shouldRetry) {
+    if (shouldRetry && originalRequest) {
       originalRequest._retryCount = (originalRequest._retryCount ?? 0) + 1;
       const delay = 300 * originalRequest._retryCount;
       await new Promise((resolve) => setTimeout(resolve, delay));
@@ -108,15 +221,14 @@ axiosInstance.interceptors.response.use(
   }
 );
 
-// ─── Global Error Handler
+// ─── Global Error Handler ─────────────────────────────────────────
+
 const handleError = (error) => {
-  // Cancelled request — not an error
   if (error.code === "ERR_CANCELED") {
     console.warn("Request cancelled:", error.message);
     return;
   }
 
-  // Network / no-response errors
   if (!error.response) {
     console.error("Network error:", error.message || "Unknown network error");
     return;
@@ -136,27 +248,49 @@ const handleError = (error) => {
       break;
 
     default: {
-      const message = data?.message;
-
-      if (!message) {
-        console.error("Unexpected error occurred");
-        return;
-      }
-
-      // Validation errors come as { field: string[] }
-      if (typeof message === "object") {
-        Object.entries(message).forEach(([field, messages]) => {
-          const msgs = Array.isArray(messages) ? messages : [messages];
-          msgs.forEach((msg) => console.error(`Validation [${field}]:`, msg));
-        });
-      } else {
-        console.error("API error:", message);
+      const message = extractErrorMessage(data);
+      if (message) {
+        console.error(`API error (${status}):`, message);
       }
     }
   }
 };
 
-// ─── apiRequest
+/**
+ * Format and extract clean error message from FastAPI / Django / Express payloads
+ */
+export const extractErrorMessage = (data) => {
+  if (!data) return "An unexpected error occurred.";
+  if (typeof data === "string") return data;
+
+  // FastAPI detail can be string or array of validation errors
+  if (data.detail) {
+    if (typeof data.detail === "string") return data.detail;
+    if (Array.isArray(data.detail)) {
+      return data.detail.map((d) => d.msg || JSON.stringify(d)).join(", ");
+    }
+    return JSON.stringify(data.detail);
+  }
+
+  if (data.message) {
+    if (typeof data.message === "string") return data.message;
+    if (typeof data.message === "object") {
+      return Object.entries(data.message)
+        .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(", ") : v}`)
+        .join("; ");
+    }
+  }
+
+  if (data.error) {
+    if (typeof data.error === "string") return data.error;
+    return JSON.stringify(data.error);
+  }
+
+  return "An unexpected error occurred.";
+};
+
+// ─── apiRequest Core Function ─────────────────────────────────────
+
 const apiRequest = (
   method,
   url,
@@ -213,35 +347,41 @@ const apiRequest = (
     ...(timeout != null && { timeout }),
   };
 
-  // Do not send a body for methods that don't support it
   if (!NO_BODY_METHODS.includes(method)) {
     config.data = data;
   }
+
   return axiosInstance(config)
-  .then((response) => {
-    if (onSuccess) onSuccess(response.data);
-    return response.data;
-  })
-  .catch((error) => {
-    if (error.code === "ERR_CANCELED") {
-      console.warn("Request cancelled:", error.message);
-      throw error;
-    }
+    .then((response) => {
+      if (onSuccess) onSuccess(response.data);
+      return response.data;
+    })
+    .catch((error) => {
+      if (error.code === "ERR_CANCELED") {
+        console.warn("Request cancelled:", error.message);
+        throw error;
+      }
 
-    if (onFailure) {
-      onFailure(error.response?.data ?? error);
-      return;
-    }
+      const parsedError = {
+        status: error.response?.status,
+        message: extractErrorMessage(error.response?.data) || error.message,
+        data: error.response?.data,
+        raw: error,
+      };
 
-    throw error;
-  })
-  .finally(() => {
-    if (requestKey) {
-      cleanupRequest(requestKey, abortController);
-    }
+      if (onFailure) {
+        onFailure(parsedError);
+        return;
+      }
 
-    if (onFinally) onFinally();
-  });
+      throw parsedError;
+    })
+    .finally(() => {
+      if (requestKey) {
+        cleanupRequest(requestKey, abortController);
+      }
+      if (onFinally) onFinally();
+    });
 };
 
 export { axiosInstance };
