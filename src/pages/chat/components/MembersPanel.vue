@@ -207,7 +207,7 @@ const conversationName = computed(() => {
 });
 
 const isUserOnline = (userId) => {
-  return chatStore.onlineUserIds.has(userId);
+  return !!chatStore.onlineUserIds[userId];
 };
 
 const getInitials = (name) => {

@@ -20,6 +20,7 @@ const urls = {
     me: "users/me",
     myPermissions: "users/me/permissions",
     list: "users",
+    search: "users/search",
     create: "users",
     detail: (id) => `users/${id}`,
     update: (id) => `users/${id}`,

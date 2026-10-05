@@ -20,17 +20,33 @@
         <div class="relative">
           <span class="material-symbols-rounded absolute left-2.5 top-2.5 text-secondary-text text-sm pointer-events-none">search</span>
           <input
+            ref="searchInputRef"
             v-model="searchQuery"
             type="text"
             placeholder="Search team members..."
             class="input-field pl-8 pr-3 py-1.5 text-xs"
+            autocomplete="off"
           />
         </div>
       </div>
 
       <div class="flex-1 overflow-y-auto no-scrollbar space-y-1 divide-y divide-primary-border/30 max-h-56">
         <div
-          v-if="eligibleUsers.length === 0"
+          v-if="isSearching"
+          class="p-6 text-center text-xs text-secondary-text"
+        >
+          Searching...
+        </div>
+
+        <div
+          v-else-if="!searchQuery.trim()"
+          class="p-6 text-center text-xs text-secondary-text"
+        >
+          Type a name or email to find members
+        </div>
+
+        <div
+          v-else-if="eligibleUsers.length === 0"
           class="p-6 text-center text-xs text-secondary-text"
         >
           No available users to add
@@ -60,7 +76,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { useChatStore } from "@/stores/chat/chat";
 
 const props = defineProps({
@@ -78,21 +94,54 @@ const emit = defineEmits(["update:modelValue"]);
 
 const chatStore = useChatStore();
 const searchQuery = ref("");
+const searchInputRef = ref(null);
+const isSearching = ref(false);
+
+let searchDebounceTimer = null;
+const SEARCH_DEBOUNCE_MS = 300;
 
 const eligibleUsers = computed(() => {
   const currentMemberIds = new Set(
-    chatStore.activeMembers.filter((m) => !m.left_at).map((m) => m.user_id)
+    chatStore.activeMembers.filter((member) => !member.left_at).map((member) => member.user_id)
   );
+  return chatStore.availableUsers.filter((user) => !currentMemberIds.has(user.id));
+});
 
-  return chatStore.availableUsers.filter((u) => {
-    if (currentMemberIds.has(u.id)) return false;
-    if (!searchQuery.value) return true;
-    const q = searchQuery.value.toLowerCase();
-    return (
-      (u.name && u.name.toLowerCase().includes(q)) ||
-      (u.email && u.email.toLowerCase().includes(q))
-    );
-  });
+const runSearch = async (query) => {
+  const searchTerm = (query || "").trim();
+  if (!searchTerm) {
+    chatStore.availableUsers = [];
+    isSearching.value = false;
+    return;
+  }
+
+  isSearching.value = true;
+  try {
+    await chatStore.searchUsers(searchTerm);
+  } finally {
+    isSearching.value = false;
+  }
+};
+
+watch(
+  () => props.modelValue,
+  async (isOpen) => {
+    if (!isOpen) {
+      searchQuery.value = "";
+      chatStore.availableUsers = [];
+      if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+      return;
+    }
+    await nextTick();
+    searchInputRef.value?.focus();
+  }
+);
+
+watch(searchQuery, (query) => {
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(() => {
+    runSearch(query);
+  }, SEARCH_DEBOUNCE_MS);
 });
 
 const handleAdd = async (userId) => {

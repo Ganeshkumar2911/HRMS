@@ -4,27 +4,44 @@ import apiRequest from "@/api/request";
 import urls from "@/api/urls";
 import { useSnackbarStore } from "@/stores/snackbar/snackbar";
 
+const emptyListParams = () => ({
+  limit: 50,
+  offset: 0,
+  status: "",
+  priority: "",
+  q: "",
+  sort_by: "updated_at",
+  sort_dir: "desc",
+});
+
+const compactQuery = (params) => {
+  const query = { ...params };
+  Object.keys(query).forEach((key) => {
+    if (query[key] === "" || query[key] == null) delete query[key];
+  });
+  return query;
+};
+
+const summaryFiltersFromList = (listParams) => {
+  const { status, priority, q } = listParams;
+  return compactQuery({ status, priority, q });
+};
+
 export const useTasksStore = defineStore("tasks", () => {
   const snackbar = useSnackbarStore();
 
   const tasks = ref([]);
   const summary = ref(null);
   const activeTask = ref(null);
-  const listParams = ref({
-    limit: 50,
-    offset: 0,
-    status: "",
-    priority: "",
-    q: "",
-    sort_by: "updated_at",
-    sort_dir: "desc",
-  });
+  const listParams = ref(emptyListParams());
   const hasMore = ref(false);
+  const assigneeMatches = ref([]);
 
   const inFlight = {
     tasks: false,
     summary: false,
     detail: false,
+    assignees: false,
   };
 
   const isFetched = ref({
@@ -63,6 +80,7 @@ export const useTasksStore = defineStore("tasks", () => {
     };
 
     return apiRequest(urls.KEYS.GET, urls.tasks.summary, {
+      params: summaryFiltersFromList(listParams.value),
       isTokenRequired: true,
       onSuccess: successHandler,
       onFailure: failureHandler,
@@ -78,14 +96,8 @@ export const useTasksStore = defineStore("tasks", () => {
     loading.value = true;
     error.value = null;
 
-    const query = {
-      ...listParams.value,
-      ...params,
-    };
-    Object.keys(query).forEach((key) => {
-      if (query[key] === "" || query[key] == null) delete query[key];
-    });
     listParams.value = { ...listParams.value, ...params };
+    const query = compactQuery(listParams.value);
 
     const successHandler = (res) => {
       const rows = Array.isArray(res) ? res : [];
@@ -110,6 +122,30 @@ export const useTasksStore = defineStore("tasks", () => {
       onSuccess: successHandler,
       onFailure: failureHandler,
       onFinally: finallyHandler,
+    });
+  };
+
+  const searchAssignees = (query, { limit = 20 } = {}) => {
+    const searchTerm = (query || "").trim();
+    if (!searchTerm) {
+      assigneeMatches.value = [];
+      return Promise.resolve([]);
+    }
+
+    inFlight.assignees = true;
+
+    return apiRequest(urls.KEYS.GET, urls.users.search, {
+      isTokenRequired: true,
+      params: { q: searchTerm, limit },
+      onSuccess: (res) => {
+        assigneeMatches.value = Array.isArray(res) ? res : [];
+      },
+      onFailure: () => {
+        assigneeMatches.value = [];
+      },
+      onFinally: () => {
+        inFlight.assignees = false;
+      },
     });
   };
 
@@ -142,8 +178,7 @@ export const useTasksStore = defineStore("tasks", () => {
         snackbar.show("Task updated", "success");
         if (res) {
           activeTask.value = res;
-          const index = tasks.value.findIndex((task) => task.id === taskId);
-          if (index >= 0) tasks.value[index] = res;
+          tasks.value = tasks.value.map((task) => (task.id === taskId ? res : task));
         }
         fetchSummary(true);
       },
@@ -180,6 +215,7 @@ export const useTasksStore = defineStore("tasks", () => {
     activeTask,
     listParams,
     hasMore,
+    assigneeMatches,
     inFlight,
     isFetched,
     loading,
@@ -189,6 +225,7 @@ export const useTasksStore = defineStore("tasks", () => {
     resetFetchedFlags,
     fetchSummary,
     fetchTasks,
+    searchAssignees,
     createTask,
     updateTask,
     deleteTask,

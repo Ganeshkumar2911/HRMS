@@ -204,7 +204,7 @@ const getConversationTitle = (conv) => {
 const isDirectPartnerOnline = (conv) => {
   const other = conv.members?.find((m) => m.user_id !== currentUserId.value);
   if (!other) return false;
-  return chatStore.onlineUserIds.has(other.user_id);
+  return !!chatStore.onlineUserIds[other.user_id];
 };
 
 const formatTime = (isoString) => {

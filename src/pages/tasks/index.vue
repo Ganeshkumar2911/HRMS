@@ -8,7 +8,7 @@
         </div>
         <h1 class="title-text text-primary-text">Tasks</h1>
         <p class="sub-text text-secondary-text">
-          Visibility: <code class="text-[11px]">created_by = me OR assigned_to = me</code>
+          You see tasks you created or that are assigned to you.
         </p>
       </div>
       <button
@@ -21,9 +21,11 @@
       </button>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       <MetricCard title="Total" :value="summary?.total ?? '—'" icon="tag" />
       <MetricCard title="Pending" :value="summary?.status?.pending ?? '—'" icon="pending" />
+      <MetricCard title="Upcoming" :value="summary?.status?.upcoming ?? '—'" icon="event_upcoming" />
+      <MetricCard title="Pick later" :value="summary?.status?.pick_later ?? '—'" icon="schedule" />
       <MetricCard title="Completed" :value="summary?.status?.completed ?? '—'" icon="check_circle" />
       <MetricCard title="Overdue" :value="summary?.overdue ?? '—'" icon="warning" />
     </div>
@@ -31,14 +33,14 @@
     <div class="flex flex-wrap gap-2 items-end">
       <div>
         <label class="block text-[11px] text-secondary-text mb-1">Status</label>
-        <select v-model="filters.status" class="input-field px-3 py-1.5 text-xs" @change="reload">
+        <select v-model="filters.status" class="input-field px-3 py-1.5 text-xs" @change="applyFilters">
           <option value="">All</option>
           <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
         </select>
       </div>
       <div>
         <label class="block text-[11px] text-secondary-text mb-1">Priority</label>
-        <select v-model="filters.priority" class="input-field px-3 py-1.5 text-xs" @change="reload">
+        <select v-model="filters.priority" class="input-field px-3 py-1.5 text-xs" @change="applyFilters">
           <option value="">All</option>
           <option v-for="p in priorities" :key="p" :value="p">{{ p }}</option>
         </select>
@@ -49,22 +51,43 @@
           v-model="filters.q"
           class="input-field px-3 py-1.5 text-xs"
           placeholder="Search title…"
-          @keyup.enter="reload"
+          @keyup.enter="applyFilters"
         />
       </div>
-      <button type="button" class="btn-secondary text-xs px-3 py-1.5" @click="reload">Apply</button>
+      <button type="button" class="btn-secondary text-xs px-3 py-1.5" @click="applyFilters">Apply</button>
     </div>
 
-    <DataTable :data="store.tasks" :columns="columns" :loading="store.loading" row-key="id">
+    <DataTable
+      :data="store.tasks"
+      :columns="columns"
+      :loading="store.loading"
+      :row-class="taskRowClass"
+      row-key="id"
+    >
       <template #cell-status="{ row }">
         <StatusBadge :status="row.status" />
       </template>
       <template #cell-priority="{ row }">
         <StatusBadge :status="row.priority" />
       </template>
+      <template #cell-assigned_to="{ row }">
+        <span class="text-xs text-primary-text">{{ row.assigned_to_name || row.assigned_to }}</span>
+      </template>
+      <template #cell-due_date="{ row }">
+        <span :class="isOverdue(row) ? 'text-primary-red font-semibold' : ''">
+          {{ row.due_date || "—" }}
+        </span>
+      </template>
       <template #actions="{ row }">
         <div class="flex items-center gap-2">
-          <button type="button" class="text-xs text-primary hover:underline" @click="openEdit(row)">Edit</button>
+          <button
+            v-if="canOpenEditor(row)"
+            type="button"
+            class="text-xs text-primary hover:underline"
+            @click="openEdit(row)"
+          >
+            Edit
+          </button>
           <button
             v-if="permissions.can('task.complete') && row.status !== 'COMPLETED'"
             type="button"
@@ -74,7 +97,7 @@
             Complete
           </button>
           <button
-            v-if="permissions.can('task.delete') && row.created_by === auth.currentUser?.id"
+            v-if="permissions.can('task.delete') && isCreator(row)"
             type="button"
             class="text-xs text-primary-red hover:underline"
             @click="confirmDelete(row)"
@@ -104,7 +127,6 @@
       </button>
     </div>
 
-    <!-- Create / Edit modal -->
     <div
       v-if="modalOpen"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
@@ -115,26 +137,63 @@
         @submit.prevent="saveTask"
       >
         <h3 class="title-text text-sm">{{ editing ? "Edit task" : "New task" }}</h3>
-        <input v-model="form.title" class="input-field px-3 py-2 text-sm" placeholder="Title" required />
-        <textarea v-model="form.description" class="input-field px-3 py-2 text-sm min-h-20" placeholder="Description" />
+        <input
+          v-model="form.title"
+          class="input-field px-3 py-2 text-sm"
+          placeholder="Title"
+          required
+          :disabled="!canEditFields"
+        />
+        <textarea
+          v-model="form.description"
+          class="input-field px-3 py-2 text-sm min-h-20"
+          placeholder="Description"
+          :disabled="!canEditFields"
+        />
         <div class="grid grid-cols-2 gap-3">
-          <select v-model="form.status" class="input-field px-3 py-2 text-sm">
-            <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
+          <select v-model="form.status" class="input-field px-3 py-2 text-sm" :disabled="!canChangeStatus">
+            <option v-for="s in availableStatuses" :key="s" :value="s">{{ s }}</option>
           </select>
-          <select v-model="form.priority" class="input-field px-3 py-2 text-sm">
+          <select v-model="form.priority" class="input-field px-3 py-2 text-sm" :disabled="!canEditFields">
             <option v-for="p in priorities" :key="p" :value="p">{{ p }}</option>
           </select>
         </div>
         <div class="grid grid-cols-2 gap-3">
-          <input v-model="form.start_date" type="date" class="input-field px-3 py-2 text-sm" />
-          <input v-model="form.due_date" type="date" class="input-field px-3 py-2 text-sm" />
+          <input v-model="form.start_date" type="date" class="input-field px-3 py-2 text-sm" :disabled="!canEditFields" />
+          <input v-model="form.due_date" type="date" class="input-field px-3 py-2 text-sm" :disabled="!canEditFields" />
         </div>
-        <input
-          v-model.number="form.assigned_to"
-          type="number"
-          class="input-field px-3 py-2 text-sm"
-          placeholder="Assignee user id (optional)"
-        />
+
+        <div v-if="canPickAssignee" class="space-y-2">
+          <label class="block text-[11px] text-secondary-text">Assignee</label>
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-xs text-primary-text">
+              {{ form.assigned_to_name || (form.assigned_to ? `User #${form.assigned_to}` : "Me (self)") }}
+            </p>
+            <button type="button" class="text-xs text-primary hover:underline" @click="assignToMe">
+              Assign to me
+            </button>
+          </div>
+          <input
+            v-model="assigneeQuery"
+            class="input-field px-3 py-2 text-sm"
+            placeholder="Search people by name or email…"
+            autocomplete="off"
+          />
+          <div v-if="store.inFlight.assignees" class="text-[11px] text-secondary-text">Searching…</div>
+          <div v-else-if="store.assigneeMatches.length" class="border border-primary-border rounded-lg divide-y divide-primary-border/40 max-h-40 overflow-y-auto">
+            <button
+              v-for="person in store.assigneeMatches"
+              :key="person.id"
+              type="button"
+              class="w-full text-left px-3 py-2 hover:bg-background"
+              @click="selectAssignee(person)"
+            >
+              <p class="text-xs font-semibold text-primary-text">{{ person.name }}</p>
+              <p class="text-[11px] text-secondary-text">{{ person.email }}</p>
+            </button>
+          </div>
+        </div>
+
         <div class="flex justify-end gap-2 pt-2">
           <button type="button" class="btn-secondary text-xs px-3 py-1.5" @click="modalOpen = false">Cancel</button>
           <button type="submit" class="btn-primary text-xs px-3 py-1.5" :disabled="store.actionLoading">Save</button>
@@ -154,7 +213,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref, watch } from "vue";
 import DataTable from "@/components/common/DataTable";
 import MetricCard from "@/components/common/MetricCard.vue";
 import StatusBadge from "@/components/common/StatusBadge.vue";
@@ -163,6 +222,7 @@ import { useTasksStore } from "@/stores/tasks/tasks";
 import { usePermissionsStore } from "@/stores/rbac/permissions";
 import { useAuthStore } from "@/stores/auth/auth";
 
+const SEARCH_DEBOUNCE_MS = 280;
 const store = useTasksStore();
 const permissions = usePermissionsStore();
 const auth = useAuthStore();
@@ -192,39 +252,106 @@ const editing = ref(null);
 const original = ref(null);
 const deleteOpen = ref(false);
 const deleteTarget = ref(null);
+const assigneeQuery = ref("");
+let assigneeDebounceTimer = null;
+
 const form = reactive({
   title: "",
   description: "",
   status: "PENDING",
   priority: "MEDIUM",
   assigned_to: null,
+  assigned_to_name: "",
   start_date: "",
   due_date: "",
 });
 
-const reload = () => store.fetchTasks({ ...filters }, true);
+const currentUserId = computed(() => Number(auth.currentUser?.id));
+
+const isCreator = (row) => Number(row?.created_by) === currentUserId.value;
+
+const todayUtc = () => new Date().toISOString().slice(0, 10);
+
+const isOverdue = (row) => {
+  if (!row?.due_date || row.status === "COMPLETED") return false;
+  return row.due_date < todayUtc();
+};
+
+const taskRowClass = (row) => (isOverdue(row) ? "bg-primary-red/5" : "");
+
+const canEditFields = computed(() => permissions.can("task.update") || !editing.value);
+
+const canChangeStatus = computed(() => {
+  if (!editing.value) return permissions.can("task.update") || permissions.can("task.complete");
+  return permissions.can("task.update") || permissions.can("task.complete");
+});
+
+const canPickAssignee = computed(() => {
+  if (!permissions.can("task.assign")) return false;
+  if (!editing.value) return true;
+  return isCreator(editing.value);
+});
+
+const canOpenEditor = (row) => {
+  if (permissions.can("task.update")) return true;
+  if (permissions.can("task.assign") && isCreator(row)) return true;
+  if (permissions.can("task.complete") && row.status !== "COMPLETED") return true;
+  return false;
+};
+
+const availableStatuses = computed(() => {
+  if (permissions.can("task.complete") && permissions.can("task.update")) return statuses;
+  if (permissions.can("task.complete") && !permissions.can("task.update")) {
+    return editing.value ? [...new Set([editing.value.status, "COMPLETED"])] : statuses;
+  }
+  return statuses.filter((status) => status !== "COMPLETED" || form.status === "COMPLETED");
+});
+
+const listQuery = () => ({
+  status: filters.status,
+  priority: filters.priority,
+  q: filters.q,
+  limit: filters.limit,
+  offset: filters.offset,
+});
+
+const reloadList = () => store.fetchTasks(listQuery(), true);
+
+const applyFilters = () => {
+  filters.offset = 0;
+  store.fetchTasks(listQuery(), true);
+  store.fetchSummary(true);
+};
 
 const prevPage = () => {
   filters.offset = Math.max(0, filters.offset - filters.limit);
-  reload();
-};
-const nextPage = () => {
-  filters.offset += filters.limit;
-  reload();
+  reloadList();
 };
 
-const openCreate = () => {
-  editing.value = null;
-  original.value = null;
+const nextPage = () => {
+  filters.offset += filters.limit;
+  reloadList();
+};
+
+const resetForm = () => {
   Object.assign(form, {
     title: "",
     description: "",
     status: "PENDING",
     priority: "MEDIUM",
     assigned_to: null,
+    assigned_to_name: auth.currentUser?.name || "Me (self)",
     start_date: "",
     due_date: "",
   });
+  assigneeQuery.value = "";
+  store.assigneeMatches = [];
+};
+
+const openCreate = () => {
+  editing.value = null;
+  original.value = null;
+  resetForm();
   modalOpen.value = true;
 };
 
@@ -237,11 +364,35 @@ const openEdit = (row) => {
     status: row.status,
     priority: row.priority,
     assigned_to: row.assigned_to,
+    assigned_to_name: row.assigned_to_name || "",
     start_date: row.start_date || "",
     due_date: row.due_date || "",
   });
+  assigneeQuery.value = "";
+  store.assigneeMatches = [];
   modalOpen.value = true;
 };
+
+const assignToMe = () => {
+  form.assigned_to = currentUserId.value || null;
+  form.assigned_to_name = auth.currentUser?.name || "Me (self)";
+  assigneeQuery.value = "";
+  store.assigneeMatches = [];
+};
+
+const selectAssignee = (person) => {
+  form.assigned_to = person.id;
+  form.assigned_to_name = person.name;
+  assigneeQuery.value = "";
+  store.assigneeMatches = [];
+};
+
+watch(assigneeQuery, (query) => {
+  if (assigneeDebounceTimer) clearTimeout(assigneeDebounceTimer);
+  assigneeDebounceTimer = setTimeout(() => {
+    store.searchAssignees(query);
+  }, SEARCH_DEBOUNCE_MS);
+});
 
 const buildPatch = () => {
   if (!original.value) {
@@ -253,7 +404,9 @@ const buildPatch = () => {
       start_date: form.start_date || null,
       due_date: form.due_date || null,
     };
-    if (form.assigned_to) payload.assigned_to = form.assigned_to;
+    if (form.assigned_to && Number(form.assigned_to) !== currentUserId.value) {
+      payload.assigned_to = form.assigned_to;
+    }
     return payload;
   }
   const patch = {};
@@ -262,6 +415,12 @@ const buildPatch = () => {
     const prev = original.value[key] ?? null;
     if (next !== prev) patch[key] = next;
   });
+  if (patch.assigned_to == null && original.value.assigned_to != null && form.assigned_to) {
+    patch.assigned_to = form.assigned_to;
+  }
+  if (patch.assigned_to == null && "assigned_to" in patch) {
+    delete patch.assigned_to;
+  }
   return patch;
 };
 
@@ -291,6 +450,6 @@ const doDelete = async () => {
 
 onMounted(() => {
   store.fetchSummary(true);
-  reload();
+  reloadList();
 });
 </script>

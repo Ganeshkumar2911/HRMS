@@ -197,7 +197,7 @@ const statusSubtitle = computed(() => {
     return `${count} active members`;
   }
   const other = props.conversation.members?.find((m) => m.user_id !== currentUserId.value);
-  if (other && chatStore.onlineUserIds.has(other.user_id)) {
+  if (other && chatStore.onlineUserIds[other.user_id]) {
     return "Online now";
   }
   return "Direct message";

@@ -103,7 +103,6 @@ onMounted(() => {
       );
     }
   });
-  chatStore.fetchUsers();
 });
 
 onBeforeUnmount(() => {

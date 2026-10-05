@@ -19,13 +19,13 @@ const displayLabel = computed(() => props.label || props.status || "—");
 
 const toneClass = computed(() => {
   const value = String(props.status || "").toUpperCase();
-  if (["ACTIVE", "APPROVED", "PRESENT", "COMPLETED", "SUCCESS"].includes(value)) {
+  if (["ACTIVE", "APPROVED", "PRESENT", "COMPLETED", "SUCCESS", "LOW"].includes(value)) {
     return "bg-primary-green/15 text-primary-green";
   }
-  if (["PENDING", "UPCOMING", "PICK_LATER", "HALF_DAY", "ON_LEAVE", "ON_NOTICE", "WFH"].includes(value)) {
+  if (["PENDING", "UPCOMING", "PICK_LATER", "MEDIUM", "HALF_DAY", "ON_LEAVE", "ON_NOTICE", "WFH"].includes(value)) {
     return "bg-primary-yellow/15 text-primary-yellow";
   }
-  if (["INACTIVE", "REJECTED", "CANCELLED", "ABSENT", "FAILED", "TERMINATED", "SUSPENDED"].includes(value)) {
+  if (["INACTIVE", "REJECTED", "CANCELLED", "ABSENT", "FAILED", "TERMINATED", "SUSPENDED", "HIGH"].includes(value)) {
     return "bg-primary-red/15 text-primary-red";
   }
   if (["HOLIDAY", "WEEK_OFF", "UNMARKED", "DRAFT"].includes(value)) {

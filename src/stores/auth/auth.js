@@ -66,8 +66,9 @@ export const useAuthStore = defineStore("auth", () => {
   const bootstrapAfterAuth = async (accessToken) => {
     const wsStore = useWsStore();
     const permissionsStore = usePermissionsStore();
-    wsStore.connect(accessToken);
+    // Permissions first — do not wait on WebSocket/Redis for route access.
     await permissionsStore.fetchMyPermissions(true).catch(() => {});
+    wsStore.connect(accessToken);
     fetchCurrentEmployee(true).catch(() => {});
   };
 

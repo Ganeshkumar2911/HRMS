@@ -5,13 +5,15 @@ import router from "../router";
 // ─── Base URL Resolution ──────────────────────────────────────────
 
 export const getBaseOrigin = () => {
-  const customUrl = localStorage.getItem("custom_base_url");
-  if (customUrl) {
-    return customUrl.trim().replace(/\/+$/, "");
-  }
+  // Prefer project env so a leftover localStorage override (e.g. old Dev Tunnel)
+  // cannot silently point the SPA at the wrong API.
   const envUrl = import.meta.env?.VITE_API_URL;
   if (envUrl) {
     return envUrl.trim().replace(/\/+$/, "");
+  }
+  const customUrl = localStorage.getItem("custom_base_url");
+  if (customUrl) {
+    return customUrl.trim().replace(/\/+$/, "");
   }
   return typeof window !== "undefined" ? window.location.origin : "http://localhost:8000";
 };
@@ -353,13 +355,13 @@ const apiRequest = (
   }
 
   return axiosInstance(config)
-    .then((response) => {
+    .then(async (response) => {
       // 204 No Content — empty body is success
       const payload = response.status === 204 ? null : response.data;
-      if (onSuccess) onSuccess(payload);
+      if (onSuccess) await onSuccess(payload);
       return payload;
     })
-    .catch((error) => {
+    .catch(async (error) => {
       if (error.code === "ERR_CANCELED") {
         console.warn("Request cancelled:", error.message);
         throw error;
@@ -373,17 +375,17 @@ const apiRequest = (
       };
 
       if (onFailure) {
-        onFailure(parsedError);
+        await onFailure(parsedError);
         return;
       }
 
       throw parsedError;
     })
-    .finally(() => {
+    .finally(async () => {
       if (requestKey) {
         cleanupRequest(requestKey, abortController);
       }
-      if (onFinally) onFinally();
+      if (onFinally) await onFinally();
     });
 };
 

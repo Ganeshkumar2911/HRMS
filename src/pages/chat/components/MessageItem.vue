@@ -15,6 +15,14 @@
         <span v-if="!isMine" class="font-semibold text-primary-text">{{ senderName }}</span>
         <span>&bull;</span>
         <span>{{ formattedTime }}</span>
+        <span
+          v-if="isMine && !message.deleted_at"
+          class="material-symbols-rounded text-sm leading-none"
+          :class="isReadByOthers ? 'text-primary' : 'text-secondary-text'"
+          :title="readReceiptTitle"
+        >
+          {{ isReadByOthers ? "done_all" : "done" }}
+        </span>
       </div>
 
       <!-- Message Content Box -->
@@ -128,6 +136,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useAuthStore } from "@/stores/auth/auth";
+import { useChatStore } from "@/stores/chat/chat";
 
 const props = defineProps({
   message: {
@@ -143,11 +152,25 @@ const props = defineProps({
 const emit = defineEmits(["edit", "delete", "preview-image"]);
 
 const authStore = useAuthStore();
+const chatStore = useChatStore();
 const isEditing = ref(false);
 const editDraft = ref("");
 
 const isMine = computed(() => {
   return props.message.sender_id === authStore.currentUser?.id;
+});
+
+const isReadByOthers = computed(() => {
+  if (!isMine.value) return false;
+  return chatStore.isMessageReadByOthers(
+    props.message.conversation_id,
+    props.message.id,
+    props.message.sender_id
+  );
+});
+
+const readReceiptTitle = computed(() => {
+  return isReadByOthers.value ? "Read" : "Sent";
 });
 
 const senderInitials = computed(() => {

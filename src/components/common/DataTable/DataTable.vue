@@ -114,7 +114,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, useSlots } from 'vue'
 import DataTableHeader from './DataTableHeader.vue'
 import DataTableBody from './DataTableBody.vue'
 import DataTablePagination from './DataTablePagination.vue'
@@ -269,8 +269,9 @@ const hasStickyLeft = computed(() => {
   return visibleColumns.value.some((c) => c.sticky === 'left')
 })
 
+const slots = useSlots()
 const hasActions = computed(() => {
-  return props.actions !== null && props.actions !== undefined
+  return Boolean(slots.actions) || (props.actions !== null && props.actions !== undefined)
 })
 
 const activeSortKey = computed(() => internalSortKey.value)

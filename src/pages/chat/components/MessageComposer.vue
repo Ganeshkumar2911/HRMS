@@ -73,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useChatStore } from "@/stores/chat/chat";
 
 const props = defineProps({
@@ -173,4 +173,14 @@ const handleSend = async () => {
     isSending.value = false;
   }
 };
+
+watch(
+  () => props.conversationId,
+  () => {
+    text.value = "";
+    isSending.value = false;
+    clearSelectedFile();
+    chatStore.stopTyping(props.conversationId);
+  }
+);
 </script>

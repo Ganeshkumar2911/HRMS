@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import apiRequest from "@/api/request";
 import urls from "@/api/urls";
+import router from "@/router";
 import { useSnackbarStore } from "@/stores/snackbar/snackbar";
 import { useWsStore } from "@/stores/ws/ws";
 import { useAuthStore } from "@/stores/auth/auth";
@@ -17,7 +18,7 @@ export const useChatStore = defineStore("chat", () => {
   const messagesByConversation = ref({});
   const nextCursorByConversation = ref({});
   const typingUsers = ref({}); // conversationId -> Map of userId -> userName
-  const onlineUserIds = ref(new Set());
+  const onlineUserIds = ref({});
   const membersByConversation = ref({});
   const availableUsers = ref([]);
 
@@ -108,7 +109,7 @@ export const useChatStore = defineStore("chat", () => {
       isFetched.value.conversations = true;
 
       // Auto-select first conversation if none selected
-      if (!activeConversationId.value && conversations.value.length > 0) {
+      if (!activeConversationId.value && conversations.value.length > 0 && !router.currentRoute.value.params.conversationId) {
         selectConversation(conversations.value[0].id);
       }
     };
@@ -131,6 +132,13 @@ export const useChatStore = defineStore("chat", () => {
     });
   };
 
+  const normalizeUserList = (res) => {
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res?.items)) return res.items;
+    if (Array.isArray(res?.data)) return res.data;
+    return [];
+  };
+
   // ─── Fetch Available Users (GET /users) ────────────────
   const fetchUsers = (force = false) => {
     if (inFlight.users) return Promise.resolve(availableUsers.value);
@@ -139,13 +147,7 @@ export const useChatStore = defineStore("chat", () => {
     inFlight.users = true;
 
     const successHandler = (res) => {
-      availableUsers.value = Array.isArray(res)
-        ? res
-        : Array.isArray(res?.items)
-        ? res.items
-        : Array.isArray(res?.data)
-        ? res.data
-        : [];
+      availableUsers.value = normalizeUserList(res);
       isFetched.value.users = true;
     };
 
@@ -162,6 +164,34 @@ export const useChatStore = defineStore("chat", () => {
       onSuccess: successHandler,
       onFailure: failureHandler,
       onFinally: finallyHandler,
+    });
+  };
+
+  // ─── Search Directory Users (GET /users/search?q=) ─────
+  const searchUsers = (query, { limit = 20 } = {}) => {
+    const searchTerm = (query || "").trim();
+    if (!searchTerm) {
+      availableUsers.value = [];
+      return Promise.resolve([]);
+    }
+
+    inFlight.users = true;
+    detailLoading.value = true;
+
+    return apiRequest(urls.KEYS.GET, urls.users.search, {
+      isTokenRequired: true,
+      params: { q: searchTerm, limit },
+      onSuccess: (res) => {
+        availableUsers.value = normalizeUserList(res);
+      },
+      onFailure: (err) => {
+        availableUsers.value = [];
+        console.warn("Could not search users for chat:", err?.message);
+      },
+      onFinally: () => {
+        inFlight.users = false;
+        detailLoading.value = false;
+      },
     });
   };
 
@@ -194,7 +224,7 @@ export const useChatStore = defineStore("chat", () => {
     messagesLoading.value = true;
     const params = { limit: 30 };
     if (cursor) {
-      params.cursor = cursor;
+      params.before = cursor;
     }
 
     const successHandler = (res) => {
@@ -207,15 +237,13 @@ export const useChatStore = defineStore("chat", () => {
       } else {
         // Initial load
         messagesByConversation.value[conversationId] = newItems;
+        if (newItems.length > 0) {
+          const latest = newItems[newItems.length - 1];
+          markAsRead(conversationId, latest.id);
+        }
       }
 
       nextCursorByConversation.value[conversationId] = res?.next_cursor ?? null;
-
-      // Mark latest as read
-      if (newItems.length > 0) {
-        const latest = newItems[newItems.length - 1];
-        markAsRead(conversationId, latest.id);
-      }
     };
 
     const failureHandler = (err) => {
@@ -336,6 +364,7 @@ export const useChatStore = defineStore("chat", () => {
       fetchConversations(true).then(() => {
         if (res?.id) {
           selectConversation(res.id);
+          router.push(`/chat/${res.id}`).catch(() => {});
         }
       });
     };
@@ -371,6 +400,7 @@ export const useChatStore = defineStore("chat", () => {
       fetchConversations(true).then(() => {
         if (res?.id) {
           selectConversation(res.id);
+          router.push(`/chat/${res.id}`).catch(() => {});
         }
       });
     };
@@ -607,6 +637,45 @@ export const useChatStore = defineStore("chat", () => {
     });
   };
 
+  const applyMemberReadCursor = (conversationId, userId, messageId) => {
+    const withUpdatedCursor = (members) => {
+      if (!Array.isArray(members)) return members;
+      return members.map((member) => {
+        if (member.user_id !== userId) return member;
+        const currentCursor = member.last_read_message_id;
+        if (currentCursor != null && messageId <= currentCursor) return member;
+        return { ...member, last_read_message_id: messageId };
+      });
+    };
+
+    const currentMembers = membersByConversation.value[conversationId];
+    if (Array.isArray(currentMembers)) {
+      membersByConversation.value = {
+        ...membersByConversation.value,
+        [conversationId]: withUpdatedCursor(currentMembers),
+      };
+    }
+
+    const conversation = conversations.value.find((item) => item.id === conversationId);
+    if (conversation?.members) {
+      conversation.members = withUpdatedCursor(conversation.members);
+    }
+  };
+
+  const isMessageReadByOthers = (conversationId, messageId, senderId) => {
+    const members =
+      membersByConversation.value[conversationId] ||
+      conversations.value.find((conversation) => conversation.id === conversationId)?.members ||
+      [];
+    const otherMembers = members.filter(
+      (member) => member.user_id !== senderId && !member.left_at
+    );
+    if (otherMembers.length === 0) return false;
+    return otherMembers.every(
+      (member) => member.last_read_message_id != null && member.last_read_message_id >= messageId
+    );
+  };
+
   // ─── Mark As Read ──────────────────────────────────────
   const markAsRead = (conversationId, messageId) => {
     if (!conversationId || !messageId) return;
@@ -641,8 +710,12 @@ export const useChatStore = defineStore("chat", () => {
     // Update conversation preview snippet in list
     const conv = conversations.value.find((c) => c.id === convId);
     if (conv) {
-      conv.last_message = msg.content;
+      conv.last_message = msg.deleted_at ? "This message was deleted" : msg.content;
       conv.updated_at = msg.created_at || new Date().toISOString();
+      conversations.value = [
+        conv,
+        ...conversations.value.filter((item) => item.id !== convId),
+      ];
     }
 
     // If currently looking at this conversation, send read receipt
@@ -670,9 +743,15 @@ export const useChatStore = defineStore("chat", () => {
     const unsubTypingStart = wsStore.subscribe("typing.start", (payload) => {
       const convId = payload.conversation_id;
       const userId = payload.user_id;
-      const userName = payload.user_name || `User ${userId}`;
-
       if (!convId || !userId) return;
+      if (userId === authStore.currentUser?.id) return;
+
+      const member = (
+        membersByConversation.value[convId] ||
+        conversations.value.find((conversation) => conversation.id === convId)?.members ||
+        []
+      ).find((item) => item.user_id === userId);
+      const userName = payload.user_name || member?.user_name || member?.user_email || `User ${userId}`;
 
       if (!typingUsers.value[convId]) {
         typingUsers.value[convId] = new Map();
@@ -708,23 +787,20 @@ export const useChatStore = defineStore("chat", () => {
       const convId = payload.conversation_id;
       const userId = payload.user_id;
       const msgId = payload.message_id;
-
-      if (convId && userId && membersByConversation.value[convId]) {
-        const mem = membersByConversation.value[convId].find((m) => m.user_id === userId);
-        if (mem) {
-          mem.last_read_message_id = msgId;
-        }
-      }
+      if (!convId || !userId || !msgId) return;
+      applyMemberReadCursor(convId, userId, msgId);
     });
 
-    // 4. presence.update
     const unsubPresence = wsStore.subscribe("presence.update", (payload) => {
       const userId = payload.user_id;
-      const status = payload.status;
-      if (status === "online" || status === "ACTIVE") {
-        onlineUserIds.value.add(userId);
+      const presenceStatus = payload.status;
+      if (!userId) return;
+      if (presenceStatus === "online" || presenceStatus === "ACTIVE") {
+        onlineUserIds.value = { ...onlineUserIds.value, [userId]: true };
       } else {
-        onlineUserIds.value.delete(userId);
+        const nextOnline = { ...onlineUserIds.value };
+        delete nextOnline[userId];
+        onlineUserIds.value = nextOnline;
       }
     });
 
@@ -770,6 +846,8 @@ export const useChatStore = defineStore("chat", () => {
     resetFetchedFlags,
     fetchConversations,
     fetchUsers,
+    searchUsers,
+    isMessageReadByOthers,
     selectConversation,
     fetchMessages,
     loadOlderMessages,
