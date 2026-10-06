@@ -33,13 +33,14 @@
     <!-- Requests -->
     <section v-if="activeTab === 'Requests'" class="space-y-3">
       <div class="flex justify-between">
-        <select v-model="requestStatus" class="input-field px-2 py-1.5 text-xs w-40" @change="loadRequests">
-          <option value="">All statuses</option>
-          <option>PENDING</option>
-          <option>APPROVED</option>
-          <option>REJECTED</option>
-          <option>CANCELLED</option>
-        </select>
+        <BaseSelect
+          v-model="requestStatus"
+          :options="[{label: 'PENDING', value: 'PENDING'}, {label: 'APPROVED', value: 'APPROVED'}, {label: 'REJECTED', value: 'REJECTED'}, {label: 'CANCELLED', value: 'CANCELLED'}]"
+          allow-all
+          all-label="All statuses"
+          custom-class="!py-1.5 text-xs w-40"
+          @update:model-value="loadRequests"
+        />
         <button
           v-if="permissions.can('leave_request.create')"
           type="button"
@@ -102,10 +103,12 @@
     <div v-if="requestOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" @click.self="requestOpen = false">
       <form class="bg-card-background border border-primary-border rounded-xl w-full max-w-md p-5 space-y-3" @submit.prevent="submitRequest">
         <h3 class="title-text text-sm">Leave request</h3>
-        <select v-model.number="requestForm.leave_type_id" class="input-field px-3 py-2 text-sm" required>
-          <option disabled :value="null">Leave type</option>
-          <option v-for="t in hrms.leaveTypes" :key="t.id" :value="t.id">{{ t.name || t.code || t.id }}</option>
-        </select>
+        <BaseSelect
+          v-model="requestForm.leave_type_id"
+          :options="hrms.leaveTypes.map(t => ({ label: t.name || t.code || String(t.id), value: t.id }))"
+          placeholder="Leave type"
+          custom-class="!py-2 text-sm"
+        />
         <input v-model="requestForm.start_date" type="date" class="input-field px-3 py-2 text-sm" required />
         <input v-model="requestForm.end_date" type="date" class="input-field px-3 py-2 text-sm" required />
         <label class="flex items-center gap-2 text-xs"><input v-model="requestForm.half_day_start" type="checkbox" /> Half day start</label>
@@ -166,6 +169,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import DataTable from "@/components/common/DataTable";
 import StatusBadge from "@/components/common/StatusBadge.vue";
 import ConfirmationDialog from "@/components/common/ConfirmationDialog.vue";
+import BaseSelect from "@/components/common/BaseSelect.vue";
 import { useHrmsStore } from "@/stores/hrms/hrms";
 import { usePermissionsStore } from "@/stores/rbac/permissions";
 

@@ -92,7 +92,7 @@
         :key="conv.id"
         @click="$emit('select', conv.id)"
         class="p-3 flex items-start gap-3 hover:bg-background transition-colors cursor-pointer relative"
-        :class="{'bg-primary/5 border-l-2 border-primary': chatStore.activeConversationId === conv.id}"
+        :class="{'bg-primary/5': chatStore.activeConversationId === conv.id}"
       >
         <!-- Icon Avatar -->
         <div class="relative shrink-0 mt-0.5">

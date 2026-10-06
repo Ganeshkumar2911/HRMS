@@ -37,17 +37,25 @@
     <div class="flex flex-wrap gap-2 items-end">
       <div>
         <label class="block text-[11px] text-secondary-text mb-1">Status</label>
-        <select v-model="filters.status" class="input-field px-3 py-1.5 text-xs" @change="applyFilters">
-          <option value="">All</option>
-          <option v-for="s in statuses" :key="s" :value="s">{{ s }}</option>
-        </select>
+        <BaseSelect
+          v-model="filters.status"
+          :options="statuses.map(s => ({ label: s, value: s }))"
+          allow-all
+          all-label="All"
+          custom-class="!py-1.5 text-xs"
+          @update:model-value="applyFilters"
+        />
       </div>
       <div>
         <label class="block text-[11px] text-secondary-text mb-1">Priority</label>
-        <select v-model="filters.priority" class="input-field px-3 py-1.5 text-xs" @change="applyFilters">
-          <option value="">All</option>
-          <option v-for="p in priorities" :key="p" :value="p">{{ p }}</option>
-        </select>
+        <BaseSelect
+          v-model="filters.priority"
+          :options="priorities.map(p => ({ label: p, value: p }))"
+          allow-all
+          all-label="All"
+          custom-class="!py-1.5 text-xs"
+          @update:model-value="applyFilters"
+        />
       </div>
       <div class="flex-1 min-w-40">
         <label class="block text-[11px] text-secondary-text mb-1">Search</label>
@@ -158,12 +166,18 @@
           :disabled="!canEditFields"
         />
         <div class="grid grid-cols-2 gap-3">
-          <select v-model="form.status" class="input-field px-3 py-2 text-sm" :disabled="!canChangeStatus">
-            <option v-for="s in availableStatuses" :key="s" :value="s">{{ s }}</option>
-          </select>
-          <select v-model="form.priority" class="input-field px-3 py-2 text-sm" :disabled="!canEditFields">
-            <option v-for="p in priorities" :key="p" :value="p">{{ p }}</option>
-          </select>
+          <BaseSelect
+            v-model="form.status"
+            :options="availableStatuses.map(s => ({ label: s, value: s }))"
+            :disabled="!canChangeStatus"
+            custom-class="!py-2 text-sm"
+          />
+          <BaseSelect
+            v-model="form.priority"
+            :options="priorities.map(p => ({ label: p, value: p }))"
+            :disabled="!canEditFields"
+            custom-class="!py-2 text-sm"
+          />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <input v-model="form.start_date" type="date" class="input-field px-3 py-2 text-sm" :disabled="!canEditFields" />
@@ -266,6 +280,7 @@ import DataTable from "@/components/common/DataTable";
 import MetricCard from "@/components/common/MetricCard.vue";
 import StatusBadge from "@/components/common/StatusBadge.vue";
 import ConfirmationDialog from "@/components/common/ConfirmationDialog.vue";
+import BaseSelect from "@/components/common/BaseSelect.vue";
 import { useTasksStore } from "@/stores/tasks/tasks";
 import { usePermissionsStore } from "@/stores/rbac/permissions";
 import { useAuthStore } from "@/stores/auth/auth";

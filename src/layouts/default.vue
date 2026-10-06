@@ -4,7 +4,7 @@
     <TopBar />
 
     <!-- Main Content Area -->
-    <main class="flex-1 w-full max-w-400 mx-auto p-4 sm:p-6 lg:p-8 overflow-y-auto no-scrollbar">
+    <main class="flex-1 w-full max-w-400 mx-auto p-2.5 sm:p-2.5 lg:p-2.5 overflow-y-auto no-scrollbar">
       <router-view />
     </main>
   </div>

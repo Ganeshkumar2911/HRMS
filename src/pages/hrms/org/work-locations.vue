@@ -19,10 +19,7 @@
         <input v-model="form.name" class="input-field px-3 py-2 text-sm" placeholder="Name" required />
         <input v-model="form.code" class="input-field px-3 py-2 text-sm" placeholder="Code" required />
         <input v-model="form.address" class="input-field px-3 py-2 text-sm" placeholder="Address" />
-        <select v-model="form.status" class="input-field px-3 py-2 text-sm">
-          <option>ACTIVE</option>
-          <option>INACTIVE</option>
-        </select>
+        <BaseSelect v-model="form.status" :options="[{label: 'ACTIVE', value: 'ACTIVE'}, {label: 'INACTIVE', value: 'INACTIVE'}]" custom-class="!py-2 text-sm" />
         <div class="flex justify-end gap-2">
           <button type="button" class="btn-secondary text-xs px-3 py-1.5" @click="modalOpen = false">Cancel</button>
           <button type="submit" class="btn-primary text-xs px-3 py-1.5">Save</button>
@@ -36,6 +33,7 @@
 import { onMounted, reactive, ref } from "vue";
 import DataTable from "@/components/common/DataTable";
 import StatusBadge from "@/components/common/StatusBadge.vue";
+import BaseSelect from "@/components/common/BaseSelect.vue";
 import { useHrmsStore } from "@/stores/hrms/hrms";
 import { usePermissionsStore } from "@/stores/rbac/permissions";
 

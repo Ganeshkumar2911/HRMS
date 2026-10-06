@@ -9,125 +9,152 @@
     </div>
 
     <!-- Message Bubble Container -->
-    <div class="max-w-[75%] sm:max-w-[65%] flex flex-col" :class="isMine ? 'items-end' : 'items-start'">
-      <!-- Sender Name (for group chats) & Timestamp -->
-      <div class="flex items-center gap-1.5 mb-1 px-1 text-[11px] text-secondary-text">
-        <span v-if="!isMine" class="font-semibold text-primary-text">{{ senderName }}</span>
-        <span>&bull;</span>
-        <span>{{ formattedTime }}</span>
-        <span
-          v-if="isMine && !message.deleted_at"
-          class="material-symbols-rounded text-sm leading-none"
-          :class="isReadByOthers ? 'text-primary' : 'text-secondary-text'"
-          :title="readReceiptTitle"
-        >
-          {{ isReadByOthers ? "done_all" : "done" }}
-        </span>
+    <div class="max-w-[75%] sm:max-w-[65%] flex flex-col relative" :class="isMine ? 'items-end' : 'items-start'">
+      <!-- Sender Name (for group chats) -->
+      <div v-if="!isMine" class="mb-1 px-1 text-[12px] font-medium text-primary-text/80">
+        {{ senderName }}
       </div>
 
-      <!-- Message Content Box -->
-      <div
-        class="rounded-2xl px-3.5 py-2.5 text-xs shadow-xs transition-all relative"
-        :class="bubbleClasses"
-      >
-        <!-- Soft Delete Tombstone -->
-        <div v-if="message.deleted_at" class="flex items-center gap-1.5 italic opacity-75">
-          <span class="material-symbols-rounded text-sm">block</span>
-          <span>This message was deleted</span>
-        </div>
+      <div class="relative group/bubble flex items-start" :class="isMine ? 'flex-row-reverse' : 'flex-row'">
+        <!-- Message Content Box -->
+        <div
+          class="relative px-3 pt-2 pb-1.5 text-[14px] shadow-sm transition-all min-w-22.5"
+          :class="bubbleClasses"
+        >
+          <!-- SVG Tail -->
+          <span v-if="!message.deleted_at"
+                class="absolute top-0 w-2 h-3"
+                :class="isMine ? '-right-1.75 text-primary' : '-left-1.75 text-card-background'">
+            <svg v-if="isMine" viewBox="0 0 8 13" fill="currentColor" class="w-full h-full"><path d="M1.5 12C1.5 12 1.5 0 1.5 0H0C0 0 8 0 8 0C8 0 2.5 1 1.5 12Z"/></svg>
+            <svg v-else viewBox="0 0 8 13" fill="currentColor" class="w-full h-full"><path d="M6.5 12C6.5 12 6.5 0 6.5 0H8C8 0 0 0 0 0C0 0 5.5 1 6.5 12Z"/></svg>
+          </span>
 
-        <!-- Normal Message -->
-        <div v-else>
-          <!-- Inline Edit Input -->
-          <div v-if="isEditing" class="space-y-2">
-            <textarea
-              v-model="editDraft"
-              rows="2"
-              class="input-field p-2 text-xs w-full text-primary-text bg-card-background"
-              @keydown.enter.prevent="handleSaveEdit"
-              @keydown.esc="isEditing = false"
-            ></textarea>
-            <div class="flex items-center justify-end gap-1.5">
+          <!-- Dropdown Options (Chevron) -->
+          <div
+            v-if="!message.deleted_at && !isEditing && isMine"
+            class="absolute top-1 right-2 z-20 transition-opacity"
+            :class="showMenu ? 'opacity-100' : 'opacity-0 group-hover/bubble:opacity-100'"
+          >
+            <div class="relative">
               <button
                 type="button"
-                @click="isEditing = false"
-                class="px-2 py-1 text-[11px] text-secondary-text hover:text-primary-text"
+                @click.stop="toggleMenu"
+                class="rounded-full bg-black/20 hover:bg-black/30 text-white w-4 h-4 cursor-pointer flex items-center justify-center backdrop-blur-sm"
               >
-                Cancel
+                <span class="material-symbols-rounded text-[13px]">expand_more</span>
               </button>
-              <button
-                type="button"
-                @click="handleSaveEdit"
-                class="btn-primary px-2.5 py-1 text-[11px]"
+              
+              <!-- Dropdown Menu -->
+              <div v-if="showMenu" class="fixed inset-0 z-10" @click.stop="showMenu = false"></div>
+              <div
+                v-if="showMenu"
+                class="absolute top-full right-0 mt-1 w-24 bg-card-background border border-primary-border/50 rounded-md shadow-lg py-1 z-20"
               >
-                Save
-              </button>
+                <button
+                  @click="startEditing(); showMenu = false"
+                  class="w-full text-left px-2 py-1 text-xs text-primary-text hover:bg-black/5 dark:hover:bg-white/5 flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <span class="material-symbols-rounded text-[13px]">edit</span> Edit
+                </button>
+                <button
+                  @click="$emit('delete', message.id); showMenu = false"
+                  class="w-full text-left px-2 py-1 text-xs text-primary-red hover:bg-primary-red/10 flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <span class="material-symbols-rounded text-[13px]">delete</span> Delete
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Message Text & Attachment -->
+          <!-- Soft Delete Tombstone -->
+          <div v-if="message.deleted_at" class="flex items-center gap-1.5 italic opacity-75">
+            <span class="material-symbols-rounded text-sm">block</span>
+            <span>This message was deleted</span>
+          </div>
+
+          <!-- Normal Message -->
           <div v-else>
-            <!-- File Attachment Preview -->
-            <div v-if="message.attachment_id || message.message_type === 'FILE'" class="mb-2">
-              <div
-                v-if="isImageAttachment"
-                class="rounded-lg overflow-hidden border border-primary-border/60 cursor-pointer max-w-xs"
-                @click="$emit('preview-image', attachmentUrl, message.content)"
-              >
-                <img
-                  :src="attachmentUrl"
-                  :alt="message.content || 'Image Attachment'"
-                  class="max-h-48 object-cover w-full hover:opacity-95 transition-opacity"
-                />
-              </div>
-
-              <!-- Generic File / Document Badge -->
-              <div
-                v-else
-                class="flex items-center gap-2 p-2 rounded-lg bg-black/5 dark:bg-white/10 border border-primary-border/50 text-xs"
-              >
-                <span class="material-symbols-rounded text-lg text-primary">description</span>
-                <span class="truncate font-medium">{{ message.content || 'Attached File' }}</span>
+            <!-- Inline Edit Input -->
+            <div v-if="isEditing" class="space-y-2 mt-1">
+              <textarea
+                v-model="editDraft"
+                rows="2"
+                class="input-field p-2 text-[14px] w-full text-primary-text bg-background border border-primary-border/50 rounded-md focus:outline-none"
+                @keydown.enter.prevent="handleSaveEdit"
+                @keydown.esc="isEditing = false"
+              ></textarea>
+              <div class="flex items-center justify-end gap-1.5">
+                <button
+                  type="button"
+                  @click="isEditing = false"
+                  class="px-2 py-1 text-[12px] text-white/70 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  @click="handleSaveEdit"
+                  class="bg-white/20 hover:bg-white/30 text-white rounded px-2.5 py-1 text-[12px] transition-colors"
+                >
+                  Save
+                </button>
               </div>
             </div>
 
-            <!-- Text Content -->
-            <p class="leading-relaxed whitespace-pre-wrap wrap-break-word">
-              {{ message.content }}
-            </p>
+            <!-- Message Text & Attachment -->
+            <div v-else>
+              <!-- File Attachment Preview -->
+              <div v-if="message.attachment_id || message.message_type === 'FILE'" class="mb-2">
+                <div
+                  v-if="isImageAttachment"
+                  class="rounded-lg overflow-hidden border border-primary-border/20 cursor-pointer max-w-xs"
+                  @click="$emit('preview-image', attachmentUrl, message.content)"
+                >
+                  <img
+                    :src="attachmentUrl"
+                    :alt="message.content || 'Image Attachment'"
+                    class="max-h-48 object-cover w-full hover:opacity-95 transition-opacity"
+                  />
+                </div>
 
-            <!-- Edited tag -->
-            <span
-              v-if="message.edited_at"
-              class="text-[10px] opacity-70 ml-1.5 inline-block"
-            >
-              (edited)
-            </span>
+                <!-- Generic File / Document Badge -->
+                <div
+                  v-else
+                  class="flex items-center gap-2 p-2 rounded-lg bg-black/5 dark:bg-white/10 border border-primary-border/20 text-[13px]"
+                >
+                  <span class="material-symbols-rounded text-lg" :class="isMine ? 'text-white' : 'text-primary'">description</span>
+                  <span class="truncate font-medium">{{ message.content || 'Attached File' }}</span>
+                </div>
+              </div>
+
+              <!-- Text Content -->
+              <div v-if="message.content" class="min-h-5">
+                <p class="leading-relaxed whitespace-pre-wrap wrap-break-word">
+                  {{ message.content }}
+                  <!-- Invisible spacer to prevent text from overlapping the absolute time -->
+                  <span class="inline-block h-3" :style="{ width: isMine ? (message.edited_at ? '95px' : '65px') : (message.edited_at ? '75px' : '45px') }"></span>
+                </p>
+              </div>
+            </div>
+            
+            <!-- WhatsApp style Absolute Timestamp & Read Receipt -->
+            <div v-if="!message.deleted_at && !isEditing" class="absolute bottom-0.5 right-1 flex items-center justify-end gap-0.5 text-[9px] leading-none" :class="isMine ? 'text-white/80' : 'text-secondary-text'">
+              <span v-if="message.edited_at" class="opacity-70 italic mr-0.5">
+                (edited)
+              </span>
+              <span>{{ formattedTime }}</span>
+              <span
+                v-if="isMine"
+                class="material-symbols-rounded text-[11px] leading-none translate-y-[0.5px]"
+                style="font-variation-settings: 'wght' 200, 'opsz' 20;"
+                :class="isReadByOthers ? 'text-[#53bdeb]' : 'text-white/80'"
+                :title="readReceiptTitle"
+              >
+                {{ isReadByOthers ? "done_all" : "done" }}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- Action Hover Buttons (Edit / Delete) -->
-      <div
-        v-if="!message.deleted_at && !isEditing && isMine"
-        class="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 mt-1 px-1 text-xs text-secondary-text"
-      >
-        <button
-          type="button"
-          @click="startEditing"
-          class="hover:text-primary p-0.5 rounded transition-colors cursor-pointer"
-          title="Edit message"
-        >
-          <span class="material-symbols-rounded text-sm">edit</span>
-        </button>
-        <button
-          type="button"
-          @click="$emit('delete', message.id)"
-          class="hover:text-primary-red p-0.5 rounded transition-colors cursor-pointer"
-          title="Delete message"
-        >
-          <span class="material-symbols-rounded text-sm">delete</span>
-        </button>
       </div>
     </div>
   </div>
@@ -155,6 +182,11 @@ const authStore = useAuthStore();
 const chatStore = useChatStore();
 const isEditing = ref(false);
 const editDraft = ref("");
+const showMenu = ref(false);
+
+const toggleMenu = () => {
+  showMenu.value = !showMenu.value;
+};
 
 const isMine = computed(() => {
   return props.message.sender_id === authStore.currentUser?.id;
@@ -188,12 +220,12 @@ const formattedTime = computed(() => {
 
 const bubbleClasses = computed(() => {
   if (props.message.deleted_at) {
-    return "bg-background border border-primary-border/60 text-secondary-text";
+    return "bg-background border border-primary-border/60 text-secondary-text rounded-xl";
   }
   if (isMine.value) {
-    return "bg-primary text-white rounded-tr-xs";
+    return "bg-primary text-white rounded-xl rounded-tr-none";
   }
-  return "bg-card-background border border-primary-border/60 text-primary-text rounded-tl-xs";
+  return "bg-card-background border border-primary-border/60 text-primary-text rounded-xl rounded-tl-none";
 });
 
 const isImageAttachment = computed(() => {

@@ -48,10 +48,11 @@
         <h3 class="title-text text-sm">Holiday</h3>
         <input v-model="holidayForm.name" class="input-field px-3 py-2 text-sm" required placeholder="Name" />
         <input v-model="holidayForm.date" type="date" class="input-field px-3 py-2 text-sm" required />
-        <select v-model="holidayForm.holiday_type" class="input-field px-3 py-2 text-sm">
-          <option>MANDATORY</option>
-          <option>OPTIONAL</option>
-        </select>
+        <BaseSelect
+          v-model="holidayForm.holiday_type"
+          :options="[{label: 'MANDATORY', value: 'MANDATORY'}, {label: 'OPTIONAL', value: 'OPTIONAL'}]"
+          custom-class="!py-2 text-sm"
+        />
         <div class="flex justify-end gap-2">
           <button type="button" class="btn-secondary text-xs px-3 py-1.5" @click="holidayOpen = false">Cancel</button>
           <button type="submit" class="btn-primary text-xs px-3 py-1.5">Save</button>
@@ -66,10 +67,11 @@
         <label class="flex items-center gap-2 text-xs"><input v-model="policyForm.is_default" type="checkbox" class="custom-checkbox" /> Default policy</label>
         <div v-for="day in policyForm.days" :key="day.weekday" class="flex items-center gap-2">
           <span class="text-xs w-16">{{ weekdayLabel(day.weekday) }}</span>
-          <select v-model="day.day_type" class="input-field px-2 py-1 text-xs flex-1">
-            <option>WORKING</option>
-            <option>WEEK_OFF</option>
-          </select>
+          <BaseSelect
+            v-model="day.day_type"
+            :options="[{label: 'WORKING', value: 'WORKING'}, {label: 'WEEK_OFF', value: 'WEEK_OFF'}]"
+            custom-class="!py-1 text-xs flex-1"
+          />
         </div>
         <div class="flex justify-end gap-2">
           <button type="button" class="btn-secondary text-xs px-3 py-1.5" @click="policyOpen = false">Cancel</button>
@@ -84,6 +86,7 @@
 import { onMounted, reactive, ref } from "vue";
 import DataTable from "@/components/common/DataTable";
 import StatusBadge from "@/components/common/StatusBadge.vue";
+import BaseSelect from "@/components/common/BaseSelect.vue";
 import { useHrmsStore } from "@/stores/hrms/hrms";
 import { usePermissionsStore } from "@/stores/rbac/permissions";
 

@@ -30,10 +30,10 @@
               v-if="isGroup && canManage"
               type="button"
               @click="isRenameModalOpen = true"
-              class="text-secondary-text hover:text-primary p-0.5 rounded transition-colors"
+              class="text-secondary-text hover:text-primary p-0.5 rounded transition-colors text-xs"
               title="Rename Channel"
             >
-              <span class="material-symbols-rounded text-xs">edit</span>
+              <span class="material-symbols-rounded">edit</span>
             </button>
           </div>
           <p class="text-[11px] text-secondary-text truncate leading-tight">
