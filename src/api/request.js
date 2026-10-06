@@ -11,11 +11,9 @@ export const getBaseOrigin = () => {
   if (envUrl) {
     return envUrl.trim().replace(/\/+$/, "");
   }
-  const customUrl = localStorage.getItem("custom_base_url");
-  if (customUrl) {
-    return customUrl.trim().replace(/\/+$/, "");
-  }
-  return typeof window !== "undefined" ? window.location.origin : "http://localhost:8000";
+  return typeof window !== "undefined"
+    ? window.location.origin
+    : "https://zpj8dpf6-8000.inc1.devtunnels.ms/";
 };
 
 export const getBaseURL = () => {
@@ -36,8 +34,12 @@ export const getWsURL = (token = "") => {
     wsProto = parsed.protocol === "https:" ? "wss:" : "ws:";
     host = parsed.host;
   } catch (_) {
-    wsProto = typeof window !== "undefined" && window.location.protocol === "https:" ? "wss:" : "ws:";
-    host = typeof window !== "undefined" ? window.location.host : "localhost:8000";
+    wsProto =
+      typeof window !== "undefined" && window.location.protocol === "https:"
+        ? "wss:"
+        : "ws:";
+    host =
+      typeof window !== "undefined" ? window.location.host : "localhost:8000";
   }
 
   const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
@@ -92,7 +94,7 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 // ─── Token Refresh Coordination ───────────────────────────────────
@@ -177,7 +179,7 @@ axiosInstance.interceptors.response.use(
           {
             headers: { "Content-Type": "application/json" },
             timeout: 15000,
-          }
+          },
         );
 
         const data = refreshResponse.data;
@@ -221,7 +223,7 @@ axiosInstance.interceptors.response.use(
 
     handleError(error);
     return Promise.reject(error);
-  }
+  },
 );
 
 // ─── Global Error Handler ─────────────────────────────────────────
@@ -312,11 +314,11 @@ const apiRequest = (
     signal = null,
     timeout = null,
     cancelPrevious = false,
-  } = {}
+  } = {},
 ) => {
   if (!ALLOWED_METHODS.includes(method)) {
     throw new Error(
-      `Method "${method}" is not allowed. Use one of: ${ALLOWED_METHODS.join(", ")}`
+      `Method "${method}" is not allowed. Use one of: ${ALLOWED_METHODS.join(", ")}`,
     );
   }
   if (!url) {
