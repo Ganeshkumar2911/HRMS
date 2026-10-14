@@ -97,9 +97,9 @@
       <div
         v-for="conv in filteredConversations"
         :key="conv.id"
-        @click="$emit('select', conv.id)"
+        @click="handleSelectConversation(conv.id)"
         class="p-3 flex items-start gap-3 hover:bg-background transition-colors cursor-pointer relative"
-        :class="{'bg-primary/5': chatStore.activeConversationId === conv.id}"
+        :class="{'bg-primary/5': String(chatStore.activeConversationId) === String(conv.id)}"
       >
         <!-- Icon Avatar -->
         <div class="relative shrink-0 mt-0.5">
@@ -240,6 +240,11 @@ const handleApiSearch = async (query) => {
 const handleSearchClear = () => {
   searchQuery.value = "";
   apiSearchResults.value = [];
+};
+
+const handleSelectConversation = (convId) => {
+  chatStore.selectConversation(convId);
+  emit("select", convId);
 };
 
 const handleStartChatWithUser = (user) => {

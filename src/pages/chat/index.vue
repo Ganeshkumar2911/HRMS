@@ -87,7 +87,7 @@ watch(
   () => route.params.conversationId,
   (newId) => {
     if (newId) {
-      chatStore.selectConversation(Number(newId) || newId);
+      chatStore.selectConversation(newId);
     }
   },
   { immediate: true }
@@ -98,9 +98,7 @@ onMounted(() => {
   chatStore.setupRealtimeListeners();
   chatStore.fetchConversations().then(() => {
     if (route.params.conversationId) {
-      chatStore.selectConversation(
-        Number(route.params.conversationId) || route.params.conversationId
-      );
+      chatStore.selectConversation(route.params.conversationId);
     }
   });
 });

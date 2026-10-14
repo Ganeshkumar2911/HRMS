@@ -50,7 +50,8 @@ export const useChatStore = defineStore("chat", () => {
 
   // ─── Computed State ────────────────────────────────────
   const activeConversation = computed(() => {
-    return conversations.value.find((c) => c.id === activeConversationId.value) || null;
+    if (!activeConversationId.value) return null;
+    return conversations.value.find((c) => String(c.id) === String(activeConversationId.value)) || null;
   });
 
   const activeMessages = computed(() => {
@@ -197,7 +198,8 @@ export const useChatStore = defineStore("chat", () => {
 
   // ─── Select Active Conversation ────────────────────────
   const selectConversation = (conversationId) => {
-    if (activeConversationId.value === conversationId) return;
+    if (!conversationId) return;
+    if (activeConversationId.value && String(activeConversationId.value) === String(conversationId)) return;
 
     activeConversationId.value = conversationId;
 

@@ -190,7 +190,6 @@ watch(
   () => props.conversation.id,
   () => {
     scrollToBottom();
-    renameDraft.value = props.conversation.name || "";
   },
   { immediate: true }
 );
