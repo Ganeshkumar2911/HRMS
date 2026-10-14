@@ -145,6 +145,103 @@
   --color-primary-red: var(--status-overdue-text);
   --color-primary-blue: var(--status-upcoming-text);
   --color-primary-purple: var(--status-pick-later-text);
+
+  /* Quiet Work Status & Priority Theme Tokens */
+  --color-status-completed: var(--status-completed-text);
+  --color-status-completed-bg: var(--status-completed-bg);
+  --color-status-completed-dot: var(--status-completed-dot);
+
+  --color-status-pending: var(--status-pending-text);
+  --color-status-pending-bg: var(--status-pending-bg);
+  --color-status-pending-dot: var(--status-pending-dot);
+
+  --color-status-upcoming: var(--status-upcoming-text);
+  --color-status-upcoming-bg: var(--status-upcoming-bg);
+  --color-status-upcoming-dot: var(--status-upcoming-dot);
+
+  --color-status-overdue: var(--status-overdue-text);
+  --color-status-overdue-bg: var(--status-overdue-bg);
+  --color-status-overdue-dot: var(--status-overdue-dot);
+
+  --color-status-pick-later: var(--status-pick-later-text);
+  --color-status-pick-later-bg: var(--status-pick-later-bg);
+  --color-status-pick-later-dot: var(--status-pick-later-dot);
+
+  --color-priority-high: var(--priority-high-text);
+  --color-priority-high-bg: var(--priority-high-bg);
+  --color-priority-med: var(--priority-med-text);
+  --color-priority-med-bg: var(--priority-med-bg);
+  --color-priority-low: var(--priority-low-text);
+  --color-priority-low-bg: var(--priority-low-bg);
+}
+
+/* ─── Quiet Work Status & Priority Badge Utilities ─────────────────── */
+.badge-status-completed {
+  background-color: var(--status-completed-bg);
+  color: var(--status-completed-text);
+}
+.dot-status-completed {
+  background-color: var(--status-completed-dot);
+}
+.text-status-completed {
+  color: var(--status-completed-text);
+}
+
+.badge-status-pending {
+  background-color: var(--status-pending-bg);
+  color: var(--status-pending-text);
+}
+.dot-status-pending {
+  background-color: var(--status-pending-dot);
+}
+.text-status-pending {
+  color: var(--status-pending-text);
+}
+
+.badge-status-upcoming {
+  background-color: var(--status-upcoming-bg);
+  color: var(--status-upcoming-text);
+}
+.dot-status-upcoming {
+  background-color: var(--status-upcoming-dot);
+}
+.text-status-upcoming {
+  color: var(--status-upcoming-text);
+}
+
+.badge-status-overdue {
+  background-color: var(--status-overdue-bg);
+  color: var(--status-overdue-text);
+}
+.dot-status-overdue {
+  background-color: var(--status-overdue-dot);
+}
+.text-status-overdue {
+  color: var(--status-overdue-text);
+}
+
+.badge-status-pick-later {
+  background-color: var(--status-pick-later-bg);
+  color: var(--status-pick-later-text);
+}
+.dot-status-pick-later {
+  background-color: var(--status-pick-later-dot);
+}
+.text-status-pick-later {
+  color: var(--status-pick-later-text);
+}
+
+.badge-priority-high {
+  background-color: var(--priority-high-bg);
+  color: var(--priority-high-text);
+}
+.badge-priority-medium {
+  background-color: var(--priority-med-bg);
+  color: var(--priority-med-text);
+}
+.badge-priority-low {
+  background-color: var(--priority-low-bg);
+  color: var(--priority-low-text);
 }
 
 body {

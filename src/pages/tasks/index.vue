@@ -21,7 +21,7 @@
         <button
           type="button"
           @click="exportTasksLog"
-          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-card-background hover:bg-surface-hover text-primary-text border border-primary-border/70 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-card-background hover:bg-surface-hover text-primary-text text-xs font-semibold transition-all cursor-pointer active:scale-95"
           title="Export current tasks as JSON"
         >
           <span class="material-symbols-rounded text-base text-secondary-text">file_download</span>
@@ -32,7 +32,7 @@
           v-if="permissions.can('task.create')"
           type="button"
           @click="openCreate"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-[#2c3539] text-white text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition-all cursor-pointer active:scale-95"
         >
           <span class="material-symbols-rounded text-base">add</span>
           <span>New Task</span>
@@ -44,8 +44,8 @@
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
       <!-- Total Tasks -->
       <div
-        class="bg-card-background p-4 rounded-xl shadow-xs border transition-all cursor-pointer select-none flex flex-col justify-between group"
-        :class="!filters.status ? 'border-primary ring-1 ring-primary/20' : 'border-primary-border/70 hover:border-primary-border'"
+        class="bg-card-background p-4 rounded-xl transition-all cursor-pointer select-none flex flex-col justify-between group"
+        :class="!filters.status ? 'bg-surface-container' : 'hover:bg-surface-subtle'"
         @click="filterByStatus('')"
         title="Show all tasks"
       >
@@ -61,31 +61,31 @@
 
       <!-- Pending -->
       <div
-        class="bg-card-background p-4 rounded-xl shadow-xs border transition-all cursor-pointer select-none flex flex-col justify-between group"
-        :class="filters.status === 'PENDING' ? 'border-[#9c733e] ring-1 ring-[#9c733e]/20' : 'border-primary-border/70 hover:border-primary-border'"
+        class="bg-card-background p-4 rounded-xl transition-all cursor-pointer select-none flex flex-col justify-between group"
+        :class="filters.status === 'PENDING' ? 'bg-status-pending-bg/50' : 'hover:bg-surface-subtle'"
         @click="filterByStatus('PENDING')"
         title="Filter by Pending"
       >
         <div class="flex items-center justify-between text-secondary-text mb-2">
           <span class="text-xs font-medium group-hover:text-primary-text transition-colors">Pending</span>
-          <span class="w-2 h-2 rounded-full bg-[#c4a679]"></span>
+          <span class="w-2 h-2 rounded-full dot-status-pending"></span>
         </div>
         <div class="flex items-baseline gap-2">
           <span class="text-2xl sm:text-3xl font-bold text-primary-text tracking-tight">{{ metrics.pending }}</span>
-          <span class="text-[11px] text-[#9c733e] font-medium">action req.</span>
+          <span class="text-[11px] text-status-pending font-medium">action req.</span>
         </div>
       </div>
 
       <!-- Upcoming -->
       <div
-        class="bg-card-background p-4 rounded-xl shadow-xs border transition-all cursor-pointer select-none flex flex-col justify-between group"
-        :class="filters.status === 'UPCOMING' ? 'border-[#546f7a] ring-1 ring-[#546f7a]/20' : 'border-primary-border/70 hover:border-primary-border'"
+        class="bg-card-background p-4 rounded-xl transition-all cursor-pointer select-none flex flex-col justify-between group"
+        :class="filters.status === 'UPCOMING' ? 'bg-status-upcoming-bg/50' : 'hover:bg-surface-subtle'"
         @click="filterByStatus('UPCOMING')"
         title="Filter by Upcoming"
       >
         <div class="flex items-center justify-between text-secondary-text mb-2">
           <span class="text-xs font-medium group-hover:text-primary-text transition-colors">Upcoming</span>
-          <span class="w-2 h-2 rounded-full bg-[#7b91a4]"></span>
+          <span class="w-2 h-2 rounded-full dot-status-upcoming"></span>
         </div>
         <div class="flex items-baseline gap-2">
           <span class="text-2xl sm:text-3xl font-bold text-primary-text tracking-tight">{{ metrics.upcoming }}</span>
@@ -95,14 +95,14 @@
 
       <!-- Pick Later -->
       <div
-        class="bg-card-background p-4 rounded-xl shadow-xs border transition-all cursor-pointer select-none flex flex-col justify-between group"
-        :class="filters.status === 'PICK_LATER' ? 'border-[#6c727a] ring-1 ring-[#6c727a]/20' : 'border-primary-border/70 hover:border-primary-border'"
+        class="bg-card-background p-4 rounded-xl transition-all cursor-pointer select-none flex flex-col justify-between group"
+        :class="filters.status === 'PICK_LATER' ? 'bg-status-pick-later-bg/50' : 'hover:bg-surface-subtle'"
         @click="filterByStatus('PICK_LATER')"
         title="Filter by Pick Later"
       >
         <div class="flex items-center justify-between text-secondary-text mb-2">
           <span class="text-xs font-medium group-hover:text-primary-text transition-colors">Pick Later</span>
-          <span class="w-2 h-2 rounded-full bg-[#9da3ac]"></span>
+          <span class="w-2 h-2 rounded-full dot-status-pick-later"></span>
         </div>
         <div class="flex items-baseline gap-2">
           <span class="text-2xl sm:text-3xl font-bold text-primary-text tracking-tight">{{ metrics.pickLater }}</span>
@@ -112,46 +112,46 @@
 
       <!-- Completed -->
       <div
-        class="bg-card-background p-4 rounded-xl shadow-xs border transition-all cursor-pointer select-none flex flex-col justify-between group"
-        :class="filters.status === 'COMPLETED' ? 'border-[#496e58] ring-1 ring-[#496e58]/20' : 'border-primary-border/70 hover:border-primary-border'"
+        class="bg-card-background p-4 rounded-xl transition-all cursor-pointer select-none flex flex-col justify-between group"
+        :class="filters.status === 'COMPLETED' ? 'bg-status-completed-bg/50' : 'hover:bg-surface-subtle'"
         @click="filterByStatus('COMPLETED')"
         title="Filter by Completed"
       >
         <div class="flex items-center justify-between text-secondary-text mb-2">
           <span class="text-xs font-medium group-hover:text-primary-text transition-colors">Completed</span>
-          <span class="w-2 h-2 rounded-full bg-[#7d8c75]"></span>
+          <span class="w-2 h-2 rounded-full dot-status-completed"></span>
         </div>
         <div class="flex items-baseline gap-2">
           <span class="text-2xl sm:text-3xl font-bold text-primary-text tracking-tight">{{ metrics.completed }}</span>
-          <span class="text-[11px] text-[#496e58] font-medium">resolved</span>
+          <span class="text-[11px] text-status-completed font-medium">resolved</span>
         </div>
       </div>
 
       <!-- Overdue -->
       <div
-        class="bg-card-background p-4 rounded-xl shadow-xs border transition-all cursor-pointer select-none flex flex-col justify-between group"
-        :class="metrics.overdue > 0 ? 'border-[#a24d4d]/60 hover:border-[#a24d4d]' : 'border-primary-border/70 hover:border-primary-border'"
+        class="bg-card-background p-4 rounded-xl transition-all cursor-pointer select-none flex flex-col justify-between group"
+        :class="metrics.overdue > 0 ? 'bg-status-overdue-bg/40' : 'hover:bg-surface-subtle'"
         title="Overdue tasks"
       >
         <div class="flex items-center justify-between text-secondary-text mb-2">
           <span class="text-xs font-medium group-hover:text-primary-text transition-colors">Overdue</span>
-          <span class="w-2 h-2 rounded-full bg-[#ba1a1a]"></span>
+          <span class="w-2 h-2 rounded-full dot-status-overdue"></span>
         </div>
         <div class="flex items-baseline gap-2">
-          <span class="text-2xl sm:text-3xl font-bold text-[#a24d4d] tracking-tight">{{ metrics.overdue }}</span>
-          <span class="text-[11px] text-[#a24d4d]/80 font-medium">past SLA</span>
+          <span class="text-2xl sm:text-3xl font-bold text-status-overdue tracking-tight">{{ metrics.overdue }}</span>
+          <span class="text-[11px] text-status-overdue/80 font-medium">past SLA</span>
         </div>
       </div>
     </div>
 
     <!-- ── 3. Operational Filter & View Bar (Stitch Design) ──────────────── -->
     <div
-      class="bg-card-background p-3 rounded-xl shadow-xs flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3"
+      class="bg-card-background p-3 rounded-xl flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3"
     >
       <!-- Left Filters -->
       <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
         <!-- Search Input -->
-        <div class="flex items-center gap-2 bg-surface-subtle px-3 py-1.5 rounded-lg focus-within:border-primary transition-colors flex-1 min-w-[200px] sm:min-w-[240px] max-w-sm">
+        <div class="flex items-center gap-2 bg-surface-subtle px-3 py-1.5 rounded-lg focus-within:ring-1 focus-within:ring-primary/20 transition-colors flex-1 min-w-[200px] sm:min-w-[240px] max-w-sm">
           <span class="material-symbols-rounded text-secondary-text text-[18px]">search</span>
           <input
             v-model="filters.q"
@@ -177,7 +177,7 @@
             :options="statusOptions"
             allow-all
             all-label="Status: All"
-            custom-class="!h-9 !py-1 text-xs rounded-lg bg-surface-subtle border-primary-border/60"
+            custom-class="!h-9 !py-1 text-xs rounded-lg bg-surface-subtle border-none"
             @update:model-value="applyFilters"
           />
         </div>
@@ -189,7 +189,7 @@
             :options="priorityOptions"
             allow-all
             all-label="Priority: All"
-            custom-class="!h-9 !py-1 text-xs rounded-lg bg-surface-subtle border-primary-border/60"
+            custom-class="!h-9 !py-1 text-xs rounded-lg bg-surface-subtle border-none"
             @update:model-value="applyFilters"
           />
         </div>
@@ -204,7 +204,7 @@
             :block-future="false"
             :presets="taskDatePresets"
             placeholder="Date range (from - to)"
-            custom-class="!h-9 !py-1 text-xs rounded-lg bg-surface-subtle border-primary-border/60"
+            custom-class="!h-9 !py-1 text-xs rounded-lg bg-surface-subtle border-none"
             @change="handleDateRangeChange"
             @clear="handleDateRangeClear"
           />
@@ -214,10 +214,10 @@
         <button
           type="button"
           @click="toggleOnlyMyTasks"
-          class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-medium rounded-lg border transition-all cursor-pointer select-none"
+          class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-medium rounded-lg transition-all cursor-pointer select-none"
           :class="onlyMyTasks
-            ? 'bg-primary text-white border-primary font-semibold shadow-xs'
-            : 'bg-surface-subtle border-primary-border/60 text-secondary-text hover:text-primary-text'"
+            ? 'bg-primary text-white font-semibold'
+            : 'bg-surface-subtle text-secondary-text hover:text-primary-text'"
           title="Filter tasks assigned to me"
         >
           <span class="material-symbols-rounded text-sm">person</span>
@@ -246,7 +246,7 @@
             @click="viewMode = 'table'"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer"
             :class="viewMode === 'table'
-              ? 'bg-primary text-white shadow-xs'
+              ? 'bg-primary text-white'
               : 'text-secondary-text hover:text-primary-text'"
           >
             <span class="material-symbols-rounded text-[16px]">table_rows</span>
@@ -258,7 +258,7 @@
             @click="viewMode = 'cards'"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer"
             :class="viewMode === 'cards'
-              ? 'bg-primary text-white shadow-xs'
+              ? 'bg-primary text-white'
               : 'text-secondary-text hover:text-primary-text'"
           >
             <span class="material-symbols-rounded text-[16px]">view_agenda</span>
@@ -269,7 +269,7 @@
     </div>
 
     <!-- ── 4A. View 1: Data Table View (Default) ─────────────────────────── -->
-    <div v-if="viewMode === 'table'" class="bg-card-background rounded-xl shadow-xs border border-primary-border/70 overflow-hidden">
+    <div v-if="viewMode === 'table'">
       <DataTable
         :data="displayedTasks"
         :columns="columns"
@@ -288,13 +288,13 @@
           >
             <span
               v-if="row.status === 'COMPLETED'"
-              class="material-symbols-rounded text-lg text-[#496e58] group-hover/chk:scale-110 transition-transform"
+              class="material-symbols-rounded text-lg text-status-completed group-hover/chk:scale-110 transition-transform"
             >
               check_circle
             </span>
             <span
               v-else
-              class="material-symbols-rounded text-lg text-secondary-text/40 group-hover/chk:text-[#496e58] group-hover/chk:scale-110 transition-transform"
+              class="material-symbols-rounded text-lg text-secondary-text/40 group-hover/chk:text-status-completed group-hover/chk:scale-110 transition-transform"
             >
               radio_button_unchecked
             </span>
@@ -390,18 +390,18 @@
           <div class="flex items-center gap-1.5">
             <span
               v-if="isOverdue(row)"
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#f9efef] text-[#a24d4d]"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold badge-status-overdue"
               title="Task is overdue!"
             >
-              <span class="w-1.5 h-1.5 rounded-full bg-[#ba1a1a]"></span>
+              <span class="w-1.5 h-1.5 rounded-full dot-status-overdue"></span>
               <span>{{ formatDate(row.due_date) }}</span>
             </span>
             <span
               v-else-if="isDueSoon(row)"
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#f8f3ea] text-[#9c733e]"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold badge-status-pending"
               title="Due soon"
             >
-              <span class="w-1.5 h-1.5 rounded-full bg-[#c4a679]"></span>
+              <span class="w-1.5 h-1.5 rounded-full dot-status-pending"></span>
               <span>{{ formatDate(row.due_date) }}</span>
             </span>
             <span
@@ -429,7 +429,7 @@
             <button
               v-if="canComplete(row)"
               type="button"
-              class="w-7 h-7 rounded-lg text-secondary-text hover:text-[#496e58] hover:bg-surface-subtle flex items-center justify-center transition-colors cursor-pointer"
+              class="w-7 h-7 rounded-lg text-secondary-text hover:text-status-completed hover:bg-surface-subtle flex items-center justify-center transition-colors cursor-pointer"
               :title="row.status === 'COMPLETED' ? 'Reopen task' : 'Mark completed'"
               @click.stop="toggleComplete(row)"
             >
@@ -487,7 +487,7 @@
 
     <!-- ── 4B. View 2: Clean Cards View ──────────────────────────────────── -->
     <div v-else-if="viewMode === 'cards'">
-      <div v-if="displayedTasks.length === 0" class="bg-card-background rounded-xl p-12 text-center border border-primary-border/70 space-y-3">
+      <div v-if="displayedTasks.length === 0" class="bg-card-background rounded-xl p-12 text-center space-y-3">
         <div class="w-12 h-12 rounded-2xl bg-surface-subtle flex items-center justify-center mx-auto text-secondary-text">
           <span class="material-symbols-rounded text-2xl">checklist</span>
         </div>
@@ -501,11 +501,11 @@
         <div
           v-for="task in displayedTasks"
           :key="`card-${task.id}`"
-          class="bg-card-background border border-primary-border/70 rounded-xl p-4 shadow-xs flex flex-col justify-between hover:border-primary/60 transition-all group"
+          class="bg-card-background rounded-xl p-4 flex flex-col justify-between hover:bg-surface-subtle/40 transition-all group"
         >
           <!-- Card Header: ID, Status, Priority -->
           <div>
-            <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-primary-border/50">
+            <div class="flex items-center justify-between gap-2 pb-2.5">
               <span class="text-xs font-mono font-medium text-secondary-text">#{{ task.id }}</span>
               <div class="flex items-center gap-1.5">
                 <!-- Priority Pill -->
@@ -526,9 +526,9 @@
                 type="button"
                 @click.stop="toggleComplete(task)"
                 :disabled="!canComplete(task) && !canEditFields"
-                class="mt-0.5 text-secondary-text/40 hover:text-[#496e58] cursor-pointer"
+                class="mt-0.5 text-secondary-text/40 hover:text-status-completed cursor-pointer"
               >
-                <span v-if="task.status === 'COMPLETED'" class="material-symbols-rounded text-base text-[#496e58]">check_circle</span>
+                <span v-if="task.status === 'COMPLETED'" class="material-symbols-rounded text-base text-status-completed">check_circle</span>
                 <span v-else class="material-symbols-rounded text-base">radio_button_unchecked</span>
               </button>
               <div class="min-w-0 flex-1">
@@ -547,7 +547,7 @@
           </div>
 
           <!-- Card Footer: People & Timeline -->
-          <div class="pt-4 mt-3 border-t border-primary-border/50 flex items-center justify-between text-xs text-secondary-text">
+          <div class="pt-3 mt-3 flex items-center justify-between text-xs text-secondary-text">
             <!-- Assignee avatar -->
             <div class="flex items-center gap-2 min-w-0">
               <div class="w-6 h-6 rounded-full bg-surface-subtle font-bold text-[10px] flex items-center justify-center shrink-0">
@@ -593,7 +593,7 @@
       <div class="flex items-center gap-1.5">
         <button
           type="button"
-          class="w-8 h-8 rounded-lg bg-card-background border border-primary-border/70 flex items-center justify-center text-secondary-text hover:text-primary-text hover:border-primary transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-8 h-8 rounded-lg bg-card-background flex items-center justify-center text-secondary-text hover:text-primary-text hover:bg-surface-subtle transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           :disabled="filters.offset <= 0"
           @click="prevPage"
           title="Previous Page"
@@ -607,7 +607,7 @@
 
         <button
           type="button"
-          class="w-8 h-8 rounded-lg bg-card-background border border-primary-border/70 flex items-center justify-center text-secondary-text hover:text-primary-text hover:border-primary transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-8 h-8 rounded-lg bg-card-background flex items-center justify-center text-secondary-text hover:text-primary-text hover:bg-surface-subtle transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           :disabled="!store.hasMore && (filters.offset + filters.limit >= totalCount)"
           @click="nextPage"
           title="Next Page"
@@ -624,13 +624,13 @@
       @click.self="modalOpen = false"
     >
       <form
-        class="bg-card-background border border-primary-border rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar"
+        class="bg-card-background rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar"
         @submit.prevent="saveTask"
       >
         <!-- Modal Header -->
-        <div class="flex items-center justify-between pb-3 border-b border-primary-border/60">
+        <div class="flex items-center justify-between pb-3">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 shadow-xs">
+            <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
               <span class="material-symbols-rounded text-base">{{ editing ? 'edit_note' : 'add_task' }}</span>
             </div>
             <div>
@@ -654,7 +654,7 @@
         <!-- Task Title -->
         <div>
           <label class="block text-xs font-semibold text-primary-text mb-1">
-            Task Title <span class="text-[#a24d4d]">*</span>
+            Task Title <span class="text-status-overdue">*</span>
           </label>
           <input
             v-model="form.title"
@@ -735,7 +735,7 @@
           </div>
 
           <!-- Current Selected Assignee Card -->
-          <div class="flex items-center gap-2 p-2 rounded-lg bg-card-background border border-primary-border/40">
+          <div class="flex items-center gap-2 p-2 rounded-lg bg-card-background">
             <div class="w-7 h-7 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center shrink-0">
               {{ getInitials(form.assigned_to_name) }}
             </div>
@@ -764,7 +764,7 @@
           </div>
           <div
             v-else-if="activeUserSearch === 'assignee' && store.assigneeMatches.length"
-            class="border border-primary-border rounded-lg divide-y divide-primary-border/40 max-h-36 overflow-y-auto no-scrollbar bg-card-background shadow-sm"
+            class="rounded-lg divide-y divide-primary-border/40 max-h-36 overflow-y-auto no-scrollbar bg-card-background shadow-sm"
           >
             <button
               v-for="person in store.assigneeMatches"
@@ -795,7 +795,7 @@
             </button>
           </div>
 
-          <div class="flex items-center gap-2 p-2 rounded-lg bg-card-background border border-primary-border/40">
+          <div class="flex items-center gap-2 p-2 rounded-lg bg-card-background">
             <div class="w-7 h-7 rounded-full bg-surface-subtle text-secondary-text font-bold text-xs flex items-center justify-center shrink-0">
               {{ getInitials(form.created_by_name) }}
             </div>
@@ -820,7 +820,7 @@
           </div>
           <div
             v-else-if="activeUserSearch === 'creator' && store.assigneeMatches.length"
-            class="border border-primary-border rounded-lg divide-y divide-primary-border/40 max-h-36 overflow-y-auto no-scrollbar bg-card-background shadow-sm"
+            class="rounded-lg divide-y divide-primary-border/40 max-h-36 overflow-y-auto no-scrollbar bg-card-background shadow-sm"
           >
             <button
               v-for="person in store.assigneeMatches"
@@ -839,7 +839,7 @@
         </div>
 
         <!-- Modal Footer Actions -->
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-primary-border/60">
+        <div class="flex items-center justify-end gap-2 pt-3">
           <button
             type="button"
             class="btn-secondary text-xs px-3.5 py-2 cursor-pointer"
@@ -1086,36 +1086,38 @@ const isDueSoon = (row) => {
 };
 
 const taskRowClass = (row) => {
-  if (isOverdue(row)) return "bg-[#f9efef]/20";
+  if (isOverdue(row)) return "bg-status-overdue-bg/15";
   if (row.status === "COMPLETED") return "opacity-80";
   return "";
 };
 
-// Stitch Quiet Work Status Badges
+// Stitch Quiet Work Status Badges (Tokens from src/style.css)
 const getStatusClasses = (status) => {
   const s = String(status || "").toUpperCase();
-  if (s === "COMPLETED") return "bg-[#eef4f0] text-[#496e58] dark:bg-[#18261e] dark:text-[#82b394]";
-  if (s === "PENDING") return "bg-[#f8f3ea] text-[#9c733e] dark:bg-[#2e2519] dark:text-[#d6a564]";
-  if (s === "UPCOMING") return "bg-[#edf2f4] text-[#546f7a] dark:bg-[#1b252a] dark:text-[#8ca8b5]";
-  if (s === "PICK_LATER") return "bg-[#f0f1f3] text-[#6c727a] dark:bg-[#22252a] dark:text-[#9da3ac]";
+  if (s === "COMPLETED") return "badge-status-completed";
+  if (s === "PENDING") return "badge-status-pending";
+  if (s === "UPCOMING") return "badge-status-upcoming";
+  if (s === "PICK_LATER") return "badge-status-pick-later";
+  if (s === "OVERDUE") return "badge-status-overdue";
   return "bg-surface-subtle text-secondary-text";
 };
 
 const getStatusDotClass = (status) => {
   const s = String(status || "").toUpperCase();
-  if (s === "COMPLETED") return "bg-[#7d8c75] dark:bg-[#82b394]";
-  if (s === "PENDING") return "bg-[#c4a679] dark:bg-[#d6a564]";
-  if (s === "UPCOMING") return "bg-[#7b91a4] dark:bg-[#8ca8b5]";
-  if (s === "PICK_LATER") return "bg-[#9da3ac]";
+  if (s === "COMPLETED") return "dot-status-completed";
+  if (s === "PENDING") return "dot-status-pending";
+  if (s === "UPCOMING") return "dot-status-upcoming";
+  if (s === "PICK_LATER") return "dot-status-pick-later";
+  if (s === "OVERDUE") return "dot-status-overdue";
   return "bg-secondary-text/50";
 };
 
-// Stitch Quiet Work Priority Badges
+// Stitch Quiet Work Priority Badges (Tokens from src/style.css)
 const getPriorityClasses = (priority) => {
   const p = String(priority || "").toUpperCase();
-  if (p === "HIGH") return "bg-[#f8ebeb] text-[#8f3d3d] dark:bg-[#2e1a1a] dark:text-[#e07d7d]";
-  if (p === "MEDIUM") return "bg-[#ededf0] text-[#525861] dark:bg-[#25282e] dark:text-[#b2b8c2]";
-  return "bg-[#ecefe9] text-[#5b665e] dark:bg-[#1e2620] dark:text-[#9cb2a2]";
+  if (p === "HIGH") return "badge-priority-high";
+  if (p === "MEDIUM") return "badge-priority-medium";
+  return "badge-priority-low";
 };
 
 const canEditFields = computed(() => {

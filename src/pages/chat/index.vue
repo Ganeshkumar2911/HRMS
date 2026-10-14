@@ -1,49 +1,48 @@
 <template>
-  <div class="h-[calc(100vh-4.7rem)] max-h-220 bg-card-background border border-primary-border/70 rounded-2xl overflow-hidden flex flex-col">
-    <!-- Main Chat Workspace -->
-    <div class="flex-1 flex overflow-hidden">
-      <!-- Left Column: Conversations List -->
-      <ConversationList
-        class="sm:flex"
-        :class="{'hidden': selectedConversation && isMobileView, 'flex': !selectedConversation || !isMobileView}"
-        @select="handleSelectConversation"
-      />
+  <div class="h-full w-full flex overflow-hidden bg-card-background text-primary-text" data-purpose="chat-application-workspace">
+    <!-- Left Column: Conversations List -->
+    <ConversationList
+      class="sm:flex"
+      :class="{'hidden': selectedConversation && isMobileView, 'flex': !selectedConversation || !isMobileView}"
+      @select="handleSelectConversation"
+    />
 
-      <!-- Middle Column: Message Thread -->
-      <div
-        v-if="selectedConversation"
-        class="flex-1 flex flex-col min-w-0"
-        :class="{'flex': selectedConversation, 'hidden sm:flex': !selectedConversation}"
-      >
-        <MessageThread
-          :conversation="selectedConversation"
-          :is-members-open="isMembersPanelOpen"
-          @toggle-members="isMembersPanelOpen = !isMembersPanelOpen"
-          @back="handleBackToConversationList"
-        />
-      </div>
-
-      <!-- No Conversation Selected Placeholder (Desktop) -->
-      <div
-        v-else
-        class="hidden sm:flex flex-1 flex-col items-center justify-center p-8 text-center bg-background"
-      >
-        <div class="w-16 h-16 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4 border border-primary-border/60">
-          <span class="material-symbols-rounded text-3xl">chat</span>
-        </div>
-        <h3 class="title-text text-base font-semibold text-primary-text mb-1">Select a conversation</h3>
-        <p class="sub-text text-secondary-text max-w-sm">
-          Pick a conversation from the sidebar or start a new direct message or group channel.
-        </p>
-      </div>
-
-      <!-- Right Column: Members Side Panel -->
-      <MembersPanel
-        v-if="selectedConversation && isMembersPanelOpen"
+    <!-- Middle Column: Message Thread -->
+    <div
+      v-if="selectedConversation"
+      class="flex-1 flex flex-col min-w-0 h-full overflow-hidden"
+      :class="{'flex': selectedConversation, 'hidden sm:flex': !selectedConversation}"
+    >
+      <MessageThread
         :conversation="selectedConversation"
-        @close="isMembersPanelOpen = false"
+        :is-members-open="isMembersPanelOpen"
+        @toggle-members="isMembersPanelOpen = !isMembersPanelOpen"
+        @back="handleBackToConversationList"
       />
     </div>
+
+    <!-- No Conversation Selected Placeholder (Desktop) -->
+    <div
+      v-else
+      class="hidden sm:flex flex-1 flex-col items-center justify-center p-8 text-center bg-background text-primary-text"
+    >
+      <div class="w-14 h-14 rounded-2xl bg-surface-subtle text-secondary-text flex items-center justify-center mb-3 border border-primary-border">
+        <svg class="w-7 h-7 text-secondary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+        </svg>
+      </div>
+      <h3 class="text-sm font-semibold text-primary-text mb-1">Select a conversation</h3>
+      <p class="text-xs text-secondary-text max-w-sm">
+        Pick a conversation from the sidebar or start a new direct message or group channel.
+      </p>
+    </div>
+
+    <!-- Right Column: Members Side Panel -->
+    <MembersPanel
+      v-if="selectedConversation && isMembersPanelOpen"
+      :conversation="selectedConversation"
+      @close="isMembersPanelOpen = false"
+    />
   </div>
 </template>
 

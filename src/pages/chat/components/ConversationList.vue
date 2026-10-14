@@ -1,96 +1,148 @@
 <template>
-  <div class="h-full flex flex-col bg-card-background border-r border-primary-border/60 w-full sm:w-80 lg:w-88 shrink-0">
-    <!-- List Header -->
-    <div class="border-b border-primary-border/60">
-      <!-- Title & Search Area -->
-      <div class="p-3.5 pb-2.5 space-y-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <h2 class="title-text text-base font-semibold text-primary-text tracking-tight">Conversations</h2>
-          </div>
-          
-          <!-- New Chat Dropdown -->
-          <div class="relative" ref="newChatDropdownRef">
+  <section class="w-full sm:w-80 border-r border-primary-border bg-background flex flex-col shrink-0 h-full" data-purpose="conversations-pane">
+    <!-- Conversations Top Header & Action -->
+    <div class="p-3.5 pb-2.5 border-b border-primary-border">
+      <div class="flex items-center justify-between mb-3">
+        <h1 class="text-base font-bold text-primary-text tracking-tight">Conversations</h1>
+        <!-- New message button + dropdown -->
+        <div class="relative" ref="newChatDropdownRef">
+          <button
+            type="button"
+            @click="isNewMenuOpen = !isNewMenuOpen"
+            class="w-7 h-7 rounded-lg bg-primary hover:bg-primary-hover text-btn-text-primary flex items-center justify-center transition shadow-xs cursor-pointer"
+            title="New message"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div
+            v-if="isNewMenuOpen"
+            class="absolute right-0 mt-1.5 w-48 bg-card-background border border-primary-border rounded-xl p-1 z-50 shadow-lg flex flex-col gap-0.5 animate-in fade-in duration-100"
+          >
             <button
               type="button"
-              @click="isNewMenuOpen = !isNewMenuOpen"
-              class="w-8 h-8 rounded-full bg-primary hover:bg-primary-hover text-white flex items-center justify-center transition-all active:scale-95  cursor-pointer"
-              title="New Chat"
-              aria-label="New Chat"
+              @click="openNewDirect"
+              class="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs text-secondary-text hover:text-primary-text hover:bg-surface-subtle transition-colors text-left cursor-pointer"
             >
-              <span class="material-symbols-rounded text-base">edit_square</span>
+              <svg class="w-4 h-4 text-secondary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+              </svg>
+              <span class="font-medium">Direct Message</span>
             </button>
-
-            <div
-              v-if="isNewMenuOpen"
-              class="absolute right-0 mt-1.5 w-48 bg-card-background border border-primary-border/80 rounded-xl p-1 z-50 shadow-lg flex flex-col gap-0.5 animate-in fade-in duration-100"
+            <button
+              type="button"
+              @click="openNewGroup"
+              class="flex items-center space-x-2.5 px-2.5 py-2 rounded-lg text-xs text-secondary-text hover:text-primary-text hover:bg-surface-subtle transition-colors text-left cursor-pointer"
             >
-              <button
-                type="button"
-                @click="openNewDirect"
-                class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs text-secondary-text hover:text-primary-text hover:bg-background transition-colors text-left cursor-pointer"
-              >
-                <span class="material-symbols-rounded text-base text-primary">person_add</span>
-                <span class="font-medium">Direct Message</span>
-              </button>
-              <button
-                type="button"
-                @click="openNewGroup"
-                class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs text-secondary-text hover:text-primary-text hover:bg-background transition-colors text-left cursor-pointer"
-              >
-                <span class="material-symbols-rounded text-base text-primary">group_add</span>
-                <span class="font-medium">New Group Channel</span>
-              </button>
-            </div>
+              <svg class="w-4 h-4 text-secondary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+              </svg>
+              <span class="font-medium">New Group Channel</span>
+            </button>
           </div>
         </div>
-
-        <!-- Search Input Component (Supports both Frontend Filtering & Debounced API Directory Search) -->
-        <SearchInput
-          v-model="searchQuery"
-          placeholder="Search conversations or people..."
-          variant="pill"
-          size="md"
-          :search-fn="handleApiSearch"
-          @clear="handleSearchClear"
-        />
       </div>
 
-      <!-- Tab Filter (All / Direct / Group / Archived) -->
-      <div class="px-2">
-        <Tabs
-          v-model="activeFilter"
-          :tabs="filterTabs"
-          size="sm"
-          :bordered="false"
+      <!-- Internal Search -->
+      <div class="relative mb-3">
+        <span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-text-muted">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </span>
+        <input
+          v-model="searchQuery"
+          @input="handleSearchInput"
+          class="w-full pl-8 pr-3 py-1.5 bg-card-background border border-primary-border rounded-lg text-xs placeholder:text-text-muted focus:outline-none focus:border-secondary-text text-primary-text transition"
+          placeholder="Search conversations or people..."
+          type="text"
         />
+        <button
+          v-if="searchQuery"
+          @click="handleSearchClear"
+          class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-text-muted hover:text-primary-text cursor-pointer"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Sub Filter Navigation -->
+      <div class="flex items-center space-x-1 p-0.5 bg-surface-subtle rounded-lg text-xs font-medium text-secondary-text">
+        <button
+          @click="activeFilter = 'all'"
+          type="button"
+          class="flex-1 py-1 rounded-md flex items-center justify-center space-x-1.5 transition cursor-pointer"
+          :class="activeFilter === 'all' ? 'bg-card-background text-primary-text font-semibold shadow-xs' : 'hover:text-primary-text text-secondary-text'"
+        >
+          <svg class="w-3 h-3 text-secondary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+          <span>All</span>
+        </button>
+        <button
+          @click="activeFilter = 'direct'"
+          type="button"
+          class="flex-1 py-1 rounded-md flex items-center justify-center space-x-1 transition cursor-pointer"
+          :class="activeFilter === 'direct' ? 'bg-card-background text-primary-text font-semibold shadow-xs' : 'hover:text-primary-text text-secondary-text'"
+        >
+          <svg class="w-3 h-3 text-secondary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+          <span>Direct</span>
+        </button>
+        <button
+          @click="activeFilter = 'group'"
+          type="button"
+          class="flex-1 py-1 rounded-md flex items-center justify-center space-x-1 transition cursor-pointer"
+          :class="activeFilter === 'group' ? 'bg-card-background text-primary-text font-semibold shadow-xs' : 'hover:text-primary-text text-secondary-text'"
+        >
+          <svg class="w-3 h-3 text-secondary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+          <span>Group</span>
+        </button>
+        <button
+          @click="activeFilter = 'archived'"
+          type="button"
+          class="px-2 py-1 rounded-md transition cursor-pointer"
+          :class="activeFilter === 'archived' ? 'bg-card-background text-primary-text font-semibold shadow-xs' : 'hover:text-primary-text text-secondary-text'"
+          title="Archived"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </button>
       </div>
     </div>
 
-    <!-- Conversations Scrollable List -->
-    <div class="flex-1 overflow-y-auto no-scrollbar divide-y divide-primary-border/30">
-      <!-- Loading Shimmer / Spinner -->
-      <div v-if="chatStore.loading" class="p-6 text-center text-xs text-secondary-text flex items-center justify-center gap-2">
-        <span class="material-symbols-rounded text-base animate-spin text-primary">progress_activity</span>
+    <!-- Conversations List -->
+    <div class="flex-1 overflow-y-auto">
+      <!-- Loading State -->
+      <div v-if="chatStore.loading" class="p-6 text-center text-xs text-text-muted flex items-center justify-center space-x-2">
+        <svg class="w-4 h-4 animate-spin text-primary" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+        </svg>
         <span>Loading conversations...</span>
       </div>
 
-      <!-- Empty State (When neither local conversations nor API search results exist) -->
+      <!-- Empty State -->
       <div
         v-else-if="filteredConversations.length === 0 && apiSearchResults.length === 0"
-        class="p-8 text-center text-xs text-secondary-text space-y-2"
+        class="p-8 text-center text-xs text-text-muted space-y-2"
       >
-        <span class="material-symbols-rounded text-3xl text-secondary-text/50">chat_bubble_outline</span>
+        <div class="w-10 h-10 rounded-full bg-surface-subtle flex items-center justify-center mx-auto text-text-muted">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+          </svg>
+        </div>
         <p class="font-medium text-primary-text">{{ searchQuery ? 'No matches found' : 'No conversations found' }}</p>
-        <p class="text-[11px]">{{ searchQuery ? `No conversations or colleagues match "${searchQuery}"` : 'Start a new direct chat or group channel above.' }}</p>
-      </div>
-
-      <!-- Local Conversations Section Header (when searching) -->
-      <div
-        v-if="searchQuery && filteredConversations.length > 0"
-        class="px-3 pt-2.5 pb-1 text-[10px] font-semibold text-secondary-text uppercase tracking-wider bg-background/30"
-      >
-        Conversations ({{ filteredConversations.length }})
+        <p class="text-[11px] text-text-muted">{{ searchQuery ? `No conversations match "${searchQuery}"` : 'Start a new direct chat or group channel above.' }}</p>
       </div>
 
       <!-- Conversation Item -->
@@ -98,62 +150,85 @@
         v-for="conv in filteredConversations"
         :key="conv.id"
         @click="handleSelectConversation(conv.id)"
-        class="p-3 flex items-start gap-3 hover:bg-background transition-colors cursor-pointer relative"
-        :class="{'bg-primary/5': String(chatStore.activeConversationId) === String(conv.id)}"
+        class="p-3 cursor-pointer transition select-none"
+        :class="String(chatStore.activeConversationId) === String(conv.id)
+          ? 'bg-card-background border-l-2 border-primary'
+          : 'hover:bg-card-background/70 border-l-2 border-transparent'"
       >
-        <!-- Icon Avatar -->
-        <div class="relative shrink-0 mt-0.5">
-          <div class="w-9 h-9 rounded-full bg-primary/10 text-primary font-semibold text-xs flex items-center justify-center border border-primary-border/50">
-            <span class="material-symbols-rounded text-lg">
-              {{ conv.type === 'GROUP' ? 'groups' : 'person' }}
-            </span>
-          </div>
-          <!-- Online indicator for direct chat -->
-          <span
-            v-if="conv.type === 'DIRECT' && isDirectPartnerOnline(conv)"
-            class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary-green border-2 border-card-background"
-            title="Online"
-          ></span>
-        </div>
-
-        <!-- Details -->
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between gap-1 mb-0.5">
-            <h4 class="text-xs font-semibold text-primary-text truncate leading-tight">
-              {{ getConversationTitle(conv) }}
-            </h4>
-            <span class="text-[10px] text-secondary-text shrink-0">
-              {{ formatTime(conv.updated_at || conv.created_at) }}
-            </span>
-          </div>
-
-          <p class="text-[11px] text-secondary-text truncate leading-tight">
-            {{ conv.last_message || 'No messages yet' }}
-          </p>
-
-          <!-- Badges -->
-          <div class="flex items-center gap-1.5 mt-1.5">
-            <span
-              v-if="conv.type === 'GROUP'"
-              class="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-background text-secondary-text border border-primary-border/40"
+        <div class="flex items-start space-x-3">
+          <!-- Avatar Icon -->
+          <div class="relative shrink-0 mt-0.5">
+            <!-- DIRECT: Round Initials Avatar -->
+            <div
+              v-if="conv.type === 'DIRECT'"
+              class="w-8 h-8 rounded-full bg-surface-container text-primary-text font-semibold text-xs flex items-center justify-center border border-primary-border"
             >
-              {{ conv.members?.length || 0 }} members
-            </span>
-            <span
-              v-if="conv.archived_at"
-              class="text-[9px] font-semibold px-1.5 py-0.2 rounded bg-primary-yellow/10 text-primary-yellow border border-primary-yellow/20"
+              {{ getInitials(getConversationTitle(conv)) }}
+            </div>
+
+            <!-- GROUP: Rounded Square Icon Avatar -->
+            <div
+              v-else
+              class="w-8 h-8 rounded-lg bg-surface-container text-secondary-text flex items-center justify-center border border-primary-border"
             >
-              Archived
-            </span>
+              <!-- Group Specific Icons matching Figma -->
+              <svg v-if="conv.name && conv.name.includes('Design')" class="w-4 h-4 text-secondary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+              </svg>
+              <svg v-else-if="conv.name && conv.name.includes('Announce')" class="w-4 h-4 text-secondary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+              </svg>
+              <svg v-else class="w-4 h-4 text-secondary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+              </svg>
+            </div>
+
+            <!-- Online Indicator for Direct Partner -->
+            <span
+              v-if="conv.type === 'DIRECT' && isDirectPartnerOnline(conv)"
+              class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-primary-green border-2 border-card-background"
+            ></span>
+          </div>
+
+          <!-- Conv Title & Snippet -->
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <!-- Group title with member count badge -->
+              <div v-if="conv.type === 'GROUP'" class="flex items-center space-x-1.5 truncate">
+                <span class="text-xs font-semibold text-primary-text truncate">{{ conv.name || 'Group' }}</span>
+                <span class="text-[9px] px-1 py-0.2 rounded bg-surface-subtle text-secondary-text font-medium border border-primary-border/60">
+                  {{ (conv.members?.length || 0) }} members
+                </span>
+              </div>
+              <!-- Direct Chat title -->
+              <span v-else class="text-xs font-semibold text-primary-text truncate">
+                {{ getConversationTitle(conv) }}
+              </span>
+              <span class="text-[10px] text-text-muted shrink-0">
+                {{ formatTime(conv.updated_at || conv.created_at) }}
+              </span>
+            </div>
+
+            <!-- Last Message Snippet -->
+            <p class="text-xs text-secondary-text truncate font-normal leading-relaxed">
+              <template v-if="conv.type === 'GROUP' && conv.last_message && conv.last_message.includes(':')">
+                <span class="text-primary-text font-medium">{{ conv.last_message.split(':')[0] }}:</span>{{ conv.last_message.substring(conv.last_message.indexOf(':') + 1) }}
+              </template>
+              <template v-else>
+                {{ conv.last_message || 'No messages yet' }}
+              </template>
+            </p>
           </div>
         </div>
       </div>
 
-      <!-- People Directory API Results (Shown when searching) -->
-      <div v-if="searchQuery && apiSearchResults.length > 0" class="p-2 border-t border-primary-border/40 bg-background/40">
-        <div class="px-2 py-1.5 text-[10px] font-semibold text-secondary-text uppercase tracking-wider flex items-center justify-between">
-          <span class="flex items-center gap-1.5">
-            <span class="material-symbols-rounded text-sm text-primary">person_search</span>
+      <!-- People Directory API Results (When Searching) -->
+      <div v-if="searchQuery && apiSearchResults.length > 0" class="p-2 border-t border-primary-border bg-surface-subtle/50">
+        <div class="px-2 py-1.5 text-[10px] font-semibold text-text-muted uppercase tracking-wider flex items-center justify-between">
+          <span class="flex items-center space-x-1.5">
+            <svg class="w-3.5 h-3.5 text-secondary-text" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+            </svg>
             <span>People Directory</span>
           </span>
           <span class="text-[10px] text-primary font-medium">{{ apiSearchResults.length }} found</span>
@@ -166,22 +241,22 @@
             @click="handleStartChatWithUser(user)"
             class="p-2 rounded-lg flex items-center justify-between hover:bg-card-background transition-colors cursor-pointer group"
           >
-            <div class="flex items-center gap-2.5 min-w-0">
-              <div class="w-7 h-7 rounded-full bg-primary/10 text-primary font-semibold text-xs flex items-center justify-center border border-primary-border/50 shrink-0">
-                {{ getUserInitials(user.name) }}
+            <div class="flex items-center space-x-2.5 min-w-0">
+              <div class="w-7 h-7 rounded-full bg-surface-container text-primary-text font-semibold text-xs flex items-center justify-center border border-primary-border shrink-0">
+                {{ getInitials(user.name) }}
               </div>
               <div class="min-w-0">
-                <p class="text-xs font-medium text-primary-text truncate group-hover:text-primary transition-colors">
+                <p class="text-xs font-semibold text-primary-text truncate group-hover:text-primary transition-colors">
                   {{ user.name }}
                 </p>
-                <p class="text-[10px] text-secondary-text truncate">
+                <p class="text-[10px] text-text-muted truncate">
                   {{ user.email }}
                 </p>
               </div>
             </div>
             <button
               type="button"
-              class="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-all shrink-0 cursor-pointer"
+              class="text-[10px] font-semibold px-2 py-0.5 rounded bg-primary text-btn-text-primary transition-all shrink-0 cursor-pointer"
             >
               Message
             </button>
@@ -193,7 +268,7 @@
     <!-- Modals -->
     <NewDirectModal v-model="isDirectModalOpen" />
     <NewGroupModal v-model="isGroupModalOpen" />
-  </div>
+  </section>
 </template>
 
 <script setup>
@@ -202,8 +277,6 @@ import { useChatStore } from "@/stores/chat/chat";
 import { useAuthStore } from "@/stores/auth/auth";
 import NewDirectModal from "./NewDirectModal.vue";
 import NewGroupModal from "./NewGroupModal.vue";
-import Tabs from "@/components/common/Tabs.vue";
-import SearchInput from "@/components/common/SearchInput.vue";
 
 const emit = defineEmits(["select"]);
 
@@ -218,23 +291,26 @@ const isDirectModalOpen = ref(false);
 const isGroupModalOpen = ref(false);
 const newChatDropdownRef = ref(null);
 
-const handleApiSearch = async (query) => {
-  const q = (query || "").trim();
-  if (!q) {
-    apiSearchResults.value = [];
-    return;
-  }
-  try {
-    await chatStore.searchUsers(q);
-    // Exclude myself from directory results
-    const results = (chatStore.availableUsers || []).filter(
-      (u) => u.id !== currentUserId.value
-    );
-    apiSearchResults.value = results;
-  } catch (err) {
-    console.warn("API Search failed:", err);
-    apiSearchResults.value = [];
-  }
+let searchDebounce = null;
+
+const handleSearchInput = () => {
+  if (searchDebounce) clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(async () => {
+    const q = searchQuery.value.trim();
+    if (!q) {
+      apiSearchResults.value = [];
+      return;
+    }
+    try {
+      await chatStore.searchUsers(q);
+      const results = (chatStore.availableUsers || []).filter(
+        (u) => u.id !== currentUserId.value
+      );
+      apiSearchResults.value = results;
+    } catch {
+      apiSearchResults.value = [];
+    }
+  }, 250);
 };
 
 const handleSearchClear = () => {
@@ -248,7 +324,6 @@ const handleSelectConversation = (convId) => {
 };
 
 const handleStartChatWithUser = (user) => {
-  // Check if a direct chat with this user already exists
   const existingConv = chatStore.conversations.find((c) => {
     if (c.type !== "DIRECT") return false;
     return c.members?.some((m) => m.user_id === user.id);
@@ -264,7 +339,7 @@ const handleStartChatWithUser = (user) => {
   apiSearchResults.value = [];
 };
 
-const getUserInitials = (name) => {
+const getInitials = (name) => {
   if (!name) return "U";
   const parts = name.trim().split(" ");
   if (parts.length >= 2) {
@@ -272,13 +347,6 @@ const getUserInitials = (name) => {
   }
   return name.slice(0, 2).toUpperCase();
 };
-
-const filterTabs = computed(() => [
-  { id: "all", label: "All", icon: "forum" },
-  { id: "direct", label: "Direct", icon: "person" },
-  { id: "group", label: "Group", icon: "groups" },
-  { id: "archived", label: "Archived", icon: "archive" },
-]);
 
 const currentUserId = computed(() => authStore.currentUser?.id);
 
@@ -325,7 +393,10 @@ const formatTime = (isoString) => {
   const now = new Date();
   const diffDays = Math.floor((now - d) / (1000 * 60 * 60 * 24));
   if (diffDays === 0) {
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  }
+  if (diffDays === 1) {
+    return "Yesterday";
   }
   if (diffDays < 7) {
     return d.toLocaleDateString([], { weekday: "short" });

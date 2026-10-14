@@ -1,5 +1,5 @@
 <template>
-  <header class="w-full bg-card-background/90 backdrop-blur-md border-b border-primary-border/60 sticky top-0 z-30 transition-colors duration-200">
+  <header class="w-full bg-card-background/90 backdrop-blur-md sticky top-0 z-30 transition-colors duration-200 shadow-sm">
     <div class="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
       
       <!-- ── Left: Mobile Toggle & Global Search Bar ─────────── -->
