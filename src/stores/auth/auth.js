@@ -66,8 +66,8 @@ export const useAuthStore = defineStore("auth", () => {
   const bootstrapAfterAuth = async (accessToken) => {
     const wsStore = useWsStore();
     const permissionsStore = usePermissionsStore();
-    // Permissions first — do not wait on WebSocket/Redis for route access.
-    await permissionsStore.fetchMyPermissions(true).catch(() => {});
+    // Only fetch permissions if not already loaded or in-flight
+    await permissionsStore.ensurePermissionsLoaded().catch(() => {});
     wsStore.connect(accessToken);
     fetchCurrentEmployee(true).catch(() => {});
   };
@@ -274,21 +274,30 @@ export const useAuthStore = defineStore("auth", () => {
   };
 
   // ─── Shell Initialization ──────────────────────────────
+  let initSessionPromise = null;
+
   const initSession = async () => {
     if (sessionInitialized.value) return;
+    if (initSessionPromise) return initSessionPromise;
 
-    if (authToken.hasToken()) {
-      try {
-        await fetchCurrentUser();
-        if (authToken.hasToken() && currentUser.value?.status === "ACTIVE") {
-          await bootstrapAfterAuth(authToken.getAccessToken());
+    initSessionPromise = (async () => {
+      if (authToken.hasToken()) {
+        try {
+          await fetchCurrentUser();
+          if (authToken.hasToken() && currentUser.value?.status === "ACTIVE") {
+            await bootstrapAfterAuth(authToken.getAccessToken());
+          }
+        } catch (_) {
+          // Handled in handlers
         }
-      } catch (_) {
-        // Handled in handlers
       }
-    }
 
-    sessionInitialized.value = true;
+      sessionInitialized.value = true;
+    })().finally(() => {
+      initSessionPromise = null;
+    });
+
+    return initSessionPromise;
   };
 
   return {

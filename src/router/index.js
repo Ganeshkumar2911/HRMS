@@ -37,11 +37,6 @@ router.beforeEach(async (to) => {
     await permissionsStore.ensurePermissionsLoaded();
 
     if (!permissionsStore.can(requiredPermission)) {
-      // One retry covers token-refresh / init-session races.
-      await permissionsStore.fetchMyPermissions(true).catch(() => {});
-    }
-
-    if (!permissionsStore.can(requiredPermission)) {
       return {
         name: "Forbidden",
         query: { from: to.fullPath },

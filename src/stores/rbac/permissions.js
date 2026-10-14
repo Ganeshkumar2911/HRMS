@@ -10,7 +10,16 @@ const SCOPE_WEIGHTS = {
 };
 
 export const usePermissionsStore = defineStore("permissions", () => {
-  const permissions = ref([]);
+  const getStoredPermissions = () => {
+    try {
+      const stored = localStorage.getItem("user_permissions");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const permissions = ref(getStoredPermissions());
   const roles = ref([]);
 
   const inFlight = {
@@ -113,11 +122,9 @@ export const usePermissionsStore = defineStore("permissions", () => {
     if (pendingPermissionsRequest) {
       try {
         await pendingPermissionsRequest;
+        return permissions.value;
       } catch (_) {
         // Previous attempt failed — fall through to retry when needed.
-      }
-      if (isFetched.value.permissions && !force) {
-        return permissions.value;
       }
     }
 
@@ -154,11 +161,11 @@ export const usePermissionsStore = defineStore("permissions", () => {
   };
 
   const ensurePermissionsLoaded = async () => {
-    if (isFetched.value.permissions && permissions.value.length > 0) {
+    if (isFetched.value.permissions) {
       return permissions.value;
     }
     try {
-      await fetchMyPermissions(true);
+      await fetchMyPermissions(false);
     } catch (_) {
       // Caller decides whether missing codes are fatal.
     }

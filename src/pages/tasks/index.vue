@@ -1,30 +1,5 @@
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-primary-border/60">
-      <div>
-        <div class="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-wider mb-1">
-          <span class="material-symbols-rounded text-base">task_alt</span>
-          <span>Workflow</span>
-        </div>
-        <h1 class="title-text text-primary-text">Tasks</h1>
-        <p class="sub-text text-secondary-text">
-          {{
-            canViewAllTasks
-              ? "Organization view: every user’s tasks (created, assigned, completed)."
-              : "You see tasks you created or that are assigned to you."
-          }}
-        </p>
-      </div>
-      <button
-        v-if="permissions.can('task.create')"
-        type="button"
-        class="btn-primary text-xs px-3.5 py-2"
-        @click="openCreate"
-      >
-        New task
-      </button>
-    </div>
-
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       <MetricCard title="Total" :value="summary?.total ?? '—'" icon="tag" />
       <MetricCard title="Pending" :value="summary?.status?.pending ?? '—'" icon="pending" />
@@ -34,39 +9,86 @@
       <MetricCard title="Overdue" :value="summary?.overdue ?? '—'" icon="warning" />
     </div>
 
-    <div class="flex flex-wrap gap-2 items-end">
-      <div>
-        <label class="block text-[11px] text-secondary-text mb-1">Status</label>
-        <BaseSelect
-          v-model="filters.status"
-          :options="statuses.map(s => ({ label: s, value: s }))"
-          allow-all
-          all-label="All"
-          custom-class="!py-1.5 text-xs"
-          @update:model-value="applyFilters"
-        />
+    <!-- Filters & Action Bar -->
+    <div
+      class="p-3 sm:p-3.5 rounded-xl bg-card-background border border-primary-border/60  flex flex-col md:flex-row md:items-center justify-between gap-3"
+    >
+      <!-- Filters Group -->
+      <div class="flex flex-1 flex-wrap items-center gap-2.5">
+        <!-- Search Input with Debouncer -->
+        <div class="relative flex-1 min-w-[200px] sm:min-w-[240px] max-w-sm">
+          <span
+            class="material-symbols-rounded absolute left-3 top-1/2 -translate-y-1/2 text-secondary-text text-base pointer-events-none"
+          >
+            search
+          </span>
+          <input
+            v-model="filters.q"
+            type="text"
+            class="input-field pl-9 pr-8 h-9 text-xs w-full bg-background rounded-lg border border-primary-border focus:border-primary placeholder:text-secondary-text/50"
+            placeholder="Search tasks by title..."
+            @input="handleSearchInput"
+          />
+          <button
+            v-if="filters.q"
+            type="button"
+            @click="clearSearch"
+            class="absolute right-2.5 top-1/2 -translate-y-1/2 text-secondary-text hover:text-primary-text cursor-pointer p-0.5 rounded transition-colors"
+            title="Clear search"
+          >
+            <span class="material-symbols-rounded text-sm">close</span>
+          </button>
+        </div>
+
+        <!-- Status Filter (Direct Apply) -->
+        <div class="w-36 sm:w-40">
+          <BaseSelect
+            v-model="filters.status"
+            :options="statusOptions"
+            allow-all
+            all-label="All Statuses"
+            custom-class="!h-9 !py-1 text-xs rounded-lg bg-background"
+            @update:model-value="applyFilters"
+          />
+        </div>
+
+        <!-- Priority Filter (Direct Apply) -->
+        <div class="w-36 sm:w-40">
+          <BaseSelect
+            v-model="filters.priority"
+            :options="priorityOptions"
+            allow-all
+            all-label="All Priorities"
+            custom-class="!h-9 !py-1 text-xs rounded-lg bg-background"
+            @update:model-value="applyFilters"
+          />
+        </div>
+
+        <!-- Reset Filters Button -->
+        <button
+          v-if="hasActiveFilters"
+          type="button"
+          @click="resetFilters"
+          class="h-9 inline-flex items-center gap-1 px-2.5 text-xs text-secondary-text hover:text-primary-red transition-colors cursor-pointer rounded-lg hover:bg-background shrink-0"
+          title="Reset filters"
+        >
+          <span class="material-symbols-rounded text-sm">restart_alt</span>
+          <span>Reset</span>
+        </button>
       </div>
-      <div>
-        <label class="block text-[11px] text-secondary-text mb-1">Priority</label>
-        <BaseSelect
-          v-model="filters.priority"
-          :options="priorities.map(p => ({ label: p, value: p }))"
-          allow-all
-          all-label="All"
-          custom-class="!py-1.5 text-xs"
-          @update:model-value="applyFilters"
-        />
+
+      <!-- Action Button: New Task -->
+      <div class="flex items-center shrink-0">
+        <button
+          v-if="permissions.can('task.create')"
+          type="button"
+          class="btn-primary h-9 text-xs px-3.5 flex items-center gap-1.5  cursor-pointer whitespace-nowrap"
+          @click="openCreate"
+        >
+          <span class="material-symbols-rounded text-base">add</span>
+          <span>New task</span>
+        </button>
       </div>
-      <div class="flex-1 min-w-40">
-        <label class="block text-[11px] text-secondary-text mb-1">Search</label>
-        <input
-          v-model="filters.q"
-          class="input-field px-3 py-1.5 text-xs"
-          placeholder="Search title…"
-          @keyup.enter="applyFilters"
-        />
-      </div>
-      <button type="button" class="btn-secondary text-xs px-3 py-1.5" @click="applyFilters">Apply</button>
     </div>
 
     <DataTable
@@ -292,6 +314,22 @@ const auth = useAuthStore();
 
 const statuses = ["PENDING", "UPCOMING", "PICK_LATER", "COMPLETED"];
 const priorities = ["LOW", "MEDIUM", "HIGH"];
+
+const formatLabel = (str) => {
+  if (!str) return "";
+  return str
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
+const statusOptions = computed(() =>
+  statuses.map((s) => ({ label: formatLabel(s), value: s }))
+);
+
+const priorityOptions = computed(() =>
+  priorities.map((p) => ({ label: formatLabel(p), value: p }))
+);
 const canViewAllTasks = computed(() => permissions.can("task.view_all"));
 const columns = computed(() => {
   const base = [
@@ -421,6 +459,35 @@ const applyFilters = () => {
   store.fetchTasks(listQuery(), true);
   store.fetchSummary(true);
 };
+
+let searchDebounceTimer = null;
+
+const handleSearchInput = () => {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer);
+  }
+  searchDebounceTimer = setTimeout(() => {
+    applyFilters();
+  }, 350);
+};
+
+const clearSearch = () => {
+  filters.q = "";
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  applyFilters();
+};
+
+const resetFilters = () => {
+  filters.status = "";
+  filters.priority = "";
+  filters.q = "";
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+  applyFilters();
+};
+
+const hasActiveFilters = computed(() => {
+  return !!filters.status || !!filters.priority || !!filters.q;
+});
 
 const prevPage = () => {
   filters.offset = Math.max(0, filters.offset - filters.limit);

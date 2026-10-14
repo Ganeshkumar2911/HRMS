@@ -21,21 +21,9 @@
 
         <!-- Name & Status -->
         <div class="overflow-hidden">
-          <div class="flex items-center gap-2">
-            <h3 class="text-xs font-bold text-primary-text truncate">
-              {{ conversationTitle }}
-            </h3>
-            <!-- Inline Rename for Group -->
-            <button
-              v-if="isGroup && canManage"
-              type="button"
-              @click="isRenameModalOpen = true"
-              class="text-secondary-text hover:text-primary p-0.5 rounded transition-colors text-xs"
-              title="Rename Channel"
-            >
-              <span class="material-symbols-rounded">edit</span>
-            </button>
-          </div>
+          <h3 class="text-xs font-bold text-primary-text truncate">
+            {{ conversationTitle }}
+          </h3>
           <p class="text-[11px] text-secondary-text truncate leading-tight">
             {{ statusSubtitle }}
           </p>
@@ -109,40 +97,6 @@
       :title="previewImageTitle"
     />
 
-    <!-- Rename Modal -->
-    <div
-      v-if="isRenameModalOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150"
-      @click.self="isRenameModalOpen = false"
-    >
-      <div class="bg-card-background border border-primary-border rounded-xl max-w-sm w-full p-5 shadow-xl space-y-4">
-        <h3 class="title-text text-sm font-semibold text-primary-text">Rename Channel</h3>
-        <input
-          v-model="renameDraft"
-          type="text"
-          placeholder="Enter new channel name..."
-          class="input-field px-3 py-2 text-xs w-full"
-          @keydown.enter="handleSaveRename"
-        />
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            @click="isRenameModalOpen = false"
-            class="btn-secondary text-xs px-3 py-1.5"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            @click="handleSaveRename"
-            class="btn-primary text-xs px-3.5 py-1.5"
-            :disabled="!renameDraft.trim() || chatStore.actionLoading"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -174,8 +128,6 @@ const messagesContainerRef = ref(null);
 const isImageModalOpen = ref(false);
 const previewImageUrl = ref("");
 const previewImageTitle = ref("");
-const isRenameModalOpen = ref(false);
-const renameDraft = ref("");
 
 const currentUserId = computed(() => authStore.currentUser?.id);
 
@@ -272,11 +224,5 @@ const handlePreviewImage = (url, title) => {
   previewImageUrl.value = url;
   previewImageTitle.value = title || "Attachment Preview";
   isImageModalOpen.value = true;
-};
-
-const handleSaveRename = async () => {
-  if (!renameDraft.value.trim()) return;
-  await chatStore.renameConversation(props.conversation.id, renameDraft.value.trim());
-  isRenameModalOpen.value = false;
 };
 </script>

@@ -31,36 +31,45 @@
 
           <!-- Dropdown Options (Chevron) -->
           <div
-            v-if="!message.deleted_at && !isEditing && isMine"
-            class="absolute top-1 right-2 z-20 transition-opacity"
+            v-if="!message.deleted_at && !isEditing"
+            class="absolute top-0 right-0 z-20 transition-opacity"
             :class="showMenu ? 'opacity-100' : 'opacity-0 group-hover/bubble:opacity-100'"
           >
             <div class="relative">
               <button
                 type="button"
                 @click.stop="toggleMenu"
-                class="rounded-full bg-black/20 hover:bg-black/30 text-white w-4 h-4 cursor-pointer flex items-center justify-center backdrop-blur-sm"
+                class="w-4 h-4 mt-1 mr-1 rounded-full flex items-center justify-center cursor-pointer backdrop-blur-md transition-colors"
+                :class="isMine ? 'bg-black/10 hover:bg-black/20 text-white/90' : 'bg-black/5 hover:bg-black/10 text-primary-text/70'"
               >
-                <span class="material-symbols-rounded text-[13px]">expand_more</span>
+                <span class="material-symbols-rounded text-[12px] scale-[0.8] origin-center inline-block">keyboard_arrow_down</span>
               </button>
               
               <!-- Dropdown Menu -->
               <div v-if="showMenu" class="fixed inset-0 z-10" @click.stop="showMenu = false"></div>
               <div
                 v-if="showMenu"
-                class="absolute top-full right-0 mt-1 w-24 bg-card-background border border-primary-border/50 rounded-md shadow-lg py-1 z-20"
+                class="absolute top-full right-0 mt-1 w-20 bg-card-background rounded-md shadow-[0_2px_10px_-3px_rgba(0,0,0,0.2)] py-1 z-20 border border-primary-border/10 overflow-hidden"
               >
                 <button
-                  @click="startEditing(); showMenu = false"
-                  class="w-full text-left px-2 py-1 text-xs text-primary-text hover:bg-black/5 dark:hover:bg-white/5 flex items-center gap-1.5 transition-colors cursor-pointer"
+                  @click="copyMessage(); showMenu = false"
+                  class="w-full text-left px-2 py-1 text-[10px] text-primary-text hover:bg-black/5 dark:hover:bg-white/5 flex items-center gap-1 transition-colors cursor-pointer"
                 >
-                  <span class="material-symbols-rounded text-[13px]">edit</span> Edit
+                  <span class="material-symbols-rounded text-[12px] scale-[0.7] origin-center inline-block">content_copy</span> Copy
                 </button>
                 <button
-                  @click="$emit('delete', message.id); showMenu = false"
-                  class="w-full text-left px-2 py-1 text-xs text-primary-red hover:bg-primary-red/10 flex items-center gap-1.5 transition-colors cursor-pointer"
+                  v-if="isMine"
+                  @click="startEditing(); showMenu = false"
+                  class="w-full text-left px-2 py-1 text-[10px] text-primary-text hover:bg-black/5 dark:hover:bg-white/5 flex items-center gap-1 transition-colors cursor-pointer"
                 >
-                  <span class="material-symbols-rounded text-[13px]">delete</span> Delete
+                  <span class="material-symbols-rounded text-[12px] scale-[0.7] origin-center inline-block">edit</span> Edit
+                </button>
+                <button
+                  v-if="isMine"
+                  @click="$emit('delete', message.id); showMenu = false"
+                  class="w-full text-left px-2 py-1 text-[10px] text-primary-red hover:bg-primary-red/10 flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <span class="material-symbols-rounded text-[12px] scale-[0.7] origin-center inline-block">delete</span> Delete
                 </button>
               </div>
             </div>
@@ -186,6 +195,16 @@ const showMenu = ref(false);
 
 const toggleMenu = () => {
   showMenu.value = !showMenu.value;
+};
+
+const copyMessage = async () => {
+  if (props.message.content) {
+    try {
+      await navigator.clipboard.writeText(props.message.content);
+    } catch (err) {
+      console.error("Failed to copy message:", err);
+    }
+  }
 };
 
 const isMine = computed(() => {

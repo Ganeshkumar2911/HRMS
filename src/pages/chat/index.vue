@@ -1,5 +1,5 @@
 <template>
-  <div class="h-[calc(100vh-5rem)] max-h-220 bg-card-background border border-primary-border/70 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+  <div class="h-[calc(100vh-4.7rem)] max-h-220 bg-card-background border border-primary-border/70 rounded-2xl overflow-hidden flex flex-col">
     <!-- Main Chat Workspace -->
     <div class="flex-1 flex overflow-hidden">
       <!-- Left Column: Conversations List -->

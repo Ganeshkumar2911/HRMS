@@ -3,7 +3,6 @@
     <!-- Panel Header -->
     <div class="p-4 border-b border-primary-border/60 flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <span class="material-symbols-rounded text-primary text-base">info</span>
         <h3 class="text-xs font-semibold text-primary-text uppercase tracking-wider">Channel Details</h3>
       </div>
       <button
@@ -24,9 +23,20 @@
             {{ isGroup ? 'groups' : 'person' }}
           </span>
         </div>
-        <h4 class="text-xs font-bold text-primary-text leading-tight">
-          {{ conversationName }}
-        </h4>
+        <div class="flex items-center justify-center gap-1.5 px-2">
+          <h4 class="text-xs font-bold text-primary-text leading-tight truncate">
+            {{ conversationName }}
+          </h4>
+          <button
+            v-if="isGroup && canManageMembers"
+            type="button"
+            @click="openRenameModal"
+            class="w-6 h-6 rounded-full hover:bg-background text-secondary-text hover:text-primary flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            title="Rename Channel"
+          >
+            <span class="material-symbols-rounded text-sm">edit</span>
+          </button>
+        </div>
         <span class="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded bg-background text-secondary-text border border-primary-border/60">
           {{ conversation?.type || 'CONVERSATION' }}
         </span>
@@ -158,6 +168,41 @@
       confirm-text="Remove"
       @confirm="handleRemove"
     />
+
+    <!-- Rename Channel Modal -->
+    <div
+      v-if="isRenameModalOpen"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150"
+      @click.self="isRenameModalOpen = false"
+    >
+      <div class="bg-card-background border border-primary-border rounded-xl max-w-sm w-full p-5 shadow-xl space-y-4">
+        <h3 class="title-text text-sm font-semibold text-primary-text">Rename Channel</h3>
+        <input
+          v-model="renameDraft"
+          type="text"
+          placeholder="Enter new channel name..."
+          class="input-field px-3 py-2 text-xs w-full"
+          @keydown.enter="handleSaveRename"
+        />
+        <div class="flex items-center justify-end gap-2">
+          <button
+            type="button"
+            @click="isRenameModalOpen = false"
+            class="btn-secondary text-xs px-3 py-1.5"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            @click="handleSaveRename"
+            class="btn-primary text-xs px-3.5 py-1.5"
+            :disabled="!renameDraft.trim() || chatStore.actionLoading"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -184,6 +229,8 @@ const isAddModalOpen = ref(false);
 const isConfirmLeaveOpen = ref(false);
 const isConfirmArchiveOpen = ref(false);
 const isConfirmRemoveOpen = ref(false);
+const isRenameModalOpen = ref(false);
+const renameDraft = ref("");
 const memberToRemove = ref(null);
 
 const currentUserId = computed(() => authStore.currentUser?.id);
@@ -236,5 +283,16 @@ const handleLeave = async () => {
 const handleArchive = async () => {
   await chatStore.archiveConversation(props.conversation.id);
   isConfirmArchiveOpen.value = false;
+};
+
+const openRenameModal = () => {
+  renameDraft.value = props.conversation?.name || "";
+  isRenameModalOpen.value = true;
+};
+
+const handleSaveRename = async () => {
+  if (!renameDraft.value.trim()) return;
+  await chatStore.renameConversation(props.conversation.id, renameDraft.value.trim());
+  isRenameModalOpen.value = false;
 };
 </script>

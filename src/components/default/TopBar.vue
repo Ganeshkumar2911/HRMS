@@ -16,10 +16,10 @@
         </router-link>
 
         <!-- Divider -->
-        <div class="h-4 w-px bg-primary-border/80 hidden lg:block"></div>
+        <div class="h-4 w-px bg-primary-border/80 hidden md:block"></div>
 
         <!-- Desktop Navigation Items (Gated by permission store) -->
-        <nav class="hidden lg:flex items-center gap-1">
+        <nav class="hidden md:flex items-center gap-1">
           <!-- Chat -->
           <router-link
             to="/chat"
@@ -248,7 +248,7 @@
         <!-- User Profile Dropdown -->
         <div class="relative" ref="profileDropdownRef">
           <button
-            @click="isProfileOpen = !isProfileOpen"
+            @click="toggleProfileDropdown"
             type="button"
             class="flex items-center gap-2 py-1 px-1.5 rounded-lg hover:bg-background transition-colors cursor-pointer text-left"
           >
@@ -330,11 +330,17 @@
 
         <!-- Mobile Navigation Menu Toggle -->
         <button
-          @click="isMobileMenuOpen = !isMobileMenuOpen"
+          ref="mobileMenuButtonRef"
+          @click="toggleMobileMenu"
           type="button"
-          class="lg:hidden btn-icon p-1.5 text-secondary-text hover:text-primary-text rounded-lg hover:bg-background transition-colors cursor-pointer"
+          class="inline-flex md:!hidden items-center justify-center p-1.5 text-secondary-text hover:text-primary-text rounded-lg hover:bg-background transition-all cursor-pointer"
+          :aria-expanded="isMobileMenuOpen"
+          aria-label="Toggle navigation menu"
         >
-          <span class="material-symbols-rounded text-[22px]">
+          <span
+            class="material-symbols-rounded text-[22px] transition-transform duration-200 select-none block"
+            :class="{ 'rotate-90': isMobileMenuOpen }"
+          >
             {{ isMobileMenuOpen ? 'close' : 'menu' }}
           </span>
         </button>
@@ -342,81 +348,104 @@
       </div>
     </div>
 
+    <!-- Mobile Navigation Drawer Backdrop -->
+    <Transition name="mobile-backdrop">
+      <div
+        v-if="isMobileMenuOpen"
+        class="fixed inset-0 top-14 bg-black/25 backdrop-blur-2xs z-30 md:hidden"
+        @click="isMobileMenuOpen = false"
+        aria-hidden="true"
+      ></div>
+    </Transition>
+
     <!-- Mobile Navigation Drawer -->
     <div
-      v-if="isMobileMenuOpen"
-      class="lg:hidden border-t border-primary-border/60 bg-card-background px-4 py-3 flex flex-col gap-1 transition-all"
+      ref="mobileMenuRef"
+      class="md:hidden absolute top-full left-0 right-0 z-40 border-b border-primary-border/80 bg-card-background/98 backdrop-blur-md shadow-xl mobile-menu-grid"
+      :class="{ 'is-open': isMobileMenuOpen }"
     >
-      <router-link
-        to="/chat"
-        @click="isMobileMenuOpen = false"
-        class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
-        :class="isActive('/chat') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background'"
-      >
-        <span class="material-symbols-rounded text-[18px]">chat</span>
-        <span>Chat</span>
-      </router-link>
+      <div class="mobile-menu-inner">
+        <div class="mobile-menu-content px-4 py-3 flex flex-col gap-1">
+          <!-- Chat -->
+          <router-link
+            to="/chat"
+            @click="isMobileMenuOpen = false"
+            class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
+            :class="isActive('/chat') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
+          >
+            <span class="material-symbols-rounded text-[18px]">chat</span>
+            <span>Chat</span>
+          </router-link>
 
-      <router-link
-        v-if="permissionsStore.canAccessArea('tasks')"
-        to="/tasks"
-        @click="isMobileMenuOpen = false"
-        class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
-        :class="isActive('/tasks') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background'"
-      >
-        <span class="material-symbols-rounded text-[18px]">task_alt</span>
-        <span>Tasks</span>
-      </router-link>
+          <!-- Tasks -->
+          <router-link
+            v-if="permissionsStore.canAccessArea('tasks')"
+            to="/tasks"
+            @click="isMobileMenuOpen = false"
+            class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
+            :class="isActive('/tasks') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
+          >
+            <span class="material-symbols-rounded text-[18px]">task_alt</span>
+            <span>Tasks</span>
+          </router-link>
 
-      <router-link
-        v-if="permissionsStore.canAccessArea('hrms')"
-        to="/hrms"
-        @click="isMobileMenuOpen = false"
-        class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
-        :class="isActive('/hrms') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background'"
-      >
-        <span class="material-symbols-rounded text-[18px]">badge</span>
-        <span>HRMS</span>
-      </router-link>
+          <!-- HRMS -->
+          <router-link
+            v-if="permissionsStore.canAccessArea('hrms')"
+            to="/hrms"
+            @click="isMobileMenuOpen = false"
+            class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
+            :class="isActive('/hrms') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
+          >
+            <span class="material-symbols-rounded text-[18px]">badge</span>
+            <span>HRMS</span>
+          </router-link>
 
-      <div v-if="hasAdminAccess" class="pt-2 mt-1 border-t border-primary-border/60">
-        <span class="text-[10px] font-semibold text-secondary-text uppercase tracking-wider px-3">Admin</span>
-        <router-link
-          v-if="permissionsStore.canAccessArea('admin_users')"
-          to="/admin/users"
-          @click="isMobileMenuOpen = false"
-          class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 text-secondary-text hover:bg-background"
-        >
-          <span class="material-symbols-rounded text-[18px]">manage_accounts</span>
-          <span>Users</span>
-        </router-link>
-        <router-link
-          v-if="permissionsStore.canAccessArea('admin_roles')"
-          to="/admin/roles"
-          @click="isMobileMenuOpen = false"
-          class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 text-secondary-text hover:bg-background"
-        >
-          <span class="material-symbols-rounded text-[18px]">security</span>
-          <span>Roles</span>
-        </router-link>
-        <router-link
-          v-if="permissionsStore.canAccessArea('admin_audit')"
-          to="/admin/audit"
-          @click="isMobileMenuOpen = false"
-          class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 text-secondary-text hover:bg-background"
-        >
-          <span class="material-symbols-rounded text-[18px]">history</span>
-          <span>Audit Logs</span>
-        </router-link>
-        <router-link
-          v-if="permissionsStore.canAccessArea('admin_broadcast')"
-          to="/admin/notifications/broadcast"
-          @click="isMobileMenuOpen = false"
-          class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 text-secondary-text hover:bg-background"
-        >
-          <span class="material-symbols-rounded text-[18px]">campaign</span>
-          <span>Broadcast</span>
-        </router-link>
+          <!-- Admin Section -->
+          <div v-if="hasAdminAccess" class="pt-2 mt-1 border-t border-primary-border/60">
+            <span class="text-[10px] font-semibold text-secondary-text uppercase tracking-wider px-3">Admin</span>
+            <router-link
+              v-if="permissionsStore.canAccessArea('admin_users')"
+              to="/admin/users"
+              @click="isMobileMenuOpen = false"
+              class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
+              :class="isActive('/admin/users') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
+            >
+              <span class="material-symbols-rounded text-[18px]">manage_accounts</span>
+              <span>Users</span>
+            </router-link>
+            <router-link
+              v-if="permissionsStore.canAccessArea('admin_roles')"
+              to="/admin/roles"
+              @click="isMobileMenuOpen = false"
+              class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
+              :class="isActive('/admin/roles') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
+            >
+              <span class="material-symbols-rounded text-[18px]">security</span>
+              <span>Roles</span>
+            </router-link>
+            <router-link
+              v-if="permissionsStore.canAccessArea('admin_audit')"
+              to="/admin/audit"
+              @click="isMobileMenuOpen = false"
+              class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
+              :class="isActive('/admin/audit') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
+            >
+              <span class="material-symbols-rounded text-[18px]">history</span>
+              <span>Audit Logs</span>
+            </router-link>
+            <router-link
+              v-if="permissionsStore.canAccessArea('admin_broadcast')"
+              to="/admin/notifications/broadcast"
+              @click="isMobileMenuOpen = false"
+              class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
+              :class="isActive('/admin/notifications') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
+            >
+              <span class="material-symbols-rounded text-[18px]">campaign</span>
+              <span>Broadcast</span>
+            </router-link>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -426,7 +455,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { initTheme, toggleTheme, getTheme } from "@/utils/theme";
 import { useAuthStore } from "@/stores/auth/auth";
@@ -452,6 +481,8 @@ const currentTheme = ref("light");
 const profileDropdownRef = ref(null);
 const adminDropdownRef = ref(null);
 const notificationsDropdownRef = ref(null);
+const mobileMenuRef = ref(null);
+const mobileMenuButtonRef = ref(null);
 
 const userInitials = computed(() => {
   const name = authStore.currentUser?.name;
@@ -517,6 +548,24 @@ const openPermissionsModal = () => {
   isPermissionsModalOpen.value = true;
 };
 
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value;
+  if (isMobileMenuOpen.value) {
+    isProfileOpen.value = false;
+    isAdminOpen.value = false;
+    isNotificationsOpen.value = false;
+  }
+};
+
+const toggleProfileDropdown = () => {
+  isProfileOpen.value = !isProfileOpen.value;
+  if (isProfileOpen.value) {
+    isMobileMenuOpen.value = false;
+    isAdminOpen.value = false;
+    isNotificationsOpen.value = false;
+  }
+};
+
 const handleClickOutside = (event) => {
   if (profileDropdownRef.value && !profileDropdownRef.value.contains(event.target)) {
     isProfileOpen.value = false;
@@ -527,17 +576,44 @@ const handleClickOutside = (event) => {
   if (notificationsDropdownRef.value && !notificationsDropdownRef.value.contains(event.target)) {
     isNotificationsOpen.value = false;
   }
+  if (
+    isMobileMenuOpen.value &&
+    mobileMenuRef.value &&
+    !mobileMenuRef.value.contains(event.target) &&
+    mobileMenuButtonRef.value &&
+    !mobileMenuButtonRef.value.contains(event.target)
+  ) {
+    isMobileMenuOpen.value = false;
+  }
 };
+
+const handleResize = () => {
+  if (window.innerWidth >= 768 && isMobileMenuOpen.value) {
+    isMobileMenuOpen.value = false;
+  }
+};
+
+watch(
+  () => route.path,
+  () => {
+    isMobileMenuOpen.value = false;
+    isProfileOpen.value = false;
+    isAdminOpen.value = false;
+    isNotificationsOpen.value = false;
+  }
+);
 
 onMounted(() => {
   currentTheme.value = initTheme() || getTheme() || "light";
   document.addEventListener("click", handleClickOutside);
+  window.addEventListener("resize", handleResize);
   notificationsStore.setupRealtimeListener();
   notificationsStore.fetchUnreadCount().catch(() => {});
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);
+  window.removeEventListener("resize", handleResize);
   notificationsStore.cleanupRealtimeListener();
 });
 
@@ -564,7 +640,54 @@ const handleNotificationClick = (item) => {
 const toggleNotificationsDropdown = () => {
   isNotificationsOpen.value = !isNotificationsOpen.value;
   if (!isNotificationsOpen.value) return;
+  isMobileMenuOpen.value = false;
+  isProfileOpen.value = false;
+  isAdminOpen.value = false;
   notificationsStore.fetchUnreadCount(true).catch(() => {});
   notificationsStore.fetchNotifications({ limit: 5, offset: 0 }, true).catch(() => {});
 };
 </script>
+
+<style scoped>
+.mobile-menu-grid {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.24s ease,
+    visibility 0.3s;
+  pointer-events: none;
+}
+
+.mobile-menu-grid.is-open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.mobile-menu-inner {
+  overflow: hidden;
+}
+
+.mobile-menu-content {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(-8px);
+}
+
+.mobile-menu-grid.is-open .mobile-menu-content {
+  transform: translateY(0);
+}
+
+.mobile-backdrop-enter-active,
+.mobile-backdrop-leave-active {
+  transition: opacity 0.22s ease;
+}
+
+.mobile-backdrop-enter-from,
+.mobile-backdrop-leave-to {
+  opacity: 0;
+}
+</style>
