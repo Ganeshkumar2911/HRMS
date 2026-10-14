@@ -430,7 +430,7 @@ export const useChatStore = defineStore("chat", () => {
 
     const successHandler = (res) => {
       snackbar.show("Conversation renamed", "success");
-      const target = conversations.value.find((c) => c.id === conversationId);
+      const target = conversations.value.find((c) => String(c.id) === String(conversationId));
       if (target) {
         target.name = newName;
       }

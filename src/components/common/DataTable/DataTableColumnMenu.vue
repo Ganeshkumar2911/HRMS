@@ -12,7 +12,7 @@
         <!-- Menu Header -->
         <div class="px-3.5 pb-2 border-b border-primary-border flex items-center justify-between">
           <div class="flex items-center gap-1.5 text-xs font-semibold text-primary-text">
-            <Columns3 class="w-3.5 h-3.5 text-primary" />
+            <span class="material-symbols-rounded text-sm text-primary">view_column</span>
             <span>Customize Columns</span>
           </div>
           <button

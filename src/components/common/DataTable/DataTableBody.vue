@@ -57,7 +57,7 @@
           <slot name="empty">
             <div class="flex flex-col items-center justify-center gap-2.5 max-w-sm mx-auto">
               <div class="w-12 h-12 rounded-2xl bg-background flex items-center justify-center border border-primary-border text-secondary-text shadow-xs">
-                <FolderOpen class="w-6 h-6 stroke-[1.5]" />
+                <span class="material-symbols-rounded text-2xl">folder_open</span>
               </div>
               <p class="text-sm font-semibold text-primary-text">
                 {{ emptyTitle }}
@@ -154,7 +154,7 @@
                 @click.stop
               >
                 <span>{{ formatCellValue(row[col.key], col, row) }}</span>
-                <ExternalLink class="w-3 h-3 shrink-0 opacity-60" />
+                <span class="material-symbols-rounded text-xs shrink-0 opacity-60">open_in_new</span>
               </a>
               <span v-else>{{ formatCellValue(row[col.key], col, row) }}</span>
             </template>

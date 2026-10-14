@@ -18,26 +18,84 @@
     <div class="flex-1 overflow-y-auto no-scrollbar p-4 space-y-6">
       <!-- Conversation Summary -->
       <div class="text-center pb-4 border-b border-primary-border/40">
-        <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary mx-auto flex items-center justify-center font-bold text-base mb-2 border border-primary-border/50">
-          <span class="material-symbols-rounded text-2xl">
+        <div class="w-10 h-10 rounded-xl bg-primary/10 text-primary mx-auto flex items-center justify-center font-bold mb-2 border border-primary-border/50">
+          <span class="material-symbols-rounded text-xl">
             {{ isGroup ? 'groups' : 'person' }}
           </span>
         </div>
-        <div class="flex items-center justify-center gap-1.5 px-2">
-          <h4 class="text-xs font-bold text-primary-text leading-tight truncate">
-            {{ conversationName }}
-          </h4>
-          <button
-            v-if="isGroup && canManageMembers"
-            type="button"
-            @click="openRenameModal"
-            class="w-6 h-6 rounded-full hover:bg-background text-secondary-text hover:text-primary flex items-center justify-center transition-colors cursor-pointer shrink-0"
-            title="Rename Channel"
+
+        <!-- Channel / Direct Name with Inline Editor -->
+        <div class="px-1">
+          <!-- View Mode -->
+          <div
+            v-if="!isEditingName"
+            class="inline-flex items-center justify-center gap-1.5 px-2 py-0.5 rounded-lg max-w-full group transition-colors"
+            :class="isGroup && canManageMembers ? 'hover:bg-primary/5 cursor-pointer' : ''"
+            @click="isGroup && canManageMembers ? startRename() : null"
+            :title="isGroup && canManageMembers ? 'Click to rename channel' : ''"
           >
-            <span class="material-symbols-rounded text-sm">edit</span>
-          </button>
+            <h4 class="text-xs font-bold text-primary-text leading-tight truncate">
+              {{ conversationName }}
+            </h4>
+            <button
+              v-if="isGroup && canManageMembers"
+              type="button"
+              @click.stop="startRename"
+              class="w-5 h-5 rounded hover:bg-background text-secondary-text hover:text-primary flex items-center justify-center transition-colors cursor-pointer shrink-0 opacity-70 group-hover:opacity-100"
+              title="Rename Channel"
+              aria-label="Rename Channel"
+            >
+              <span class="material-symbols-rounded text-[13px]">edit</span>
+            </button>
+          </div>
+
+          <!-- Inline Edit Field -->
+          <div
+            v-else
+            class="flex items-center gap-1 bg-background border border-primary/50 focus-within:border-primary rounded-lg p-1 shadow-xs transition-all animate-in fade-in duration-150"
+          >
+            <input
+              ref="renameInputRef"
+              v-model="renameDraft"
+              type="text"
+              class="flex-1 min-w-0 bg-transparent border-0 text-xs font-semibold text-primary-text outline-none px-1.5 py-0.5 placeholder:text-secondary-text/50"
+              placeholder="Channel name..."
+              maxlength="60"
+              :disabled="chatStore.actionLoading"
+              @keydown.enter.prevent="handleSaveRename"
+              @keydown.esc="cancelRename"
+            />
+            
+            <div class="flex items-center gap-0.5 shrink-0">
+              <!-- Save button -->
+              <button
+                type="button"
+                @click="handleSaveRename"
+                :disabled="!renameDraft.trim() || chatStore.actionLoading"
+                class="w-5 h-5 rounded hover:bg-primary-green/15 text-primary-green flex items-center justify-center transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                title="Save (Enter)"
+                aria-label="Save rename"
+              >
+                <span v-if="chatStore.actionLoading" class="material-symbols-rounded text-[13px] animate-spin">progress_activity</span>
+                <span v-else class="material-symbols-rounded text-[14px]">check</span>
+              </button>
+
+              <!-- Cancel button -->
+              <button
+                type="button"
+                @click="cancelRename"
+                :disabled="chatStore.actionLoading"
+                class="w-5 h-5 rounded hover:bg-primary-red/15 text-secondary-text hover:text-primary-red flex items-center justify-center transition-colors cursor-pointer disabled:opacity-40"
+                title="Cancel (Esc)"
+                aria-label="Cancel rename"
+              >
+                <span class="material-symbols-rounded text-[14px]">close</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <span class="inline-block mt-1 text-[10px] font-semibold px-2 py-0.5 rounded bg-background text-secondary-text border border-primary-border/60">
+
+        <span class="inline-block mt-1.5 text-[10px] font-semibold px-2 py-0.5 rounded bg-background text-secondary-text border border-primary-border/60">
           {{ conversation?.type || 'CONVERSATION' }}
         </span>
       </div>
@@ -168,46 +226,11 @@
       confirm-text="Remove"
       @confirm="handleRemove"
     />
-
-    <!-- Rename Channel Modal -->
-    <div
-      v-if="isRenameModalOpen"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-150"
-      @click.self="isRenameModalOpen = false"
-    >
-      <div class="bg-card-background border border-primary-border rounded-xl max-w-sm w-full p-5 shadow-xl space-y-4">
-        <h3 class="title-text text-sm font-semibold text-primary-text">Rename Channel</h3>
-        <input
-          v-model="renameDraft"
-          type="text"
-          placeholder="Enter new channel name..."
-          class="input-field px-3 py-2 text-xs w-full"
-          @keydown.enter="handleSaveRename"
-        />
-        <div class="flex items-center justify-end gap-2">
-          <button
-            type="button"
-            @click="isRenameModalOpen = false"
-            class="btn-secondary text-xs px-3 py-1.5"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            @click="handleSaveRename"
-            class="btn-primary text-xs px-3.5 py-1.5"
-            :disabled="!renameDraft.trim() || chatStore.actionLoading"
-          >
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { useChatStore } from "@/stores/chat/chat";
 import { useAuthStore } from "@/stores/auth/auth";
 import AddMemberModal from "./AddMemberModal.vue";
@@ -229,7 +252,8 @@ const isAddModalOpen = ref(false);
 const isConfirmLeaveOpen = ref(false);
 const isConfirmArchiveOpen = ref(false);
 const isConfirmRemoveOpen = ref(false);
-const isRenameModalOpen = ref(false);
+const isEditingName = ref(false);
+const renameInputRef = ref(null);
 const renameDraft = ref("");
 const memberToRemove = ref(null);
 
@@ -285,14 +309,34 @@ const handleArchive = async () => {
   isConfirmArchiveOpen.value = false;
 };
 
-const openRenameModal = () => {
+watch(
+  () => props.conversation?.id,
+  () => {
+    isEditingName.value = false;
+    renameDraft.value = "";
+  }
+);
+
+const startRename = async () => {
   renameDraft.value = props.conversation?.name || "";
-  isRenameModalOpen.value = true;
+  isEditingName.value = true;
+  await nextTick();
+  renameInputRef.value?.focus();
+  renameInputRef.value?.select();
+};
+
+const cancelRename = () => {
+  isEditingName.value = false;
+  renameDraft.value = "";
 };
 
 const handleSaveRename = async () => {
-  if (!renameDraft.value.trim()) return;
-  await chatStore.renameConversation(props.conversation.id, renameDraft.value.trim());
-  isRenameModalOpen.value = false;
+  const trimmed = renameDraft.value.trim();
+  if (!trimmed || trimmed === props.conversation?.name) {
+    isEditingName.value = false;
+    return;
+  }
+  await chatStore.renameConversation(props.conversation.id, trimmed);
+  isEditingName.value = false;
 };
 </script>

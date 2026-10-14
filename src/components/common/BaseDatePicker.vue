@@ -1,5 +1,5 @@
 <script setup>
-
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import moment from "moment";
 
 // ─── Props ──────────────────────────────────────────────────────────────────
@@ -848,10 +848,10 @@ watch(
       :class="triggerClassList"
     >
       <div class="flex items-center gap-2 truncate min-w-0">
-        <span class="material-symbols-outlined"  class="flex-shrink-0 text-secondary-text">calendar_today</span>
+        <span class="material-symbols-outlined flex-shrink-0 text-secondary-text">calendar_today</span>
         <span
           :class="[
-            'truncate text-sm',
+            'truncate text-xs',
             isPlaceholder ? 'text-secondary-text' : 'text-primary-text font-medium',
           ]"
         >
@@ -860,15 +860,15 @@ watch(
       </div>
 
       <div class="flex items-center gap-1.5 flex-shrink-0 ml-2">
-        <span class="material-symbols-outlined"
+        <span
           v-if="clearable && hasValue && !disabled"
-          
-          class="text-secondary-text hover:text-primary-red transition-colors p-0.5 cursor-pointer rounded"
-          @click.stop="clear">close</span>
-        <span class="material-symbols-outlined"
-          
-          class="text-secondary-text transition-transform duration-200"
-          :class="{ 'rotate-180': isOpen }">expand_more</span>
+          class="material-symbols-outlined text-secondary-text hover:text-primary-red transition-colors p-0.5 cursor-pointer rounded"
+          @click.stop="clear"
+        >close</span>
+        <span
+          class="material-symbols-outlined text-secondary-text transition-transform duration-200"
+          :class="{ 'rotate-180': isOpen }"
+        >expand_more</span>
       </div>
     </button>
 
@@ -904,10 +904,10 @@ watch(
                   ]"
                 >
                   <span>{{ preset.label }}</span>
-                  <span class="material-symbols-outlined"
+                  <span
                     v-if="activePresetLabel === preset.label"
-                    
-                    class="text-primary shrink-0 ml-1">check</span>
+                    class="material-symbols-outlined text-primary shrink-0 ml-1"
+                  >check</span>
                 </button>
               </div>
             </div>
@@ -921,7 +921,7 @@ watch(
                   @click="prevMonth"
                   class="w-7 h-7 flex items-center justify-center rounded-md hover:bg-background text-secondary-text hover:text-primary-text transition-colors cursor-pointer"
                 >
-                  <span class="material-symbols-outlined" >chevron_left</span>
+                  <span class="material-symbols-outlined">chevron_left</span>
                 </button>
 
                 <button
@@ -930,7 +930,7 @@ watch(
                   class="text-sm font-semibold text-primary-text hover:text-primary transition-colors px-2 py-1 rounded-md hover:bg-background cursor-pointer flex items-center gap-1"
                 >
                   <span>{{ viewTitle }}</span>
-                  <span class="material-symbols-outlined"  class="text-secondary-text">expand_more</span>
+                  <span class="material-symbols-outlined text-secondary-text">expand_more</span>
                 </button>
 
                 <button

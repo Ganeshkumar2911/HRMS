@@ -10,6 +10,8 @@ const emptyListParams = () => ({
   status: "",
   priority: "",
   q: "",
+  from_date: "",
+  to_date: "",
   sort_by: "updated_at",
   sort_dir: "desc",
 });
@@ -23,8 +25,8 @@ const compactQuery = (params) => {
 };
 
 const summaryFiltersFromList = (listParams) => {
-  const { status, priority, q } = listParams;
-  return compactQuery({ status, priority, q });
+  const { status, priority, q, from_date, to_date } = listParams;
+  return compactQuery({ status, priority, q, from_date, to_date });
 };
 
 export const useTasksStore = defineStore("tasks", () => {
@@ -35,6 +37,7 @@ export const useTasksStore = defineStore("tasks", () => {
   const activeTask = ref(null);
   const listParams = ref(emptyListParams());
   const hasMore = ref(false);
+  const pagination = ref({ limit: 50, offset: 0, total: 0, has_more: false });
   const assigneeMatches = ref([]);
 
   const inFlight = {
@@ -101,9 +104,31 @@ export const useTasksStore = defineStore("tasks", () => {
     const query = compactQuery(listParams.value);
 
     const successHandler = (res) => {
-      const rows = Array.isArray(res) ? res : [];
+      const rows = Array.isArray(res)
+        ? res
+        : Array.isArray(res?.items)
+        ? res.items
+        : Array.isArray(res?.data)
+        ? res.data
+        : [];
       tasks.value = rows;
-      hasMore.value = rows.length >= (query.limit || 50);
+      if (res?.pagination) {
+        pagination.value = {
+          limit: res.pagination.limit ?? 50,
+          offset: res.pagination.offset ?? 0,
+          total: res.pagination.total ?? rows.length,
+          has_more: !!res.pagination.has_more,
+        };
+        hasMore.value = !!res.pagination.has_more;
+      } else {
+        hasMore.value = rows.length >= (query.limit || 50);
+        pagination.value = {
+          limit: query.limit || 50,
+          offset: query.offset || 0,
+          total: rows.length,
+          has_more: hasMore.value,
+        };
+      }
       isFetched.value.tasks = true;
     };
 
@@ -120,6 +145,7 @@ export const useTasksStore = defineStore("tasks", () => {
     return apiRequest(urls.KEYS.GET, urls.tasks.list, {
       params: query,
       isTokenRequired: true,
+      cancelPrevious: true,
       onSuccess: successHandler,
       onFailure: failureHandler,
       onFinally: finallyHandler,
@@ -140,7 +166,13 @@ export const useTasksStore = defineStore("tasks", () => {
       isTokenRequired: true,
       params: { q: searchTerm, limit },
       onSuccess: (res) => {
-        assigneeMatches.value = Array.isArray(res) ? res : [];
+        assigneeMatches.value = Array.isArray(res)
+          ? res
+          : Array.isArray(res?.items)
+          ? res.items
+          : Array.isArray(res?.data)
+          ? res.data
+          : [];
       },
       onFailure: () => {
         assigneeMatches.value = [];
@@ -215,6 +247,7 @@ export const useTasksStore = defineStore("tasks", () => {
   return {
     tasks,
     summary,
+    pagination,
     activeTask,
     listParams,
     hasMore,

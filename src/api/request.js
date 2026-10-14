@@ -66,7 +66,15 @@ const cancelPreviousRequest = (requestKey) => {
   const existing = pendingRequests.get(requestKey);
   if (existing) {
     existing.abortController.abort();
+    pendingRequests.delete(requestKey);
   }
+};
+
+const cancelAllRequests = () => {
+  pendingRequests.forEach((existing) => {
+    existing.abortController?.abort();
+  });
+  pendingRequests.clear();
 };
 
 const cleanupRequest = (requestKey, controller) => {
@@ -332,7 +340,7 @@ const apiRequest = (
   let requestKey = null;
 
   if (cancelPrevious) {
-    requestKey = generateRequestKey(method, url);
+    requestKey = typeof cancelPrevious === "string" ? cancelPrevious : generateRequestKey(method, url);
     abortController = new AbortController();
     cancelPreviousRequest(requestKey);
     pendingRequests.set(requestKey, { abortController });
@@ -364,9 +372,15 @@ const apiRequest = (
       return payload;
     })
     .catch(async (error) => {
-      if (error.code === "ERR_CANCELED") {
-        console.warn("Request cancelled:", error.message);
-        throw error;
+      const isAborted =
+        axios.isCancel(error) ||
+        error?.code === "ERR_CANCELED" ||
+        error?.name === "CanceledError" ||
+        abortController?.signal?.aborted;
+
+      if (isAborted) {
+        console.warn("Request cancelled:", error?.message || "aborted");
+        return { _cancelled: true };
       }
 
       const parsedError = {
@@ -384,12 +398,15 @@ const apiRequest = (
       throw parsedError;
     })
     .finally(async () => {
+      const wasCancelled = abortController?.signal?.aborted;
       if (requestKey) {
         cleanupRequest(requestKey, abortController);
       }
-      if (onFinally) await onFinally();
+      if (onFinally && !wasCancelled) {
+        await onFinally();
+      }
     });
 };
 
-export { axiosInstance };
+export { axiosInstance, cancelPreviousRequest, cancelAllRequests };
 export default apiRequest;
