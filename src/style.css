@@ -1,69 +1,156 @@
-@import url("https://fonts.googleapis.com/css2?family=Red+Hat+Display:ital,wght@0,300..900;1,300..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Red+Hat+Display:ital,wght@0,300..900;1,300..900&display=swap");
 @import "tailwindcss";
 
-@theme {
-  /* Core */
-  --color-background: #f8fafc;
-  --color-card-background: #ffffff;
+:root {
+  /* Surfaces */
+  --bg-canvas: #faf9f7;
+  --bg-surface: #ffffff;
+  --bg-subtle: #f4f3f1;
+  --bg-container: #edece9;
+  --bg-container-high: #e5e3e0;
+  --border-subtle: #e8e6e2;
+  --border-dim: #dadad8;
 
-  /* Primary (Muted Slate) */
-  --color-primary: #475569;
-  --color-primary-hover: #334155;
+  /* Typography */
+  --text-primary: #1c1d1f;
+  --text-secondary: #4b4f54;
+  --text-muted: #767b82;
 
-  /* Secondary */
-  --color-secondary: #334155;
+  /* Brand / Primary Actions */
+  --brand-primary: #1c1d1f;
+  --brand-accent: #2c3539;
+  --brand-text-inverted: #ffffff;
+  --sidebar-active-bg: #1c1d1f;
+  --sidebar-active-text: #ffffff;
 
-  /* Navbar */
-  --color-navbar: #ffffff;
+  /* Status Badges (API Statuses) */
+  --status-pending-text: #9c733e;
+  --status-pending-bg: #f8f3ea;
+  --status-pending-dot: #c4a679;
 
-  /* Text */
-  --color-primary-text: #334155;
-  --color-secondary-text: #64748b;
+  --status-upcoming-text: #546f7a;
+  --status-upcoming-bg: #edf2f4;
+  --status-upcoming-dot: #7b91a4;
 
-  /* Border */
-  --color-primary-border: #e2e8f0;
+  --status-completed-text: #496e58;
+  --status-completed-bg: #eef4f0;
+  --status-completed-dot: #7d8c75;
 
-  /* Accent */
-  --color-accent: #64748b;
+  --status-overdue-text: #a24d4d;
+  --status-overdue-bg: #f9efef;
+  --status-overdue-dot: #ba1a1a;
 
-  /* btn colors */
-  --color-btn-text-primary: #ffffff;
+  --status-pick-later-text: #6c727a;
+  --status-pick-later-bg: #f0f1f3;
+  --status-pick-later-dot: #9da3ac;
 
-  /* Status (Muted) */
-  --color-primary-green: #10b981;
-  --color-primary-yellow: #f59e0b;
-  --color-primary-red: #ef4444;
-  --color-primary-blue: #3b82f6;
+  /* Priority Badges */
+  --priority-high-text: #8f3d3d;
+  --priority-high-bg: #f8ebeb;
+  --priority-med-text: #525861;
+  --priority-med-bg: #ededf0;
+  --priority-low-text: #5b665e;
+  --priority-low-bg: #ecefe9;
 }
 
+[data-theme="dark"],
 .dark {
-  --color-background: #0f172a;
-  --color-card-background: #1e293b;
+  /* Surfaces */
+  --bg-canvas: #141517;
+  --bg-surface: #1a1b1e;
+  --bg-subtle: #222428;
+  --bg-container: #2a2d32;
+  --bg-container-high: #33373d;
+  --border-subtle: #282a2f;
+  --border-dim: #1e2023;
 
-  --color-primary: #94a3b8;
-  --color-primary-hover: #cbd5e1;
+  /* Typography */
+  --text-primary: #edece9;
+  --text-secondary: #b0b4ba;
+  --text-muted: #7d838c;
 
-  --color-secondary: #e2e8f0;
-  --color-navbar: #1e293b;
+  /* Brand / Primary Actions */
+  --brand-primary: #e2e6e9;
+  --brand-accent: #2c3539;
+  --brand-text-inverted: #141517;
+  --sidebar-active-bg: #2e3238;
+  --sidebar-active-text: #f2f4f7;
 
-  --color-primary-text: #f1f5f9;
-  --color-secondary-text: #94a3b8;
+  /* Status Badges (API Statuses) */
+  --status-pending-text: #d6a564;
+  --status-pending-bg: #2e2519;
+  --status-pending-dot: #d6a564;
 
-  /* btn colors */
-  --color-btn-text-primary: #0f172a;
+  --status-upcoming-text: #8ca8b5;
+  --status-upcoming-bg: #1b252a;
+  --status-upcoming-dot: #8ca8b5;
 
-  --color-primary-border: #334155;
+  --status-completed-text: #82b394;
+  --status-completed-bg: #18261e;
+  --status-completed-dot: #82b394;
 
-  --color-accent: #94a3b8;
+  --status-overdue-text: #d97979;
+  --status-overdue-bg: #2d1c1c;
+  --status-overdue-dot: #d97979;
 
-  --color-primary-green: #059669;
-  --color-primary-yellow: #d97706;
-  --color-primary-red: #dc2626;
-  --color-primary-blue: #2563eb;
+  --status-pick-later-text: #9da3ac;
+  --status-pick-later-bg: #22252a;
+  --status-pick-later-dot: #9da3ac;
+
+  /* Priority Badges */
+  --priority-high-text: #e07d7d;
+  --priority-high-bg: #2e1a1a;
+  --priority-med-text: #b2b8c2;
+  --priority-med-bg: #25282e;
+  --priority-low-text: #9cb2a2;
+  --priority-low-bg: #1e2620;
+}
+
+@theme {
+  /* Core Surfaces */
+  --color-background: var(--bg-canvas);
+  --color-card-background: var(--bg-surface);
+  --color-surface-subtle: var(--bg-subtle);
+  --color-surface-container: var(--bg-container);
+  --color-surface-hover: var(--bg-container-high);
+
+  /* Primary & Brand */
+  --color-primary: var(--brand-primary);
+  --color-primary-hover: var(--brand-accent);
+
+  /* Secondary */
+  --color-secondary: var(--text-secondary);
+
+  /* Navbar */
+  --color-navbar: var(--bg-surface);
+
+  /* Text Colors */
+  --color-primary-text: var(--text-primary);
+  --color-secondary-text: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  /* Borders */
+  --color-primary-border: var(--border-subtle);
+  --color-border-dim: var(--border-dim);
+
+  /* Accent */
+  --color-accent: var(--brand-accent);
+
+  /* Button Text */
+  --color-btn-text-primary: var(--brand-text-inverted);
+
+  /* Status Colors */
+  --color-primary-green: var(--status-completed-text);
+  --color-primary-yellow: var(--status-pending-text);
+  --color-primary-red: var(--status-overdue-text);
+  --color-primary-blue: var(--status-upcoming-text);
+  --color-primary-purple: var(--status-pick-later-text);
 }
 
 body {
-  font-family: "Red Hat Display", sans-serif;
+  font-family: "Plus Jakarta Sans", "Red Hat Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
 }
 
 /* ─── Global Button & Interactive Cursors ────────────────────────────── */

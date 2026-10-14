@@ -48,7 +48,7 @@ export const getWsURL = (token = "") => {
 
 // ─── Constants ────────────────────────────────────────────────────
 
-const DEFAULT_TIMEOUT = 2 * 60 * 1000;
+const DEFAULT_TIMEOUT = 2 * 60 * 1;
 const MAX_RETRY_ATTEMPTS = 2;
 const RETRYABLE_STATUS_CODES = [502, 503, 504];
 const NO_BODY_METHODS = ["get", "delete", "head", "options"];
@@ -340,7 +340,10 @@ const apiRequest = (
   let requestKey = null;
 
   if (cancelPrevious) {
-    requestKey = typeof cancelPrevious === "string" ? cancelPrevious : generateRequestKey(method, url);
+    requestKey =
+      typeof cancelPrevious === "string"
+        ? cancelPrevious
+        : generateRequestKey(method, url);
     abortController = new AbortController();
     cancelPreviousRequest(requestKey);
     pendingRequests.set(requestKey, { abortController });
