@@ -82,7 +82,7 @@ const handleSSO = (provider) => {
       </div>
 
       <!-- Editorial Photo Frame with Floating Glassmorphic Pill -->
-      <div class="relative rounded-2xl overflow-hidden border border-primary-border shadow-xs group">
+      <div class="relative rounded-2xl overflow-hidden border border-primary-border  group">
         <img
           :src="loginImg"
           alt="Minimalist quiet architectural workspace desk with notebook and tablet"
@@ -91,7 +91,7 @@ const handleSSO = (provider) => {
         <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
 
         <!-- Frosted Glass Status Pill Overlaid -->
-        <div class="absolute bottom-3 left-3 right-3 backdrop-blur-md bg-card-background/90 border border-primary-border rounded-xl px-4 py-2.5 flex items-center justify-between shadow-xs">
+        <div class="absolute bottom-3 left-3 right-3 backdrop-blur-md bg-card-background/90 border border-primary-border rounded-xl px-4 py-2.5 flex items-center justify-between ">
           <div class="flex items-center gap-3.5 text-xs font-medium text-primary-text">
             <div class="flex items-center gap-1.5">
               <span class="w-2 h-2 rounded-full dot-status-completed animate-pulse"></span>
@@ -126,7 +126,7 @@ const handleSSO = (provider) => {
 
     <!-- Right Column: Authentication Card -->
     <div class="w-full lg:col-span-6">
-      <div class="bg-card-background rounded-2xl border border-primary-border p-6 sm:p-8 shadow-xs transition-all">
+      <div class="bg-card-background rounded-2xl border border-primary-border p-6 sm:p-8  transition-all">
         
         <!-- Card Header with Brand mark for mobile and title -->
         <div class="mb-5">
@@ -265,7 +265,7 @@ const handleSSO = (provider) => {
           <button
             type="submit"
             :disabled="authStore.actionLoading"
-            class="w-full mt-2 py-2.5 px-4 rounded-xl bg-primary text-btn-text-primary hover:bg-primary-hover active:scale-[0.99] text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs disabled:opacity-60 disabled:cursor-not-allowed"
+            class="w-full mt-2 py-2.5 px-4 rounded-xl bg-primary text-btn-text-primary hover:bg-primary-hover active:scale-[0.99] text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer  disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <span v-if="authStore.actionLoading" class="material-symbols-rounded text-sm animate-spin">progress_activity</span>
             <span>{{ authStore.actionLoading ? 'Authenticating...' : 'Sign in to Modus' }}</span>
