@@ -340,7 +340,10 @@ const apiRequest = (
   let requestKey = null;
 
   if (cancelPrevious) {
-    requestKey = typeof cancelPrevious === "string" ? cancelPrevious : generateRequestKey(method, url);
+    requestKey =
+      typeof cancelPrevious === "string"
+        ? cancelPrevious
+        : generateRequestKey(method, url);
     abortController = new AbortController();
     cancelPreviousRequest(requestKey);
     pendingRequests.set(requestKey, { abortController });

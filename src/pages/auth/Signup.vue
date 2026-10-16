@@ -77,7 +77,7 @@ const handleSignup = async () => {
 </script>
 
 <template>
-  <div class="bg-card-background border border-primary-border/70 rounded-xl p-6 sm:p-8 shadow-sm">
+  <div class="w-full max-w-md mx-auto bg-card-background border border-primary-border/70 rounded-xl p-6 sm:p-8 shadow-sm">
     <!-- Header -->
     <div class="mb-6">
       <div class="flex items-center gap-2 mb-2 text-primary">

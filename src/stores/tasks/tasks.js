@@ -4,6 +4,11 @@ import apiRequest from "@/api/request";
 import urls from "@/api/urls";
 import { useSnackbarStore } from "@/stores/snackbar/snackbar";
 
+// Auto-detect optional dummy data file (*.dummy.js)
+const dummyModules = import.meta.glob("./*.dummy.js", { eager: true });
+const dummyKey = Object.keys(dummyModules)[0];
+const dummyStore = dummyKey ? (dummyModules[dummyKey].default || dummyModules[dummyKey]) : null;
+
 const emptyListParams = () => ({
   limit: 50,
   offset: 0,
@@ -63,6 +68,15 @@ export const useTasksStore = defineStore("tasks", () => {
   };
 
   const fetchSummary = (force = false) => {
+    if (dummyStore) {
+      summary.value =
+        typeof dummyStore.getSummary === "function"
+          ? dummyStore.getSummary()
+          : dummyStore.dummySummary;
+      isFetched.value.summary = true;
+      return Promise.resolve(summary.value);
+    }
+
     if (inFlight.summary && !force) return Promise.resolve(summary.value);
     if (isFetched.value.summary && !force) return Promise.resolve(summary.value);
 
@@ -93,15 +107,43 @@ export const useTasksStore = defineStore("tasks", () => {
   };
 
   const fetchTasks = (params = {}, force = false) => {
+    listParams.value = { ...listParams.value, ...params };
+    const query = compactQuery(listParams.value);
+
+    if (dummyStore) {
+      loading.value = true;
+      const res =
+        typeof dummyStore.getTasks === "function"
+          ? dummyStore.getTasks(query)
+          : {
+              items: dummyStore.dummyTasks || [],
+              pagination: {
+                limit: 50,
+                offset: 0,
+                total: (dummyStore.dummyTasks || []).length,
+                has_more: false,
+              },
+            };
+      const rows = res.items || [];
+      tasks.value = rows;
+      pagination.value = res.pagination || {
+        limit: query.limit || 50,
+        offset: query.offset || 0,
+        total: rows.length,
+        has_more: false,
+      };
+      hasMore.value = !!pagination.value.has_more;
+      isFetched.value.tasks = true;
+      loading.value = false;
+      return Promise.resolve(tasks.value);
+    }
+
     if (inFlight.tasks && !force) return Promise.resolve(tasks.value);
     if (isFetched.value.tasks && !force) return Promise.resolve(tasks.value);
 
     inFlight.tasks = true;
     loading.value = true;
     error.value = null;
-
-    listParams.value = { ...listParams.value, ...params };
-    const query = compactQuery(listParams.value);
 
     const successHandler = (res) => {
       const rows = Array.isArray(res)
@@ -159,6 +201,19 @@ export const useTasksStore = defineStore("tasks", () => {
       return Promise.resolve([]);
     }
 
+    if (dummyStore && dummyStore.dummyUsers) {
+      const lower = searchTerm.toLowerCase();
+      const matches = dummyStore.dummyUsers
+        .filter(
+          (u) =>
+            u.name?.toLowerCase().includes(lower) ||
+            u.email?.toLowerCase().includes(lower),
+        )
+        .slice(0, limit);
+      assigneeMatches.value = matches;
+      return Promise.resolve(matches);
+    }
+
     inFlight.assignees = true;
     assigneesLoading.value = true;
 
@@ -185,6 +240,20 @@ export const useTasksStore = defineStore("tasks", () => {
   };
 
   const createTask = (payload) => {
+    if (dummyStore) {
+      actionLoading.value = true;
+      const created =
+        typeof dummyStore.createTask === "function"
+          ? dummyStore.createTask(payload)
+          : payload;
+      snackbar.show("Task created", "success");
+      if (created) activeTask.value = created;
+      actionLoading.value = false;
+      fetchTasks({}, true);
+      fetchSummary(true);
+      return Promise.resolve(created);
+    }
+
     actionLoading.value = true;
     return apiRequest(urls.KEYS.POST, urls.tasks.create, {
       data: payload,
@@ -205,6 +274,24 @@ export const useTasksStore = defineStore("tasks", () => {
   };
 
   const updateTask = (taskId, payload) => {
+    if (dummyStore) {
+      actionLoading.value = true;
+      const updated =
+        typeof dummyStore.updateTask === "function"
+          ? dummyStore.updateTask(taskId, payload)
+          : payload;
+      snackbar.show("Task updated", "success");
+      if (updated) {
+        activeTask.value = updated;
+        tasks.value = tasks.value.map((task) =>
+          task.id === taskId ? updated : task,
+        );
+      }
+      actionLoading.value = false;
+      fetchSummary(true);
+      return Promise.resolve(updated);
+    }
+
     actionLoading.value = true;
     return apiRequest(urls.KEYS.PATCH, urls.tasks.update(taskId), {
       data: payload,
@@ -227,6 +314,18 @@ export const useTasksStore = defineStore("tasks", () => {
   };
 
   const deleteTask = (taskId) => {
+    if (dummyStore) {
+      actionLoading.value = true;
+      if (typeof dummyStore.deleteTask === "function") {
+        dummyStore.deleteTask(taskId);
+      }
+      snackbar.show("Task deleted", "success");
+      tasks.value = tasks.value.filter((task) => task.id !== taskId);
+      actionLoading.value = false;
+      fetchSummary(true);
+      return Promise.resolve(true);
+    }
+
     actionLoading.value = true;
     return apiRequest(urls.KEYS.DELETE, urls.tasks.delete(taskId), {
       isTokenRequired: true,

@@ -1,154 +1,201 @@
 <template>
   <div class="space-y-6">
-    <!-- ── 1. KPI Metric Summary Cards ────────────────────────────────────── -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-      <!-- Total -->
+    <!-- ── 1. Top Meta & Title Bar (Stitch Specification) ────────────────── -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between pb-2 gap-4">
+      <div class="flex flex-col gap-1.5">
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] uppercase tracking-wider font-semibold text-secondary-text">Task Orchestration</span>
+          <span class="w-1 h-1 rounded-full bg-secondary-text/50"></span>
+          <span class="text-[11px] text-secondary-text font-medium">HR Operations</span>
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-primary-text tracking-tight font-sans">
+          Tasks &amp; Assignments
+        </h1>
+        <p class="text-xs text-secondary-text max-w-xl leading-relaxed">
+          Review, triage, and audit workflow requests and operational delegations across team nodes.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2.5 shrink-0">
+        <button
+          type="button"
+          @click="exportTasksLog"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-card-background hover:bg-surface-hover text-primary-text text-xs font-semibold transition-all cursor-pointer active:scale-95"
+          title="Export current tasks as JSON"
+        >
+          <span class="material-symbols-rounded text-base text-secondary-text">file_download</span>
+          <span>Export Log</span>
+        </button>
+
+        <button
+          v-if="permissions.can('task.create')"
+          type="button"
+          @click="openCreate"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition-all cursor-pointer active:scale-95"
+        >
+          <span class="material-symbols-rounded text-base">add</span>
+          <span>New Task</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── 2. API Summary Stats Strip (6 Metric Cards - Stitch Design) ───── -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+      <!-- Total Tasks -->
       <div
-        class="p-4 rounded-xl bg-card-background border transition-all cursor-pointer select-none group"
-        :class="!filters.status ? 'border-primary shadow-xs ring-1 ring-primary/20' : 'border-primary-border/70 hover:border-primary-border'"
+        class="bg-card-background p-4 rounded-xl transition-all cursor-pointer select-none flex flex-col justify-between group"
+        :class="!filters.status ? 'bg-surface-container' : 'hover:bg-surface-subtle'"
         @click="filterByStatus('')"
         title="Show all tasks"
       >
-        <div class="flex items-center justify-between gap-2 mb-1.5">
-          <span class="text-xs text-secondary-text font-medium group-hover:text-primary-text transition-colors">Total Tasks</span>
-          <div class="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-            <span class="material-symbols-rounded text-base">task_alt</span>
-          </div>
+        <div class="flex items-center justify-between text-secondary-text mb-2">
+          <span class="text-xs font-medium group-hover:text-primary-text transition-colors">Total Tasks</span>
+          <span class="material-symbols-rounded text-[18px]">dataset</span>
         </div>
-        <p class="text-2xl font-bold text-primary-text tracking-tight">{{ metrics.total }}</p>
-        <p class="text-[11px] text-secondary-text mt-0.5">All registered deliverables</p>
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl sm:text-3xl font-bold text-primary-text tracking-tight">{{ metrics.total }}</span>
+          <span class="text-[11px] text-secondary-text">all records</span>
+        </div>
       </div>
 
       <!-- Pending -->
       <div
-        class="p-4 rounded-xl bg-card-background border transition-all cursor-pointer select-none group"
-        :class="filters.status === 'PENDING' ? 'border-primary-yellow shadow-xs ring-1 ring-primary-yellow/20' : 'border-primary-border/70 hover:border-primary-border'"
+        class="bg-card-background p-4 rounded-xl transition-all cursor-pointer select-none flex flex-col justify-between group"
+        :class="filters.status === 'PENDING' ? 'bg-status-pending-bg/50' : 'hover:bg-surface-subtle'"
         @click="filterByStatus('PENDING')"
         title="Filter by Pending"
       >
-        <div class="flex items-center justify-between gap-2 mb-1.5">
-          <span class="text-xs text-secondary-text font-medium group-hover:text-primary-text transition-colors">Pending</span>
-          <div class="w-7 h-7 rounded-lg bg-primary-yellow/15 text-primary-yellow flex items-center justify-center shrink-0">
-            <span class="material-symbols-rounded text-base">hourglass_top</span>
-          </div>
+        <div class="flex items-center justify-between text-secondary-text mb-2">
+          <span class="text-xs font-medium group-hover:text-primary-text transition-colors">Pending</span>
+          <span class="w-2 h-2 rounded-full dot-status-pending"></span>
         </div>
-        <p class="text-2xl font-bold text-primary-text tracking-tight">{{ metrics.pending }}</p>
-        <p class="text-[11px] text-primary-yellow/90 font-medium mt-0.5">Awaiting action</p>
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl sm:text-3xl font-bold text-primary-text tracking-tight">{{ metrics.pending }}</span>
+          <span class="text-[11px] text-status-pending font-medium">action req.</span>
+        </div>
       </div>
 
       <!-- Upcoming -->
       <div
-        class="p-4 rounded-xl bg-card-background border transition-all cursor-pointer select-none group"
-        :class="filters.status === 'UPCOMING' ? 'border-primary-blue shadow-xs ring-1 ring-primary-blue/20' : 'border-primary-border/70 hover:border-primary-border'"
+        class="bg-card-background p-4 rounded-xl transition-all cursor-pointer select-none flex flex-col justify-between group"
+        :class="filters.status === 'UPCOMING' ? 'bg-status-upcoming-bg/50' : 'hover:bg-surface-subtle'"
         @click="filterByStatus('UPCOMING')"
         title="Filter by Upcoming"
       >
-        <div class="flex items-center justify-between gap-2 mb-1.5">
-          <span class="text-xs text-secondary-text font-medium group-hover:text-primary-text transition-colors">Upcoming</span>
-          <div class="w-7 h-7 rounded-lg bg-primary-blue/15 text-primary-blue flex items-center justify-center shrink-0">
-            <span class="material-symbols-rounded text-base">event_upcoming</span>
-          </div>
+        <div class="flex items-center justify-between text-secondary-text mb-2">
+          <span class="text-xs font-medium group-hover:text-primary-text transition-colors">Upcoming</span>
+          <span class="w-2 h-2 rounded-full dot-status-upcoming"></span>
         </div>
-        <p class="text-2xl font-bold text-primary-text tracking-tight">{{ metrics.upcoming }}</p>
-        <p class="text-[11px] text-secondary-text mt-0.5">Queued on timeline</p>
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl sm:text-3xl font-bold text-primary-text tracking-tight">{{ metrics.upcoming }}</span>
+          <span class="text-[11px] text-secondary-text">scheduled</span>
+        </div>
       </div>
 
       <!-- Pick Later -->
       <div
-        class="p-4 rounded-xl bg-card-background border transition-all cursor-pointer select-none group"
-        :class="filters.status === 'PICK_LATER' ? 'border-purple-500 shadow-xs ring-1 ring-purple-500/20' : 'border-primary-border/70 hover:border-primary-border'"
+        class="bg-card-background p-4 rounded-xl transition-all cursor-pointer select-none flex flex-col justify-between group"
+        :class="filters.status === 'PICK_LATER' ? 'bg-status-pick-later-bg/50' : 'hover:bg-surface-subtle'"
         @click="filterByStatus('PICK_LATER')"
-        title="Filter by Pick later"
+        title="Filter by Pick Later"
       >
-        <div class="flex items-center justify-between gap-2 mb-1.5">
-          <span class="text-xs text-secondary-text font-medium group-hover:text-primary-text transition-colors">Pick Later</span>
-          <div class="w-7 h-7 rounded-lg bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
-            <span class="material-symbols-rounded text-base">schedule</span>
-          </div>
+        <div class="flex items-center justify-between text-secondary-text mb-2">
+          <span class="text-xs font-medium group-hover:text-primary-text transition-colors">Pick Later</span>
+          <span class="w-2 h-2 rounded-full dot-status-pick-later"></span>
         </div>
-        <p class="text-2xl font-bold text-primary-text tracking-tight">{{ metrics.pickLater }}</p>
-        <p class="text-[11px] text-secondary-text mt-0.5">Backlogged</p>
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl sm:text-3xl font-bold text-primary-text tracking-tight">{{ metrics.pickLater }}</span>
+          <span class="text-[11px] text-secondary-text">staged</span>
+        </div>
       </div>
 
       <!-- Completed -->
       <div
-        class="p-4 rounded-xl bg-card-background border transition-all cursor-pointer select-none group"
-        :class="filters.status === 'COMPLETED' ? 'border-primary-green shadow-xs ring-1 ring-primary-green/20' : 'border-primary-border/70 hover:border-primary-border'"
+        class="bg-card-background p-4 rounded-xl transition-all cursor-pointer select-none flex flex-col justify-between group"
+        :class="filters.status === 'COMPLETED' ? 'bg-status-completed-bg/50' : 'hover:bg-surface-subtle'"
         @click="filterByStatus('COMPLETED')"
         title="Filter by Completed"
       >
-        <div class="flex items-center justify-between gap-2 mb-1.5">
-          <span class="text-xs text-secondary-text font-medium group-hover:text-primary-text transition-colors">Completed</span>
-          <div class="w-7 h-7 rounded-lg bg-primary-green/15 text-primary-green flex items-center justify-center shrink-0">
-            <span class="material-symbols-rounded text-base">check_circle</span>
-          </div>
+        <div class="flex items-center justify-between text-secondary-text mb-2">
+          <span class="text-xs font-medium group-hover:text-primary-text transition-colors">Completed</span>
+          <span class="w-2 h-2 rounded-full dot-status-completed"></span>
         </div>
-        <p class="text-2xl font-bold text-primary-text tracking-tight">{{ metrics.completed }}</p>
-        <p class="text-[11px] text-primary-green/90 font-medium mt-0.5">Successfully closed</p>
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl sm:text-3xl font-bold text-primary-text tracking-tight">{{ metrics.completed }}</span>
+          <span class="text-[11px] text-status-completed font-medium">resolved</span>
+        </div>
       </div>
 
       <!-- Overdue -->
       <div
-        class="p-4 rounded-xl bg-card-background border transition-all cursor-pointer select-none group"
-        :class="metrics.overdue > 0 ? 'border-primary-red/40 hover:border-primary-red' : 'border-primary-border/70'"
+        class="bg-card-background p-4 rounded-xl transition-all cursor-pointer select-none flex flex-col justify-between group"
+        :class="metrics.overdue > 0 ? 'bg-status-overdue-bg/40' : 'hover:bg-surface-subtle'"
         title="Overdue tasks"
       >
-        <div class="flex items-center justify-between gap-2 mb-1.5">
-          <span class="text-xs text-secondary-text font-medium group-hover:text-primary-text transition-colors">Overdue</span>
-          <div class="w-7 h-7 rounded-lg bg-primary-red/15 text-primary-red flex items-center justify-center shrink-0">
-            <span class="material-symbols-rounded text-base">warning</span>
-          </div>
+        <div class="flex items-center justify-between text-secondary-text mb-2">
+          <span class="text-xs font-medium group-hover:text-primary-text transition-colors">Overdue</span>
+          <span class="w-2 h-2 rounded-full dot-status-overdue"></span>
         </div>
-        <p class="text-2xl font-bold text-primary-red tracking-tight">{{ metrics.overdue }}</p>
-        <p class="text-[11px] text-primary-red/80 font-medium mt-0.5">Past due date</p>
+        <div class="flex items-baseline gap-2">
+          <span class="text-2xl sm:text-3xl font-bold text-status-overdue tracking-tight">{{ metrics.overdue }}</span>
+          <span class="text-[11px] text-status-overdue/80 font-medium">past SLA</span>
+        </div>
       </div>
     </div>
 
-    <!-- ── 2. Filters & Action Bar ────────────────────────────────────────── -->
+    <!-- ── 3. Operational Filter & View Bar (Stitch Design) ──────────────── -->
     <div
-      class="p-3 sm:p-3.5 rounded-xl bg-card-background border border-primary-border/60 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs"
+      class="bg-card-background p-3 rounded-xl flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3"
     >
-      <!-- Filters Group -->
-      <div class="flex flex-1 flex-wrap items-center gap-2 sm:gap-2.5">
-        <!-- Search Input Component -->
-        <div class="flex-1 min-w-[200px] sm:min-w-[260px] max-w-sm">
-          <SearchInput
+      <!-- Left Filters -->
+      <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
+        <!-- Search Input -->
+        <div class="flex items-center gap-2 bg-surface-subtle px-3 py-1.5 rounded-lg focus-within:ring-1 focus-within:ring-primary/20 transition-colors flex-1 min-w-[200px] sm:min-w-[240px] max-w-sm">
+          <span class="material-symbols-rounded text-secondary-text text-[18px]">search</span>
+          <input
             v-model="filters.q"
-            placeholder="Search by title, description, or person..."
-            variant="rounded"
-            size="md"
-            :debounce="350"
-            @search="applyFilters"
-            @clear="clearSearch"
+            type="text"
+            class="bg-transparent text-xs text-primary-text placeholder:text-secondary-text/60 outline-none w-full"
+            placeholder="Filter by title, creator, assignee..."
+            @input="handleSearchInput"
           />
+          <button
+            v-if="filters.q"
+            type="button"
+            @click="clearSearch"
+            class="text-secondary-text hover:text-primary-text p-0.5 rounded cursor-pointer"
+          >
+            <span class="material-symbols-rounded text-sm">close</span>
+          </button>
         </div>
 
-        <!-- Status Filter -->
+        <!-- Status Filter Pill -->
         <div class="w-32 sm:w-36">
           <BaseSelect
             v-model="filters.status"
             :options="statusOptions"
             allow-all
-            all-label="All Statuses"
-            custom-class="!h-9 !py-1 text-xs rounded-lg bg-background"
+            all-label="Status: All"
+            custom-class="!h-9 !py-1 text-xs rounded-lg bg-surface-subtle border-none"
             @update:model-value="applyFilters"
           />
         </div>
 
-        <!-- Priority Filter -->
+        <!-- Priority Filter Pill -->
         <div class="w-32 sm:w-36">
           <BaseSelect
             v-model="filters.priority"
             :options="priorityOptions"
             allow-all
-            all-label="All Priorities"
-            custom-class="!h-9 !py-1 text-xs rounded-lg bg-background"
+            all-label="Priority: All"
+            custom-class="!h-9 !py-1 text-xs rounded-lg bg-surface-subtle border-none"
             @update:model-value="applyFilters"
           />
         </div>
 
-        <!-- Date Range Filter (BaseDatePicker) -->
-        <div class="w-56 sm:w-64 min-w-[200px]">
+        <!-- Date Range Calendar Filter -->
+        <div class="w-56 sm:w-64 min-w-[210px]">
           <BaseDatePicker
             v-model="dateRangeValue"
             mode="range"
@@ -157,7 +204,7 @@
             :block-future="false"
             :presets="taskDatePresets"
             placeholder="Date range (from - to)"
-            custom-class="!h-9 !py-1 text-xs rounded-lg bg-background"
+            custom-class="!h-9 !py-1 text-xs rounded-lg bg-surface-subtle border-none"
             @change="handleDateRangeChange"
             @clear="handleDateRangeClear"
           />
@@ -167,8 +214,10 @@
         <button
           type="button"
           @click="toggleOnlyMyTasks"
-          class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-medium rounded-lg border transition-all cursor-pointer select-none"
-          :class="onlyMyTasks ? 'bg-primary/10 border-primary text-primary font-semibold' : 'bg-background border-primary-border text-secondary-text hover:text-primary-text'"
+          class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-medium rounded-lg transition-all cursor-pointer select-none"
+          :class="onlyMyTasks
+            ? 'bg-primary text-white font-semibold'
+            : 'bg-surface-subtle text-secondary-text hover:text-primary-text'"
           title="Filter tasks assigned to me"
         >
           <span class="material-symbols-rounded text-sm">person</span>
@@ -180,7 +229,7 @@
           v-if="hasActiveFilters"
           type="button"
           @click="resetFilters"
-          class="h-9 inline-flex items-center gap-1 px-2.5 text-xs text-secondary-text hover:text-primary-red transition-colors cursor-pointer rounded-lg hover:bg-background shrink-0"
+          class="h-9 inline-flex items-center gap-1 px-2.5 text-xs text-secondary-text hover:text-primary-red transition-colors cursor-pointer rounded-lg hover:bg-surface-subtle shrink-0"
           title="Reset all filters"
         >
           <span class="material-symbols-rounded text-sm">restart_alt</span>
@@ -188,230 +237,348 @@
         </button>
       </div>
 
-      <!-- Action Button: New Task -->
-      <div class="flex items-center gap-2 shrink-0">
-        <button
-          v-if="permissions.can('task.create')"
-          type="button"
-          class="btn-primary h-9 text-xs px-3.5 flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-xs active:scale-95 transition-all"
-          @click="openCreate"
-        >
-          <span class="material-symbols-rounded text-base">add</span>
-          <span>New task</span>
-        </button>
+      <!-- Right Controls: Sort Label & View Switcher (Table / Clean Cards) -->
+      <div class="flex items-center justify-between lg:justify-end gap-3 shrink-0">
+        <!-- Segmented Pill Toggle -->
+        <div class="inline-flex p-1 bg-surface-subtle rounded-lg gap-1">
+          <button
+            type="button"
+            @click="viewMode = 'table'"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer"
+            :class="viewMode === 'table'
+              ? 'bg-primary text-white'
+              : 'text-secondary-text hover:text-primary-text'"
+          >
+            <span class="material-symbols-rounded text-[16px]">table_rows</span>
+            <span>Table</span>
+          </button>
+
+          <button
+            type="button"
+            @click="viewMode = 'cards'"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer"
+            :class="viewMode === 'cards'
+              ? 'bg-primary text-white'
+              : 'text-secondary-text hover:text-primary-text'"
+          >
+            <span class="material-symbols-rounded text-[16px]">view_agenda</span>
+            <span>Clean Cards</span>
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- ── 3. Tasks Table ────────────────────────────────────────────────── -->
-    <DataTable
-      :data="displayedTasks"
-      :columns="columns"
-      :loading="store.loading"
-      :row-class="taskRowClass"
-      row-key="id"
-    >
-      <!-- Quick Status Complete Toggle Column -->
-      <template #cell-select="{ row }">
-        <button
-          type="button"
-          class="w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer group/chk"
-          :title="row.status === 'COMPLETED' ? 'Mark as incomplete' : 'Mark as complete'"
-          @click.stop="toggleComplete(row)"
-          :disabled="!canComplete(row) && !canEditFields"
-        >
-          <span
-            v-if="row.status === 'COMPLETED'"
-            class="material-symbols-rounded text-lg text-primary-green group-hover/chk:scale-110 transition-transform"
+    <!-- ── 4A. View 1: Data Table View (Default) ─────────────────────────── -->
+    <div v-if="viewMode === 'table'">
+      <DataTable
+        :data="displayedTasks"
+        :columns="columns"
+        :loading="store.loading"
+        :row-class="taskRowClass"
+        row-key="id"
+      >
+        <!-- Quick Status Complete Toggle Column -->
+        <template #cell-select="{ row }">
+          <button
+            type="button"
+            class="w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer group/chk"
+            :title="row.status === 'COMPLETED' ? 'Mark as incomplete' : 'Mark as complete'"
+            @click.stop="toggleComplete(row)"
+            :disabled="!canComplete(row) && !canEditFields"
           >
-            check_circle
-          </span>
-          <span
-            v-else
-            class="material-symbols-rounded text-lg text-secondary-text/40 group-hover/chk:text-primary-green group-hover/chk:scale-110 transition-transform"
-          >
-            radio_button_unchecked
-          </span>
-        </button>
-      </template>
-
-      <!-- Task Title & Description -->
-      <template #cell-title="{ row }">
-        <div class="py-1 min-w-0 pr-2">
-          <div class="flex items-center gap-2">
-            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-background text-secondary-text border border-primary-border/60 shrink-0">
-              #{{ row.id }}
+            <span
+              v-if="row.status === 'COMPLETED'"
+              class="material-symbols-rounded text-lg text-status-completed group-hover/chk:scale-110 transition-transform"
+            >
+              check_circle
             </span>
             <span
-              class="text-xs font-semibold truncate transition-colors cursor-pointer"
-              :class="row.status === 'COMPLETED' ? 'line-through text-secondary-text/70' : 'text-primary-text hover:text-primary'"
-              :title="row.title"
-              @click="openEdit(row)"
+              v-else
+              class="material-symbols-rounded text-lg text-secondary-text/40 group-hover/chk:text-status-completed group-hover/chk:scale-110 transition-transform"
             >
-              {{ row.title }}
+              radio_button_unchecked
             </span>
-          </div>
-          <p
-            v-if="row.description"
-            class="text-[11px] text-secondary-text/80 truncate max-w-sm mt-0.5 pl-7 leading-tight"
-            :title="row.description"
-          >
-            {{ row.description }}
-          </p>
-        </div>
-      </template>
+          </button>
+        </template>
 
-      <!-- Status Column -->
-      <template #cell-status="{ row }">
-        <span
-          class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border"
-          :class="getStatusClasses(row.status)"
-        >
-          <span class="material-symbols-rounded text-xs">{{ getStatusIcon(row.status) }}</span>
-          <span>{{ formatLabel(row.status) }}</span>
-        </span>
-      </template>
-
-      <!-- Priority Column -->
-      <template #cell-priority="{ row }">
-        <span
-          class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold border"
-          :class="getPriorityClasses(row.priority)"
-        >
-          <span class="w-1.5 h-1.5 rounded-full" :class="getPriorityDotClass(row.priority)"></span>
-          <span>{{ formatLabel(row.priority) }}</span>
-        </span>
-      </template>
-
-      <!-- Assignee Column -->
-      <template #cell-assigned_to="{ row }">
-        <div class="flex items-center gap-2 py-0.5 min-w-0" :title="row.assignee?.email || ''">
-          <div class="w-6 h-6 rounded-full bg-primary/10 text-primary font-bold text-[10px] flex items-center justify-center shrink-0 border border-primary-border/50">
-            {{ getInitials(row.assignee?.name || row.assigned_to_name) }}
-          </div>
-          <div class="min-w-0">
-            <p class="text-xs font-medium text-primary-text truncate leading-tight">
-              {{ row.assignee?.name || row.assigned_to_name || (row.assigned_to ? `User #${row.assigned_to}` : "Unassigned") }}
-              <span v-if="Number(row.assigned_to) === currentUserId" class="text-[10px] text-primary font-semibold ml-1">(You)</span>
+        <!-- Task Title & Description -->
+        <template #cell-title="{ row }">
+          <div class="py-1 min-w-0 pr-2">
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-mono font-medium text-secondary-text shrink-0">
+                #{{ row.id }}
+              </span>
+              <span
+                class="text-xs font-semibold truncate transition-colors cursor-pointer"
+                :class="row.status === 'COMPLETED' ? 'line-through text-secondary-text/70' : 'text-primary-text hover:text-primary'"
+                :title="row.title"
+                @click="openEdit(row)"
+              >
+                {{ row.title }}
+              </span>
+            </div>
+            <p
+              v-if="row.description"
+              class="text-[11px] text-secondary-text/80 truncate max-w-sm mt-0.5 pl-6 leading-tight"
+              :title="row.description"
+            >
+              {{ row.description }}
             </p>
           </div>
-        </div>
-      </template>
+        </template>
 
-      <!-- Created By / Reporter Column -->
-      <template #cell-created_by="{ row }">
-        <div class="flex items-center gap-2 py-0.5 min-w-0" :title="row.creator?.email || ''">
-          <div class="w-6 h-6 rounded-full bg-secondary-text/10 text-secondary-text font-bold text-[10px] flex items-center justify-center shrink-0 border border-primary-border/40">
-            {{ getInitials(row.creator?.name || row.created_by_name) }}
-          </div>
-          <div class="min-w-0">
-            <p class="text-xs font-medium text-primary-text truncate leading-tight">
+        <!-- Status Column (Stitch Quiet Work Badges) -->
+        <template #cell-status="{ row }">
+          <span
+            class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium"
+            :class="getStatusClasses(row.status)"
+          >
+            <span class="w-1.5 h-1.5 rounded-full" :class="getStatusDotClass(row.status)"></span>
+            <span>{{ formatLabel(row.status) }}</span>
+          </span>
+        </template>
+
+        <!-- Priority Column (Stitch Quiet Work Badges) -->
+        <template #cell-priority="{ row }">
+          <span
+            class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+            :class="getPriorityClasses(row.priority)"
+          >
+            {{ formatLabel(row.priority) }}
+          </span>
+        </template>
+
+        <!-- Creator Column -->
+        <template #cell-created_by="{ row }">
+          <div class="flex flex-col leading-tight py-0.5 min-w-0" :title="row.creator?.email || ''">
+            <span class="text-xs font-medium text-primary-text truncate">
               {{ row.creator?.name || row.created_by_name || (row.created_by ? `User #${row.created_by}` : "—") }}
-            </p>
-          </div>
-        </div>
-      </template>
-
-      <!-- Due Date Column -->
-      <template #cell-due_date="{ row }">
-        <div class="flex items-center gap-1.5">
-          <span
-            v-if="isOverdue(row)"
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary-red/10 text-primary-red border border-primary-red/20"
-            title="Task is overdue!"
-          >
-            <span class="material-symbols-rounded text-xs">warning</span>
-            <span>{{ formatDate(row.due_date) }}</span>
-          </span>
-          <span
-            v-else-if="isDueSoon(row)"
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary-yellow/10 text-primary-yellow border border-primary-yellow/20"
-            title="Due soon"
-          >
-            <span class="material-symbols-rounded text-xs">schedule</span>
-            <span>{{ formatDate(row.due_date) }}</span>
-          </span>
-          <span
-            v-else-if="row.due_date"
-            class="inline-flex items-center gap-1 text-xs text-secondary-text"
-          >
-            <span class="material-symbols-rounded text-sm text-secondary-text/70">calendar_today</span>
-            <span>{{ formatDate(row.due_date) }}</span>
-          </span>
-          <span v-else class="text-xs text-secondary-text/50">—</span>
-        </div>
-      </template>
-
-      <!-- Actions Column -->
-      <template #actions="{ row }">
-        <div class="flex items-center justify-end gap-1">
-          <button
-            v-if="canOpenEditor(row)"
-            type="button"
-            class="w-7 h-7 rounded-lg text-secondary-text hover:text-primary hover:bg-background flex items-center justify-center transition-colors cursor-pointer"
-            title="Edit task"
-            @click.stop="openEdit(row)"
-          >
-            <span class="material-symbols-rounded text-[17px]">edit</span>
-          </button>
-          <button
-            v-if="canComplete(row)"
-            type="button"
-            class="w-7 h-7 rounded-lg text-secondary-text hover:text-primary-green hover:bg-background flex items-center justify-center transition-colors cursor-pointer"
-            :title="row.status === 'COMPLETED' ? 'Reopen task' : 'Mark completed'"
-            @click.stop="toggleComplete(row)"
-          >
-            <span class="material-symbols-rounded text-[17px]">
-              {{ row.status === 'COMPLETED' ? 'replay' : 'check_circle' }}
             </span>
-          </button>
-          <button
-            v-if="permissions.can('task.delete') && isCreator(row)"
-            type="button"
-            class="w-7 h-7 rounded-lg text-secondary-text hover:text-primary-red hover:bg-primary-red/10 flex items-center justify-center transition-colors cursor-pointer"
-            title="Delete task"
-            @click.stop="confirmDelete(row)"
-          >
-            <span class="material-symbols-rounded text-[17px]">delete</span>
-          </button>
-        </div>
-      </template>
-
-      <!-- Empty State -->
-      <template #empty>
-        <div class="py-12 px-4 text-center space-y-3">
-          <div class="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mx-auto border border-primary-border/60">
-            <span class="material-symbols-rounded text-2xl">checklist</span>
+            <span v-if="row.creator?.email" class="text-[10px] text-secondary-text truncate mt-0.5">
+              {{ row.creator.email }}
+            </span>
           </div>
+        </template>
+
+        <!-- Assignee Column (Avatar Initial + Name + Email) -->
+        <template #cell-assigned_to="{ row }">
+          <div class="flex items-center gap-2 py-0.5 min-w-0" :title="row.assignee?.email || ''">
+            <div class="w-6 h-6 rounded-full bg-surface-subtle text-secondary-text font-bold text-[10px] flex items-center justify-center shrink-0">
+              {{ getInitials(row.assignee?.name || row.assigned_to_name) }}
+            </div>
+            <div class="flex flex-col leading-tight min-w-0">
+              <span class="text-xs font-medium text-primary-text truncate">
+                {{ row.assignee?.name || row.assigned_to_name || (row.assigned_to ? `User #${row.assigned_to}` : "Unassigned") }}
+                <span v-if="Number(row.assigned_to) === currentUserId" class="text-[10px] text-primary font-semibold ml-1">(You)</span>
+              </span>
+              <span v-if="row.assignee?.email" class="text-[10px] text-secondary-text truncate mt-0.5">
+                {{ row.assignee.email }}
+              </span>
+            </div>
+          </div>
+        </template>
+
+        <!-- Created Date Column -->
+        <template #cell-created_at="{ row }">
+          <span class="text-xs text-secondary-text font-tabular-nums">
+            {{ formatDate(row.created_at) }}
+          </span>
+        </template>
+
+        <!-- Due Date Column -->
+        <template #cell-due_date="{ row }">
+          <div class="flex items-center gap-1.5">
+            <span
+              v-if="isOverdue(row)"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold badge-status-overdue"
+              title="Task is overdue!"
+            >
+              <span class="w-1.5 h-1.5 rounded-full dot-status-overdue"></span>
+              <span>{{ formatDate(row.due_date) }}</span>
+            </span>
+            <span
+              v-else-if="isDueSoon(row)"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold badge-status-pending"
+              title="Due soon"
+            >
+              <span class="w-1.5 h-1.5 rounded-full dot-status-pending"></span>
+              <span>{{ formatDate(row.due_date) }}</span>
+            </span>
+            <span
+              v-else-if="row.due_date"
+              class="text-xs text-secondary-text font-tabular-nums"
+            >
+              {{ formatDate(row.due_date) }}
+            </span>
+            <span v-else class="text-xs text-secondary-text/50">—</span>
+          </div>
+        </template>
+
+        <!-- Actions Column -->
+        <template #actions="{ row }">
+          <div class="flex items-center justify-end gap-1">
+            <button
+              v-if="canOpenEditor(row)"
+              type="button"
+              class="w-7 h-7 rounded-lg text-secondary-text hover:text-primary-text hover:bg-surface-subtle flex items-center justify-center transition-colors cursor-pointer"
+              title="Edit task"
+              @click.stop="openEdit(row)"
+            >
+              <span class="material-symbols-rounded text-[17px]">edit</span>
+            </button>
+            <button
+              v-if="canComplete(row)"
+              type="button"
+              class="w-7 h-7 rounded-lg text-secondary-text hover:text-status-completed hover:bg-surface-subtle flex items-center justify-center transition-colors cursor-pointer"
+              :title="row.status === 'COMPLETED' ? 'Reopen task' : 'Mark completed'"
+              @click.stop="toggleComplete(row)"
+            >
+              <span class="material-symbols-rounded text-[17px]">
+                {{ row.status === 'COMPLETED' ? 'replay' : 'check_circle' }}
+              </span>
+            </button>
+            <button
+              v-if="permissions.can('task.delete') && isCreator(row)"
+              type="button"
+              class="w-7 h-7 rounded-lg text-secondary-text hover:text-primary-red hover:bg-primary-red/10 flex items-center justify-center transition-colors cursor-pointer"
+              title="Delete task"
+              @click.stop="confirmDelete(row)"
+            >
+              <span class="material-symbols-rounded text-[17px]">delete</span>
+            </button>
+          </div>
+        </template>
+
+        <!-- Empty State -->
+        <template #empty>
+          <div class="py-14 px-4 text-center space-y-3">
+            <div class="w-12 h-12 rounded-2xl bg-surface-subtle flex items-center justify-center mx-auto text-secondary-text">
+              <span class="material-symbols-rounded text-2xl">checklist</span>
+            </div>
+            <div>
+              <h4 class="text-sm font-semibold text-primary-text">No tasks found</h4>
+              <p class="text-xs text-secondary-text mt-1 max-w-sm mx-auto">
+                {{ hasActiveFilters ? 'No tasks match the active filters or date criteria. Try resetting filters.' : 'There are no tasks assigned yet. Create your first task to get started.' }}
+              </p>
+            </div>
+            <div class="pt-1 flex items-center justify-center gap-2">
+              <button
+                v-if="hasActiveFilters"
+                type="button"
+                class="btn-secondary text-xs px-3 py-1.5"
+                @click="resetFilters"
+              >
+                Reset Filters
+              </button>
+              <button
+                v-if="permissions.can('task.create')"
+                type="button"
+                class="btn-primary text-xs px-3.5 py-1.5"
+                @click="openCreate"
+              >
+                <span class="material-symbols-rounded text-sm">add</span>
+                <span>Create Task</span>
+              </button>
+            </div>
+          </div>
+        </template>
+      </DataTable>
+    </div>
+
+    <!-- ── 4B. View 2: Clean Cards View ──────────────────────────────────── -->
+    <div v-else-if="viewMode === 'cards'">
+      <div v-if="displayedTasks.length === 0" class="bg-card-background rounded-xl p-12 text-center space-y-3">
+        <div class="w-12 h-12 rounded-2xl bg-surface-subtle flex items-center justify-center mx-auto text-secondary-text">
+          <span class="material-symbols-rounded text-2xl">checklist</span>
+        </div>
+        <h4 class="text-sm font-semibold text-primary-text">No tasks to display</h4>
+        <p class="text-xs text-secondary-text max-w-sm mx-auto">
+          No records match your active query. Adjust your filters or create a new task.
+        </p>
+      </div>
+
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          v-for="task in displayedTasks"
+          :key="`card-${task.id}`"
+          class="bg-card-background rounded-xl p-4 flex flex-col justify-between hover:bg-surface-subtle/40 transition-all group"
+        >
+          <!-- Card Header: ID, Status, Priority -->
           <div>
-            <h4 class="text-sm font-semibold text-primary-text">No tasks found</h4>
-            <p class="text-xs text-secondary-text mt-1 max-w-sm mx-auto">
-              {{ hasActiveFilters ? 'No tasks match the active filters or search criteria. Try resetting filters.' : 'There are no tasks assigned yet. Create your first task to get started.' }}
-            </p>
+            <div class="flex items-center justify-between gap-2 pb-2.5">
+              <span class="text-xs font-mono font-medium text-secondary-text">#{{ task.id }}</span>
+              <div class="flex items-center gap-1.5">
+                <!-- Priority Pill -->
+                <span class="px-2 py-0.5 rounded text-[11px] font-medium" :class="getPriorityClasses(task.priority)">
+                  {{ formatLabel(task.priority) }}
+                </span>
+                <!-- Status Pill -->
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium" :class="getStatusClasses(task.status)">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="getStatusDotClass(task.status)"></span>
+                  <span>{{ formatLabel(task.status) }}</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Title & Quick Toggle -->
+            <div class="pt-3 flex items-start gap-2">
+              <button
+                type="button"
+                @click.stop="toggleComplete(task)"
+                :disabled="!canComplete(task) && !canEditFields"
+                class="mt-0.5 text-secondary-text/40 hover:text-status-completed cursor-pointer"
+              >
+                <span v-if="task.status === 'COMPLETED'" class="material-symbols-rounded text-base text-status-completed">check_circle</span>
+                <span v-else class="material-symbols-rounded text-base">radio_button_unchecked</span>
+              </button>
+              <div class="min-w-0 flex-1">
+                <h4
+                  class="text-xs font-semibold cursor-pointer hover:text-primary transition-colors"
+                  :class="task.status === 'COMPLETED' ? 'line-through text-secondary-text' : 'text-primary-text'"
+                  @click="openEdit(task)"
+                >
+                  {{ task.title }}
+                </h4>
+                <p v-if="task.description" class="text-[11px] text-secondary-text line-clamp-2 mt-1 leading-relaxed">
+                  {{ task.description }}
+                </p>
+              </div>
+            </div>
           </div>
-          <div class="pt-1 flex items-center justify-center gap-2">
-            <button
-              v-if="hasActiveFilters"
-              type="button"
-              class="btn-secondary text-xs px-3 py-1.5"
-              @click="resetFilters"
-            >
-              Reset Filters
-            </button>
-            <button
-              v-if="permissions.can('task.create')"
-              type="button"
-              class="btn-primary text-xs px-3.5 py-1.5"
-              @click="openCreate"
-            >
-              <span class="material-symbols-rounded text-sm">add</span>
-              <span>Create Task</span>
-            </button>
+
+          <!-- Card Footer: People & Timeline -->
+          <div class="pt-3 mt-3 flex items-center justify-between text-xs text-secondary-text">
+            <!-- Assignee avatar -->
+            <div class="flex items-center gap-2 min-w-0">
+              <div class="w-6 h-6 rounded-full bg-surface-subtle font-bold text-[10px] flex items-center justify-center shrink-0">
+                {{ getInitials(task.assignee?.name || task.assigned_to_name) }}
+              </div>
+              <span class="text-xs font-medium text-primary-text truncate">
+                {{ task.assignee?.name || task.assigned_to_name || 'Unassigned' }}
+              </span>
+            </div>
+
+            <!-- Due Date / Actions -->
+            <div class="flex items-center gap-1.5 shrink-0">
+              <span v-if="task.due_date" class="text-[11px] font-tabular-nums px-2 py-0.5 rounded bg-surface-subtle text-secondary-text">
+                {{ formatDate(task.due_date) }}
+              </span>
+              <button
+                v-if="canOpenEditor(task)"
+                type="button"
+                @click="openEdit(task)"
+                class="p-1 rounded hover:bg-surface-subtle text-secondary-text hover:text-primary-text cursor-pointer"
+                title="Edit task"
+              >
+                <span class="material-symbols-rounded text-base">edit</span>
+              </button>
+            </div>
           </div>
         </div>
-      </template>
-    </DataTable>
+      </div>
+    </div>
 
-    <!-- ── 4. Pagination Footer ──────────────────────────────────────────── -->
+    <!-- ── 5. Pagination Footer (Stitch Specification) ───────────────────── -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1 px-1 text-xs text-secondary-text">
       <div>
         Showing
@@ -420,50 +587,54 @@
         <span class="font-semibold text-primary-text">{{ endCount }}</span>
         of
         <span class="font-semibold text-primary-text">{{ totalCount }}</span>
-        tasks
+        tasks &bull; Offset {{ filters.offset }}, Limit {{ filters.limit }}
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5">
         <button
           type="button"
-          class="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-8 h-8 rounded-lg bg-card-background flex items-center justify-center text-secondary-text hover:text-primary-text hover:bg-surface-subtle transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           :disabled="filters.offset <= 0"
           @click="prevPage"
+          title="Previous Page"
         >
           <span class="material-symbols-rounded text-sm">chevron_left</span>
-          <span>Previous</span>
         </button>
-        <span class="px-2 font-medium">Page {{ currentPage }}</span>
+
+        <span class="px-2.5 py-1 rounded-lg bg-surface-subtle text-xs font-medium text-primary-text">
+          Page {{ currentPage }}
+        </span>
+
         <button
           type="button"
-          class="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          class="w-8 h-8 rounded-lg bg-card-background flex items-center justify-center text-secondary-text hover:text-primary-text hover:bg-surface-subtle transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
           :disabled="!store.hasMore && (filters.offset + filters.limit >= totalCount)"
           @click="nextPage"
+          title="Next Page"
         >
-          <span>Next</span>
           <span class="material-symbols-rounded text-sm">chevron_right</span>
         </button>
       </div>
     </div>
 
-    <!-- ── 5. Create / Edit Task Modal ────────────────────────────────────── -->
+    <!-- ── 6. Create / Edit Task Modal ────────────────────────────────────── -->
     <div
       v-if="modalOpen"
       class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
       @click.self="modalOpen = false"
     >
       <form
-        class="bg-card-background border border-primary-border rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar"
+        class="bg-card-background rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar"
         @submit.prevent="saveTask"
       >
         <!-- Modal Header -->
-        <div class="flex items-center justify-between pb-3 border-b border-primary-border/60">
+        <div class="flex items-center justify-between pb-3">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <span class="material-symbols-rounded text-lg">{{ editing ? 'edit_note' : 'add_task' }}</span>
+            <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
+              <span class="material-symbols-rounded text-base">{{ editing ? 'edit_note' : 'add_task' }}</span>
             </div>
             <div>
-              <h3 class="title-text text-base font-semibold text-primary-text">
+              <h3 class="text-base font-semibold text-primary-text">
                 {{ editing ? `Edit Task #${editing.id}` : "Create New Task" }}
               </h3>
               <p class="text-[11px] text-secondary-text">
@@ -473,7 +644,7 @@
           </div>
           <button
             type="button"
-            class="w-7 h-7 rounded-lg text-secondary-text hover:text-primary-text hover:bg-background flex items-center justify-center transition-colors cursor-pointer"
+            class="w-7 h-7 rounded-lg text-secondary-text hover:text-primary-text hover:bg-surface-subtle flex items-center justify-center transition-colors cursor-pointer"
             @click="modalOpen = false"
           >
             <span class="material-symbols-rounded text-lg">close</span>
@@ -483,7 +654,7 @@
         <!-- Task Title -->
         <div>
           <label class="block text-xs font-semibold text-primary-text mb-1">
-            Task Title <span class="text-primary-red">*</span>
+            Task Title <span class="text-status-overdue">*</span>
           </label>
           <input
             v-model="form.title"
@@ -550,7 +721,7 @@
         </div>
 
         <!-- Assignee Selection Section -->
-        <div v-if="canPickAssignee" class="space-y-2 p-3 rounded-xl bg-background border border-primary-border/60">
+        <div v-if="canPickAssignee" class="space-y-2 p-3 rounded-xl bg-surface-subtle">
           <div class="flex items-center justify-between">
             <label class="text-xs font-semibold text-primary-text">Assignee</label>
             <button
@@ -564,8 +735,8 @@
           </div>
 
           <!-- Current Selected Assignee Card -->
-          <div class="flex items-center gap-2 p-2 rounded-lg bg-card-background border border-primary-border/40">
-            <div class="w-7 h-7 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center shrink-0 border border-primary-border/50">
+          <div class="flex items-center gap-2 p-2 rounded-lg bg-card-background">
+            <div class="w-7 h-7 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center shrink-0">
               {{ getInitials(form.assigned_to_name) }}
             </div>
             <div class="min-w-0 flex-1">
@@ -593,13 +764,13 @@
           </div>
           <div
             v-else-if="activeUserSearch === 'assignee' && store.assigneeMatches.length"
-            class="border border-primary-border rounded-lg divide-y divide-primary-border/40 max-h-36 overflow-y-auto no-scrollbar bg-card-background shadow-sm"
+            class="rounded-lg divide-y divide-primary-border/40 max-h-36 overflow-y-auto no-scrollbar bg-card-background shadow-sm"
           >
             <button
               v-for="person in store.assigneeMatches"
               :key="`assignee-${person.id}`"
               type="button"
-              class="w-full text-left px-3 py-2 hover:bg-background transition-colors flex items-center justify-between gap-2 cursor-pointer"
+              class="w-full text-left px-3 py-2 hover:bg-surface-subtle transition-colors flex items-center justify-between gap-2 cursor-pointer"
               @click="selectAssignee(person)"
             >
               <div>
@@ -612,7 +783,7 @@
         </div>
 
         <!-- Create On Behalf Of (Admin / Manager) -->
-        <div v-if="canPickCreator" class="space-y-2 p-3 rounded-xl bg-background border border-primary-border/60">
+        <div v-if="canPickCreator" class="space-y-2 p-3 rounded-xl bg-surface-subtle">
           <div class="flex items-center justify-between">
             <label class="text-xs font-semibold text-primary-text">Create on behalf of</label>
             <button
@@ -624,8 +795,8 @@
             </button>
           </div>
 
-          <div class="flex items-center gap-2 p-2 rounded-lg bg-card-background border border-primary-border/40">
-            <div class="w-7 h-7 rounded-full bg-secondary-text/10 text-secondary-text font-bold text-xs flex items-center justify-center shrink-0">
+          <div class="flex items-center gap-2 p-2 rounded-lg bg-card-background">
+            <div class="w-7 h-7 rounded-full bg-surface-subtle text-secondary-text font-bold text-xs flex items-center justify-center shrink-0">
               {{ getInitials(form.created_by_name) }}
             </div>
             <p class="text-xs font-semibold text-primary-text truncate">
@@ -649,13 +820,13 @@
           </div>
           <div
             v-else-if="activeUserSearch === 'creator' && store.assigneeMatches.length"
-            class="border border-primary-border rounded-lg divide-y divide-primary-border/40 max-h-36 overflow-y-auto no-scrollbar bg-card-background shadow-sm"
+            class="rounded-lg divide-y divide-primary-border/40 max-h-36 overflow-y-auto no-scrollbar bg-card-background shadow-sm"
           >
             <button
               v-for="person in store.assigneeMatches"
               :key="`creator-${person.id}`"
               type="button"
-              class="w-full text-left px-3 py-2 hover:bg-background transition-colors flex items-center justify-between gap-2 cursor-pointer"
+              class="w-full text-left px-3 py-2 hover:bg-surface-subtle transition-colors flex items-center justify-between gap-2 cursor-pointer"
               @click="selectCreator(person)"
             >
               <div>
@@ -668,7 +839,7 @@
         </div>
 
         <!-- Modal Footer Actions -->
-        <div class="flex items-center justify-end gap-2 pt-3 border-t border-primary-border/60">
+        <div class="flex items-center justify-end gap-2 pt-3">
           <button
             type="button"
             class="btn-secondary text-xs px-3.5 py-2 cursor-pointer"
@@ -688,7 +859,7 @@
       </form>
     </div>
 
-    <!-- ── 6. Confirmation Dialog for Delete ──────────────────────────────── -->
+    <!-- ── 7. Confirmation Dialog for Delete ──────────────────────────────── -->
     <ConfirmationDialog
       v-model="deleteOpen"
       title="Delete task?"
@@ -707,7 +878,6 @@ import DataTable from "@/components/common/DataTable";
 import ConfirmationDialog from "@/components/common/ConfirmationDialog.vue";
 import BaseSelect from "@/components/common/BaseSelect.vue";
 import BaseDatePicker from "@/components/common/BaseDatePicker.vue";
-import SearchInput from "@/components/common/SearchInput.vue";
 import { useTasksStore } from "@/stores/tasks/tasks";
 import { usePermissionsStore } from "@/stores/rbac/permissions";
 import { useAuthStore } from "@/stores/auth/auth";
@@ -716,6 +886,8 @@ const SEARCH_DEBOUNCE_MS = 280;
 const store = useTasksStore();
 const permissions = usePermissionsStore();
 const auth = useAuthStore();
+
+const viewMode = ref("table"); // 'table' | 'cards'
 
 const statuses = ["PENDING", "UPCOMING", "PICK_LATER", "COMPLETED"];
 const priorities = ["LOW", "MEDIUM", "HIGH"];
@@ -733,7 +905,7 @@ const formatDate = (isoString) => {
   try {
     const d = new Date(isoString);
     if (isNaN(d.getTime())) return isoString;
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   } catch (_) {
     return isoString;
   }
@@ -746,28 +918,31 @@ const getInitials = (name) => {
 };
 
 const statusOptions = computed(() =>
-  statuses.map((s) => ({ label: formatLabel(s), value: s }))
+  statuses.map((s) => ({ label: `Status: ${formatLabel(s)}`, value: s }))
 );
 
 const priorityOptions = computed(() =>
-  priorities.map((p) => ({ label: formatLabel(p), value: p }))
+  priorities.map((p) => ({ label: `Priority: ${formatLabel(p)}`, value: p }))
 );
 
 const canViewAllTasks = computed(() => permissions.can("task.view_all"));
 
-// Columns Definition for DataTable
+// Columns Definition for DataTable matching Stitch layout
 const columns = computed(() => {
   const base = [
     { key: "select", label: "", width: 44, sortable: false },
-    { key: "title", label: "Task", minWidth: 260 },
-    { key: "status", label: "Status", width: 135 },
-    { key: "priority", label: "Priority", width: 120 },
-    { key: "assigned_to", label: "Assignee", width: 175 },
+    { key: "title", label: "Title", minWidth: 240 },
+    { key: "status", label: "Status", width: 130 },
+    { key: "priority", label: "Priority", width: 110 },
   ];
   if (canViewAllTasks.value) {
-    base.push({ key: "created_by", label: "Reporter", width: 160 });
+    base.push({ key: "created_by", label: "Creator", width: 160 });
   }
-  base.push({ key: "due_date", label: "Due Date", width: 135 });
+  base.push(
+    { key: "assigned_to", label: "Assignee", width: 180 },
+    { key: "created_at", label: "Created Date", width: 135 },
+    { key: "due_date", label: "Due Date", width: 130 }
+  );
   return base;
 });
 
@@ -911,41 +1086,38 @@ const isDueSoon = (row) => {
 };
 
 const taskRowClass = (row) => {
-  if (isOverdue(row)) return "bg-primary-red/3";
+  if (isOverdue(row)) return "bg-status-overdue-bg/15";
   if (row.status === "COMPLETED") return "opacity-80";
   return "";
 };
 
+// Stitch Quiet Work Status Badges (Tokens from src/style.css)
 const getStatusClasses = (status) => {
   const s = String(status || "").toUpperCase();
-  if (s === "COMPLETED") return "bg-primary-green/10 text-primary-green border-primary-green/20";
-  if (s === "PENDING") return "bg-primary-yellow/10 text-primary-yellow border-primary-yellow/20";
-  if (s === "UPCOMING") return "bg-primary-blue/10 text-primary-blue border-primary-blue/20";
-  if (s === "PICK_LATER") return "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20";
-  return "bg-secondary-text/10 text-secondary-text border-primary-border/60";
+  if (s === "COMPLETED") return "badge-status-completed";
+  if (s === "PENDING") return "badge-status-pending";
+  if (s === "UPCOMING") return "badge-status-upcoming";
+  if (s === "PICK_LATER") return "badge-status-pick-later";
+  if (s === "OVERDUE") return "badge-status-overdue";
+  return "bg-surface-subtle text-secondary-text";
 };
 
-const getStatusIcon = (status) => {
+const getStatusDotClass = (status) => {
   const s = String(status || "").toUpperCase();
-  if (s === "COMPLETED") return "check_circle";
-  if (s === "PENDING") return "hourglass_top";
-  if (s === "UPCOMING") return "event_upcoming";
-  if (s === "PICK_LATER") return "schedule";
-  return "help_outline";
+  if (s === "COMPLETED") return "dot-status-completed";
+  if (s === "PENDING") return "dot-status-pending";
+  if (s === "UPCOMING") return "dot-status-upcoming";
+  if (s === "PICK_LATER") return "dot-status-pick-later";
+  if (s === "OVERDUE") return "dot-status-overdue";
+  return "bg-secondary-text/50";
 };
 
+// Stitch Quiet Work Priority Badges (Tokens from src/style.css)
 const getPriorityClasses = (priority) => {
   const p = String(priority || "").toUpperCase();
-  if (p === "HIGH") return "bg-primary-red/10 text-primary-red border-primary-red/20";
-  if (p === "MEDIUM") return "bg-primary-yellow/10 text-primary-yellow border-primary-yellow/20";
-  return "bg-primary-blue/10 text-primary-blue border-primary-blue/20";
-};
-
-const getPriorityDotClass = (priority) => {
-  const p = String(priority || "").toUpperCase();
-  if (p === "HIGH") return "bg-primary-red";
-  if (p === "MEDIUM") return "bg-primary-yellow";
-  return "bg-primary-blue";
+  if (p === "HIGH") return "badge-priority-high";
+  if (p === "MEDIUM") return "badge-priority-medium";
+  return "badge-priority-low";
 };
 
 const canEditFields = computed(() => {
@@ -1070,6 +1242,30 @@ const prevPage = () => {
 const nextPage = () => {
   filters.offset += filters.limit;
   reloadList();
+};
+
+const exportTasksLog = () => {
+  const exportData = displayedTasks.value.map((t) => ({
+    id: t.id,
+    title: t.title,
+    description: t.description,
+    status: t.status,
+    priority: t.priority,
+    creator_name: t.creator?.name || t.created_by_name || "",
+    creator_email: t.creator?.email || "",
+    assignee_name: t.assignee?.name || t.assigned_to_name || "",
+    assignee_email: t.assignee?.email || "",
+    created_at: t.created_at,
+    due_date: t.due_date,
+    completed_at: t.completed_at,
+  }));
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `tasks-log-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
 };
 
 const clearUserSearch = () => {
@@ -1212,14 +1408,12 @@ const saveTask = async () => {
   }
   modalOpen.value = false;
   reloadList();
-  store.fetchSummary(true);
 };
 
 const toggleComplete = async (row) => {
   const nextStatus = row.status === "COMPLETED" ? "PENDING" : "COMPLETED";
   await store.updateTask(row.id, { status: nextStatus });
   reloadList();
-  store.fetchSummary(true);
 };
 
 const confirmDelete = (row) => {
@@ -1233,7 +1427,6 @@ const doDelete = async () => {
   }
   deleteOpen.value = false;
   reloadList();
-  store.fetchSummary(true);
 };
 
 onMounted(() => {
