@@ -20,11 +20,11 @@
       </div>
       <div>
         <label class="block text-xs font-medium text-secondary-text mb-1">Target</label>
-        <select v-model="form.target" class="input-field px-3 py-2 text-sm">
-          <option value="ALL">ALL users</option>
-          <option value="USERS">Specific user IDs</option>
-          <option value="ROLES">Role IDs</option>
-        </select>
+        <BaseSelect
+          v-model="form.target"
+          :options="targetOptions"
+          custom-class="!py-2 text-sm"
+        />
       </div>
       <div v-if="form.target === 'USERS'">
         <label class="block text-xs font-medium text-secondary-text mb-1">User IDs (comma-separated)</label>
@@ -43,7 +43,14 @@
 
 <script setup>
 import { reactive, ref } from "vue";
+import BaseSelect from "@/components/common/BaseSelect.vue";
 import { useNotificationsStore } from "@/stores/notifications/notifications";
+
+const targetOptions = [
+  { label: "ALL users", value: "ALL" },
+  { label: "Specific user IDs", value: "USERS" },
+  { label: "Role IDs", value: "ROLES" },
+];
 
 const store = useNotificationsStore();
 const userIdsText = ref("");

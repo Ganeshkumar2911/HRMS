@@ -12,10 +12,11 @@
     <div class="flex flex-wrap gap-2 items-end">
       <div>
         <label class="block text-[11px] text-secondary-text mb-1">Module</label>
-        <select v-model="filters.module" class="input-field px-3 py-1.5 text-xs">
-          <option value="">All</option>
-          <option v-for="m in modules" :key="m" :value="m">{{ m }}</option>
-        </select>
+        <BaseSelect
+          v-model="filters.module"
+          :options="moduleOptions"
+          custom-class="w-36 !py-1.5 text-xs"
+        />
       </div>
       <div>
         <label class="block text-[11px] text-secondary-text mb-1">Action</label>
@@ -95,10 +96,15 @@
 <script setup>
 import { onMounted, reactive, ref } from "vue";
 import DataTable from "@/components/common/DataTable";
+import BaseSelect from "@/components/common/BaseSelect.vue";
 import { useAuditStore } from "@/stores/audit/audit";
 
 const auditStore = useAuditStore();
 const modules = ["auth", "users", "rbac", "tasks", "hrms", "chat", "notifications"];
+const moduleOptions = [
+  { label: "All", value: "" },
+  ...modules.map((m) => ({ label: m, value: m })),
+];
 const columns = [
   { key: "id", label: "ID", width: 60 },
   { key: "module", label: "Module" },

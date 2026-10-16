@@ -24,30 +24,42 @@
         <StatusBadge :status="row.status" />
       </template>
       <template #actions="{ row }">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-1.5 flex-wrap">
           <button
             v-if="permissions.can('user.update')"
             type="button"
-            class="text-xs text-primary hover:underline"
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all duration-150 cursor-pointer shadow-2xs"
             @click="openEdit(row)"
           >
-            Edit
+            <Pencil class="w-3 h-3" />
+            <span>Edit</span>
           </button>
           <button
             v-if="permissions.can('role.assign')"
             type="button"
-            class="text-xs text-primary-blue hover:underline"
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 hover:bg-blue-600 hover:text-white transition-all duration-150 cursor-pointer shadow-2xs"
             @click="openAssign(row)"
           >
-            Role
+            <Shield class="w-3 h-3" />
+            <span>Role</span>
+          </button>
+          <button
+            v-if="permissions.can('permission.override') || permissions.can('role.assign')"
+            type="button"
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 hover:bg-purple-600 hover:text-white transition-all duration-150 cursor-pointer shadow-2xs"
+            @click="openOverrides(row)"
+          >
+            <KeyRound class="w-3 h-3" />
+            <span>Overrides</span>
           </button>
           <button
             v-if="permissions.can('user.delete') && row.status === 'ACTIVE'"
             type="button"
-            class="text-xs text-primary-red hover:underline"
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-primary-red/10 text-primary-red border border-primary-red/20 hover:bg-primary-red hover:text-white transition-all duration-150 cursor-pointer shadow-2xs"
             @click="confirmDeactivate(row)"
           >
-            Deactivate
+            <UserX class="w-3 h-3" />
+            <span>Deactivate</span>
           </button>
         </div>
       </template>
@@ -70,11 +82,12 @@
           :required="!editing"
           minlength="8"
         />
-        <select v-if="editing" v-model="form.status" class="input-field px-3 py-2 text-sm">
-          <option value="ACTIVE">ACTIVE</option>
-          <option value="INACTIVE">INACTIVE</option>
-          <option value="SUSPENDED">SUSPENDED</option>
-        </select>
+        <BaseSelect
+          v-if="editing"
+          v-model="form.status"
+          :options="statusOptions"
+          custom-class="!py-2 text-sm"
+        />
         <div class="flex justify-end gap-2">
           <button type="button" class="btn-secondary text-xs px-3 py-1.5" @click="modalOpen = false">Cancel</button>
           <button type="submit" class="btn-primary text-xs px-3 py-1.5" :disabled="usersStore.actionLoading">Save</button>
@@ -89,10 +102,12 @@
     >
       <form class="bg-card-background border border-primary-border rounded-xl w-full max-w-md p-5 space-y-3" @submit.prevent="assignRole">
         <h3 class="title-text text-sm">Assign role to {{ assignUser?.name }}</h3>
-        <select v-model.number="selectedRoleId" class="input-field px-3 py-2 text-sm" required>
-          <option disabled :value="null">Select role</option>
-          <option v-for="role in rolesStore.roles" :key="role.id" :value="role.id">{{ role.name }}</option>
-        </select>
+        <BaseSelect
+          v-model="selectedRoleId"
+          :options="roleOptions"
+          placeholder="Select role"
+          custom-class="!py-2 text-sm"
+        />
         <div class="flex justify-end gap-2">
           <button type="button" class="btn-secondary text-xs px-3 py-1.5" @click="assignOpen = false">Cancel</button>
           <button type="submit" class="btn-primary text-xs px-3 py-1.5">Assign</button>
@@ -108,21 +123,40 @@
       :loading="usersStore.actionLoading"
       @confirm="doDeactivate"
     />
+
+    <UserPermissionDrawer
+      :open="overridesOpen"
+      :user="selectedUser"
+      @close="overridesOpen = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from "vue";
+import { onMounted, reactive, ref, computed } from "vue";
+import { Pencil, Shield, KeyRound, UserX } from "lucide-vue-next";
 import DataTable from "@/components/common/DataTable";
 import StatusBadge from "@/components/common/StatusBadge.vue";
 import ConfirmationDialog from "@/components/common/ConfirmationDialog.vue";
+import BaseSelect from "@/components/common/BaseSelect.vue";
+import UserPermissionDrawer from "@/components/rbac/UserPermissionDrawer.vue";
 import { useUsersStore } from "@/stores/users/users";
 import { useRolesStore } from "@/stores/rbac/roles";
 import { usePermissionsStore } from "@/stores/rbac/permissions";
 
+const statusOptions = [
+  { label: "ACTIVE", value: "ACTIVE" },
+  { label: "INACTIVE", value: "INACTIVE" },
+  { label: "SUSPENDED", value: "SUSPENDED" },
+];
+
 const usersStore = useUsersStore();
 const rolesStore = useRolesStore();
 const permissions = usePermissionsStore();
+
+const roleOptions = computed(() =>
+  (rolesStore.roles || []).map((role) => ({ label: role.name, value: role.id }))
+);
 
 const columns = [
   { key: "id", label: "ID", width: 60 },
@@ -140,6 +174,13 @@ const deactivateTarget = ref(null);
 const assignOpen = ref(false);
 const assignUser = ref(null);
 const selectedRoleId = ref(null);
+const overridesOpen = ref(false);
+const selectedUser = ref(null);
+
+const openOverrides = (row) => {
+  selectedUser.value = row;
+  overridesOpen.value = true;
+};
 
 const openCreate = () => {
   editing.value = null;

@@ -4,6 +4,8 @@ import apiRequest from "@/api/request";
 import urls from "@/api/urls";
 import { useSnackbarStore } from "@/stores/snackbar/snackbar";
 
+import { SYSTEM_MODULES } from "@/constants/permissions";
+
 export const SCOPE_AWARE_PREFIXES = [
   "employee.",
   "attendance.",
@@ -22,6 +24,12 @@ export const useRolesStore = defineStore("roles", () => {
   const snackbar = useSnackbarStore();
   const roles = ref([]);
   const activeRole = ref(null);
+  const permissions = ref([]);
+  const permissionLoading = ref(false);
+
+  const filters = ref({
+    search: "",
+  });
 
   const inFlight = { roles: false };
   const isFetched = ref({ roles: false });
@@ -53,15 +61,38 @@ export const useRolesStore = defineStore("roles", () => {
     });
   };
 
-  const createRole = (payload) => {
+  const fetchPermissions = () => {
+    permissionLoading.value = true;
+    return apiRequest(urls.KEYS.GET, urls.roles.permissions, {
+      isTokenRequired: true,
+      onSuccess: (res) => {
+        if (Array.isArray(res) && res.length > 0) {
+          permissions.value = res;
+        } else {
+          // Fall back to SYSTEM_MODULES flat list
+          permissions.value = SYSTEM_MODULES.flatMap((m) => m.permissions);
+        }
+      },
+      onFailure: () => {
+        // Graceful fallback to default system catalog
+        permissions.value = SYSTEM_MODULES.flatMap((m) => m.permissions);
+      },
+      onFinally: () => {
+        permissionLoading.value = false;
+      },
+    });
+  };
+
+  const createRole = (payload, onSuccess) => {
     actionLoading.value = true;
     return apiRequest(urls.KEYS.POST, urls.roles.create, {
       data: payload,
       isTokenRequired: true,
       onSuccess: (res) => {
-        snackbar.show("Role created", "success");
+        snackbar.show("Role created successfully", "success");
         activeRole.value = res;
         fetchRoles(true);
+        if (onSuccess) onSuccess(res);
       },
       onFailure: (err) => snackbar.show(err?.message || "Create failed", "error"),
       onFinally: () => {
@@ -70,15 +101,16 @@ export const useRolesStore = defineStore("roles", () => {
     });
   };
 
-  const updateRole = (roleId, payload) => {
+  const updateRole = (roleId, payload, onSuccess) => {
     actionLoading.value = true;
     return apiRequest(urls.KEYS.PATCH, urls.roles.update(roleId), {
       data: payload,
       isTokenRequired: true,
       onSuccess: (res) => {
-        snackbar.show("Role updated", "success");
+        snackbar.show("Role updated successfully", "success");
         activeRole.value = res;
         fetchRoles(true);
+        if (onSuccess) onSuccess(res);
       },
       onFailure: (err) => snackbar.show(err?.message || "Update failed", "error"),
       onFinally: () => {
@@ -87,13 +119,14 @@ export const useRolesStore = defineStore("roles", () => {
     });
   };
 
-  const deleteRole = (roleId) => {
+  const deleteRole = (roleId, onSuccess) => {
     actionLoading.value = true;
     return apiRequest(urls.KEYS.DELETE, urls.roles.delete(roleId), {
       isTokenRequired: true,
       onSuccess: () => {
-        snackbar.show("Role deleted", "success");
+        snackbar.show("Role deleted successfully", "success");
         fetchRoles(true);
+        if (onSuccess) onSuccess();
       },
       onFailure: (err) => snackbar.show(err?.message || "Delete failed", "error"),
       onFinally: () => {
@@ -105,12 +138,16 @@ export const useRolesStore = defineStore("roles", () => {
   return {
     roles,
     activeRole,
+    permissions,
+    permissionLoading,
+    filters,
     inFlight,
     isFetched,
     loading,
     actionLoading,
     error,
     fetchRoles,
+    fetchPermissions,
     createRole,
     updateRole,
     deleteRole,
