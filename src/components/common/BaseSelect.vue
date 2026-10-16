@@ -9,7 +9,8 @@ import {
   watch,
   watchEffect,
 } from "vue";
-
+import { ChevronDown, Check, Search, X, Loader2 } from "lucide-vue-next";
+import { getFlagCode } from "@/utils/countries";
 
 const attrs = useAttrs();
 
@@ -35,6 +36,14 @@ const props = defineProps({
   searchable: {
     type: Boolean,
     default: false,
+  },
+  showSearch: {
+    type: Boolean,
+    default: false,
+  },
+  hideSearch: {
+    type: Boolean,
+    default: undefined,
   },
   allowAll: {
     type: Boolean,
@@ -128,6 +137,10 @@ const props = defineProps({
     type: [String, Number],
     default: "",
   },
+  clearable: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 // ─── Emits ────────────────────────────────────────────────────────────────────
@@ -144,6 +157,13 @@ const dropdownStyle = ref({});
 const highlightedIndex = ref(-1);
 
 // ─── Computed ─────────────────────────────────────────────────────────────────
+const canSearch = computed(() => {
+  if (props.hideSearch !== undefined && props.hideSearch !== null) {
+    return !props.hideSearch;
+  }
+  return props.searchable || props.showSearch;
+});
+
 const allOption = computed(() => ({ label: props.allLabel, value: null }));
 
 const baseOptions = computed(() => {
@@ -280,12 +300,24 @@ const isPlaceholder = computed(
 function getOptionFlagCode(option) {
   if (!option) return "";
   if (option.flagCode) return option.flagCode;
+
+  if (option.value && typeof option.value === "string") {
+    const code = getFlagCode(option.value);
+    if (code) return code;
+  }
+  if (option.label && typeof option.label === "string") {
+    const code = getFlagCode(option.label);
+    if (code) return code;
+  }
   return "";
 }
 
 const selectedFlagCode = computed(() => {
   if (selectedOption.value) {
     return getOptionFlagCode(selectedOption.value);
+  }
+  if (props.modelValue) {
+    return getFlagCode(String(props.modelValue));
   }
   return "";
 });
@@ -302,7 +334,7 @@ const triggerClassList = computed(() => {
   const hasCustomPx = /\bpx-\S+/.test(customStr);
   const hasCustomPy =
     /\bpy-\S+/.test(customStr) ||
-    props.py !== "" && props.py !== null && props.py !== undefined;
+    (props.py !== "" && props.py !== null && props.py !== undefined);
   const hasCustomRounded = /\brounded(-\S+)?/.test(customStr);
   const hasCustomText = /\btext-(xs|sm|base|lg|\[\S+\])/.test(customStr);
 
@@ -315,10 +347,10 @@ const triggerClassList = computed(() => {
 
   return [
     "flex items-center justify-between w-full min-w-0 transition-all duration-200 ease-in-out focus:outline-none select-none border border-primary-border",
-    !hasCustomPx ? "px-4" : "",
-    !hasCustomPy ? "py-1" : pyVal,
+    !hasCustomPx ? "px-3" : "",
+    !hasCustomPy ? "py-1.5 min-h-[34px]" : pyVal,
     !hasCustomRounded ? "rounded-lg" : "",
-    !hasCustomText ? "text-sm font-medium" : "",
+    !hasCustomText ? "text-xs font-medium" : "",
     props.disabled
       ? "opacity-60 cursor-not-allowed bg-background/50 pointer-events-none"
       : "cursor-pointer",
@@ -404,7 +436,7 @@ function toggle() {
     nextTick(() => {
       updatePosition();
       scrollToHighlighted();
-      if (props.searchable) {
+      if (canSearch.value) {
         searchRef.value?.focus();
       }
     });
@@ -419,6 +451,11 @@ function close() {
 
 function select(option) {
   emit("update:modelValue", option.value);
+  close();
+}
+
+function clearValue() {
+  emit("update:modelValue", null);
   close();
 }
 
@@ -565,26 +602,32 @@ onBeforeUnmount(() => {
       <span
         :class="[
           'truncate flex items-center gap-2',
-          isPlaceholder ? 'text-secondary-text' : 'text-primary-text',
+          isPlaceholder ? 'text-secondary-text/70 italic' : 'text-primary-text',
         ]"
       >
         <span
           v-if="showFlags && selectedFlagCode"
-          :class="[
-            'fi',
-            `fi-${selectedFlagCode}`,
-            'fis',
-            'w-4 h-3 shrink-0',
-          ]"
+          :class="['fi', `fi-${selectedFlagCode}`, 'fis', 'w-4 h-3 shrink-0']"
         ></span>
-        <span>{{ displayLabel }}</span>
+        <span class="truncate">{{ displayLabel }}</span>
       </span>
 
-      <span
-        class="material-symbols-outlined ml-2 shrink-0 text-secondary-text transition-transform duration-200"
-        :class="{ 'rotate-180': isOpen }"
-        style="font-size: 16px;"
-      >expand_more</span>
+      <div class="flex items-center gap-1.5 shrink-0 ml-2">
+        <X
+          v-if="
+            clearable &&
+            !isPlaceholder &&
+            modelValue !== null &&
+            modelValue !== ''
+          "
+          class="w-3.5 h-3.5 text-secondary-text hover:text-primary transition-colors cursor-pointer"
+          @click.stop="clearValue"
+        />
+        <ChevronDown
+          class="w-3.5 h-3.5 text-secondary-text transition-transform duration-200"
+          :class="{ 'rotate-180': isOpen }"
+        />
+      </div>
     </button>
 
     <!-- Dropdown -->
@@ -596,43 +639,46 @@ onBeforeUnmount(() => {
           role="listbox"
           :style="dropdownStyle"
           :class="[
-            'max-h-56 flex flex-col rounded-lg overflow-hidden border border-primary-border shadow-lg',
+            'max-h-60 flex flex-col rounded-xl overflow-hidden border border-primary-border shadow-xl z-50',
             dropdownBgClass,
           ]"
         >
-          <!-- Search -->
+          <!-- Search Input Header -->
           <div
-            v-if="searchable"
-            class="shrink-0 px-3 py-2 border-b border-primary-border"
+            v-if="canSearch"
+            class="shrink-0 p-2 border-b border-primary-border/70 flex items-center gap-2 bg-background/50"
           >
-            <div class="relative flex items-center">
-              <span
-                class="material-symbols-outlined absolute left-2.5 text-secondary-text pointer-events-none"
-                style="font-size: 14px;"
-              >search</span>
-              <input
-                ref="searchRef"
-                v-model="searchQuery"
-                type="text"
-                placeholder="Search..."
-                class="w-full pl-8 pr-3 py-1.5 text-sm rounded-md bg-background text-primary-text placeholder:text-secondary-text focus:outline-none"
-                @input="emit('search', searchQuery)"
-              />
-            </div>
+            <Search class="w-3.5 h-3.5 text-secondary-text shrink-0" />
+            <input
+              ref="searchRef"
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search..."
+              class="w-full bg-transparent text-xs text-primary-text placeholder:text-secondary-text/70 focus:outline-none"
+              @input="emit('search', searchQuery)"
+            />
+            <Loader2
+              v-if="isLoading"
+              class="w-3.5 h-3.5 text-primary animate-spin shrink-0"
+            />
           </div>
 
           <!-- Options -->
-          <ul ref="listRef" class="flex-1 min-h-0 overflow-y-auto py-1">
+          <ul
+            ref="listRef"
+            class="flex-1 min-h-0 overflow-y-auto p-1.5 space-y-0.5"
+          >
             <li
-              v-if="isLoading"
-              class="px-4 py-3 text-sm text-secondary-text text-center italic"
+              v-if="isLoading && !canSearch"
+              class="p-3 text-center text-xs text-secondary-text/80 italic flex items-center justify-center gap-2"
             >
-              Loading...
+              <Loader2 class="w-3.5 h-3.5 text-primary animate-spin shrink-0" />
+              <span>Loading...</span>
             </li>
 
             <li
               v-else-if="filteredOptions.length === 0"
-              class="px-4 py-3 text-sm text-secondary-text text-center italic"
+              class="p-3 text-center text-xs text-secondary-text/80"
             >
               No options found
             </li>
@@ -646,15 +692,17 @@ onBeforeUnmount(() => {
               @click="option.disabled ? null : select(option)"
               @mouseenter="highlightedIndex = index"
               :class="[
-                'flex items-center justify-between px-4 py-2.5 text-sm transition-colors duration-100',
+                'w-full flex items-center justify-between px-2.5 py-1.5 text-xs text-left rounded-lg transition-colors cursor-pointer group',
                 option.disabled
                   ? 'opacity-40 cursor-not-allowed'
-                  : index === highlightedIndex
-                    ? 'bg-background text-primary-text cursor-pointer'
-                    : 'cursor-pointer text-primary-text hover:bg-background',
+                  : isSelected(option)
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : index === highlightedIndex
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-primary-text hover:bg-primary/10 hover:text-primary',
               ]"
             >
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 min-w-0">
                 <span
                   v-if="showFlags && getOptionFlagCode(option)"
                   :class="[
@@ -664,31 +712,36 @@ onBeforeUnmount(() => {
                     'w-4 h-3 shrink-0',
                   ]"
                 ></span>
-                <span v-if="option?.optinalLableName"
+                <span
+                  v-if="option?.optinalLableName"
+                  class="shrink-0 text-secondary-text text-[11px]"
                   >{{ option.optinalLableName }} -
                 </span>
-                <div class="flex flex-col items-start">
+                <div class="flex flex-col items-start min-w-0">
                   <span
-                    :class="
+                    :class="[
+                      'truncate font-medium',
                       isSelected(option) && !option.disabled
-                        ? 'text-primary font-medium'
-                        : ''
-                    "
+                        ? 'text-primary'
+                        : '',
+                    ]"
                   >
                     {{ option.label }}
                   </span>
-                  <p v-if="isShowMail">
-                    <span class="text-xs">email : </span>
+                  <p
+                    v-if="isShowMail && option?.email"
+                    class="text-[10px] text-secondary-text font-mono truncate"
+                  >
+                    <span>email : </span>
                     <span>{{ option?.email }}</span>
                   </p>
                 </div>
               </div>
 
-              <span
+              <Check
                 v-if="isSelected(option) && !option.disabled"
-                class="material-symbols-outlined text-primary shrink-0"
-                style="font-size: 14px;"
-              >check</span>
+                class="w-3.5 h-3.5 text-primary shrink-0 ml-2"
+              />
             </li>
           </ul>
         </div>
@@ -701,20 +754,20 @@ onBeforeUnmount(() => {
 .dropdown-enter-active,
 .dropdown-leave-active {
   transition:
-    opacity 0.18s ease,
-    transform 0.18s ease;
+    opacity 0.15s ease,
+    transform 0.15s ease;
 }
 
 .dropdown-enter-from,
 .dropdown-leave-to {
   opacity: 0;
-  transform: translateY(-6px);
+  transform: translateY(-4px) scale(0.98);
 }
 
 .dropdown-enter-to,
 .dropdown-leave-from {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 ul::-webkit-scrollbar {
