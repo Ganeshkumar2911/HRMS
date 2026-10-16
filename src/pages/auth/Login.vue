@@ -251,7 +251,7 @@ const handleSSO = (provider) => {
               <input
                 type="checkbox"
                 v-model="rememberDevice"
-                class="w-4 h-4 rounded border-primary-border text-primary focus:ring-0 accent-primary cursor-pointer"
+                class="w-4 h-4 rounded border-primary-border text-btn-text-primary focus:ring-0 accent-primary cursor-pointer"
               />
               <span class="text-xs text-secondary-text font-normal">Remember device for 30 days</span>
             </label>

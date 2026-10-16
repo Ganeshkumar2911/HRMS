@@ -27,6 +27,7 @@ const urls = {
     deactivate: (id) => `users/${id}`,
     assignRole: (id) => `users/${id}/roles`,
     unassignRole: (userId, roleId) => `users/${userId}/roles/${roleId}`,
+    permissionOverrides: (id) => `users/${id}/permission-overrides`,
   },
 
   // ── Chat Module ──────────────────────────────────────────
@@ -77,10 +78,16 @@ const urls = {
     workWeekPolicyDetail: (id) => `hrms/work-week-policies/${id}`,
 
     attendance: "hrms/attendance",
+    attendanceSummary: "hrms/attendance/summary",
     attendanceCalendar: "hrms/attendance/calendar",
     attendanceMark: "hrms/attendance/mark",
     attendanceBulkMark: "hrms/attendance/bulk-mark",
     attendanceCorrection: (id) => `hrms/attendance/${id}/correction`,
+    attendanceCorrections: "hrms/attendance/corrections",
+    attendanceCorrectionDetail: (id) => `hrms/attendance/corrections/${id}`,
+    attendanceCorrectionApprove: (id) => `hrms/attendance/corrections/${id}/approve`,
+    attendanceCorrectionReject: (id) => `hrms/attendance/corrections/${id}/reject`,
+    attendanceCorrectionCancel: (id) => `hrms/attendance/corrections/${id}/cancel`,
     attendanceSettings: "hrms/attendance/settings",
     attendanceMy: "hrms/attendance/my",
     attendanceCheckIn: "hrms/attendance/check-in",
@@ -107,6 +114,7 @@ const urls = {
     create: "roles",
     update: (id) => `roles/${id}`,
     delete: (id) => `roles/${id}`,
+    permissions: "permissions",
   },
 
   // ── Tasks Module ─────────────────────────────────────────

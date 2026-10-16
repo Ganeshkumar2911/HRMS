@@ -22,6 +22,9 @@ export const useHrmsStore = defineStore("hrms", () => {
   const holidays = ref([]);
   const workWeekPolicies = ref([]);
   const attendanceRows = ref([]);
+  const attendanceTotal = ref(0);
+  const attendanceSummary = ref(null);
+  const attendanceCorrections = ref([]);
   const attendanceCalendar = ref([]);
   const attendanceSettings = ref(null);
   const myAttendance = ref(null);
@@ -337,6 +340,130 @@ export const useHrmsStore = defineStore("hrms", () => {
     });
   };
 
+  const bulkMarkAttendance = (payload) => {
+    actionLoading.value = true;
+    return apiRequest(urls.KEYS.POST, urls.hrms.attendanceBulkMark, {
+      data: payload,
+      isTokenRequired: true,
+      onSuccess: () => {
+        snackbar.show("Bulk attendance marked successfully", "success");
+        fetchAttendanceCalendar();
+      },
+      onFailure: (err) => snackbar.show(err?.message || "Bulk mark failed", "error"),
+      onFinally: () => {
+        actionLoading.value = false;
+      },
+    });
+  };
+
+  const fetchAttendanceRows = (params = {}) => {
+    inFlight.attendance = true;
+    return apiRequest(urls.KEYS.GET, urls.hrms.attendance, {
+      params,
+      isTokenRequired: true,
+      onSuccess: (res) => {
+        attendanceRows.value = Array.isArray(res) ? res : res?.items || [];
+        attendanceTotal.value = res?.total || attendanceRows.value.length;
+      },
+      onFailure: (err) => {
+        if (err?.status !== 403) snackbar.show(err?.message || "Failed to load attendance list", "error");
+      },
+      onFinally: () => {
+        inFlight.attendance = false;
+      },
+    });
+  };
+
+  const fetchAttendanceSummary = (params = {}) => {
+    return apiRequest(urls.KEYS.GET, urls.hrms.attendanceSummary, {
+      params,
+      isTokenRequired: true,
+      onSuccess: (res) => {
+        attendanceSummary.value = res;
+      },
+      onFailure: (err) => {
+        if (err?.status !== 403) snackbar.show(err?.message || "Failed to load attendance summary", "error");
+      },
+    });
+  };
+
+  const fetchAttendanceCorrections = (params = {}) => {
+    return apiRequest(urls.KEYS.GET, urls.hrms.attendanceCorrections, {
+      params,
+      isTokenRequired: true,
+      onSuccess: (res) => {
+        attendanceCorrections.value = Array.isArray(res) ? res : res?.items || [];
+      },
+      onFailure: (err) => {
+        if (err?.status !== 403) snackbar.show(err?.message || "Failed to load corrections", "error");
+      },
+    });
+  };
+
+  const createAttendanceCorrectionPetition = (attendanceId, payload) => {
+    actionLoading.value = true;
+    return apiRequest(urls.KEYS.POST, urls.hrms.attendanceCorrections, {
+      data: { attendance_id: attendanceId, ...payload },
+      isTokenRequired: true,
+      onSuccess: () => {
+        snackbar.show("Correction petition submitted", "success");
+        fetchAttendanceCalendar();
+      },
+      onFailure: (err) => snackbar.show(err?.message || "Petition failed", "error"),
+      onFinally: () => {
+        actionLoading.value = false;
+      },
+    });
+  };
+
+  const approveAttendanceCorrection = (id, payload = {}) => {
+    actionLoading.value = true;
+    return apiRequest(urls.KEYS.POST, urls.hrms.attendanceCorrectionApprove(id), {
+      data: payload,
+      isTokenRequired: true,
+      onSuccess: () => {
+        snackbar.show("Correction approved", "success");
+        fetchAttendanceCalendar();
+        fetchAttendanceCorrections();
+      },
+      onFailure: (err) => snackbar.show(err?.message || "Approval failed", "error"),
+      onFinally: () => {
+        actionLoading.value = false;
+      },
+    });
+  };
+
+  const rejectAttendanceCorrection = (id, payload = {}) => {
+    actionLoading.value = true;
+    return apiRequest(urls.KEYS.POST, urls.hrms.attendanceCorrectionReject(id), {
+      data: payload,
+      isTokenRequired: true,
+      onSuccess: () => {
+        snackbar.show("Correction rejected", "success");
+        fetchAttendanceCorrections();
+      },
+      onFailure: (err) => snackbar.show(err?.message || "Rejection failed", "error"),
+      onFinally: () => {
+        actionLoading.value = false;
+      },
+    });
+  };
+
+  const cancelAttendanceCorrection = (id) => {
+    actionLoading.value = true;
+    return apiRequest(urls.KEYS.POST, urls.hrms.attendanceCorrectionCancel(id), {
+      isTokenRequired: true,
+      onSuccess: () => {
+        snackbar.show("Petition cancelled", "success");
+        fetchAttendanceCorrections();
+      },
+      onFailure: (err) => snackbar.show(err?.message || "Cancel failed", "error"),
+      onFinally: () => {
+        actionLoading.value = false;
+      },
+    });
+  };
+
   const fetchLeaveTypes = (force = false) =>
     listFetch("leaveTypes", urls.hrms.leaveTypes, leaveTypes, {}, force);
   const fetchLeavePolicies = (force = false) =>
@@ -441,6 +568,9 @@ export const useHrmsStore = defineStore("hrms", () => {
     holidays,
     workWeekPolicies,
     attendanceRows,
+    attendanceTotal,
+    attendanceSummary,
+    attendanceCorrections,
     attendanceCalendar,
     attendanceSettings,
     myAttendance,
@@ -478,12 +608,20 @@ export const useHrmsStore = defineStore("hrms", () => {
     createWorkWeekPolicy,
     updateWorkWeekPolicy,
     fetchAttendanceCalendar,
+    fetchAttendanceRows,
+    fetchAttendanceSummary,
     fetchAttendanceSettings,
     updateAttendanceSettings,
     fetchMyAttendance,
     punchAttendance,
     markAttendance,
+    bulkMarkAttendance,
     correctAttendance,
+    fetchAttendanceCorrections,
+    createAttendanceCorrectionPetition,
+    approveAttendanceCorrection,
+    rejectAttendanceCorrection,
+    cancelAttendanceCorrection,
     fetchLeaveTypes,
     fetchLeavePolicies,
     fetchLeaveBalances,

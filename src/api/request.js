@@ -13,7 +13,7 @@ export const getBaseOrigin = () => {
   }
   return typeof window !== "undefined"
     ? window.location.origin
-    : "https://zpj8dpf6-8000.inc1.devtunnels.ms/";
+    : "http://localhost:8000/";
 };
 
 export const getBaseURL = () => {
