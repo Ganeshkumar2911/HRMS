@@ -45,9 +45,9 @@
 
           <!-- Sorting Indicator -->
           <span v-if="col.sortable" class="shrink-0 inline-flex items-center transition-transform">
-            <span class="material-symbols-outlined w-3.5 h-3.5 text-primary" v-if="sortKey === col.key && sortDirection === 'asc'">arrow_upward</span>
-            <span class="material-symbols-outlined w-3.5 h-3.5 text-primary" v-else-if="sortKey === col.key && sortDirection === 'desc'">arrow_downward</span>
-            <ArrowUpDown v-else class="w-3 h-3 text-secondary-text/40 group-hover:text-secondary-text/80 transition-opacity" />
+            <span class="material-symbols-outlined w-3.5 h-3.5 text-primary text-sm" v-if="sortKey === col.key && sortDirection === 'asc'">arrow_upward</span>
+            <span class="material-symbols-outlined w-3.5 h-3.5 text-primary text-sm" v-else-if="sortKey === col.key && sortDirection === 'desc'">arrow_downward</span>
+            <span v-else class="material-symbols-outlined text-sm text-secondary-text/40 group-hover:text-secondary-text/80 transition-opacity">unfold_more</span>
           </span>
         </div>
 
@@ -80,9 +80,9 @@
             ref="settingsBtnRef"
             @click.stop="$emit('open-column-menu', $refs.settingsBtnRef)"
             title="Customize columns"
-            class="p-1 rounded hover:bg-background text-secondary-text hover:text-primary-text transition cursor-pointer"
+            class="p-1 rounded hover:bg-background text-secondary-text hover:text-primary-text transition cursor-pointer flex items-center justify-center"
           >
-            <SlidersHorizontal class="w-3.5 h-3.5" />
+            <span class="material-symbols-rounded text-sm">tune</span>
           </button>
         </div>
       </th>

@@ -1,133 +1,36 @@
 <template>
-  <header class="w-full bg-card-background border-b border-primary-border/60 sticky top-0 z-40 transition-colors duration-200">
-    <div class="max-w-400 mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
+  <header class="w-full bg-card-background/90 backdrop-blur-md sticky top-0 z-30 transition-colors duration-200 shadow-sm">
+    <div class="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
       
-      <!-- ── Left: Brand & Navigation ────────────────────────── -->
-      <div class="flex items-center gap-6">
-        <!-- Brand Logo -->
-        <router-link to="/chat" class="flex items-center gap-2.5 shrink-0 group">
-          <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary/15 transition-colors">
-            <span class="material-symbols-rounded text-lg">workspaces</span>
+      <!-- ── Left: Mobile Toggle & Global Search Bar ─────────── -->
+      <div class="flex items-center gap-3">
+        <!-- Mobile Sidebar Toggle Button -->
+        <button
+          @click="$emit('toggle-sidebar')"
+          type="button"
+          class="lg:hidden p-2 rounded-lg text-secondary-text hover:text-primary-text hover:bg-surface-subtle transition-colors cursor-pointer"
+          aria-label="Toggle navigation menu"
+        >
+          <span class="material-symbols-rounded text-xl block">menu</span>
+        </button>
+
+        <!-- Mobile Brand (Visible only when sidebar is hidden on small screens) -->
+        <router-link to="/tasks" class="flex lg:hidden items-center gap-2">
+          <div class="w-7 h-7 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 shadow-xs">
+            <span class="material-symbols-rounded text-base">corporate_fare</span>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="font-semibold text-sm tracking-tight text-primary-text">HRMS Shell</span>
-            <span class="text-[10px] font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary">v1.0</span>
-          </div>
+          <span class="font-bold text-sm text-primary-text tracking-tight">Kora HR</span>
         </router-link>
 
-        <!-- Divider -->
-        <div class="h-4 w-px bg-primary-border/80 hidden md:block"></div>
-
-        <!-- Desktop Navigation Items (Gated by permission store) -->
-        <nav class="hidden md:flex items-center gap-1">
-          <!-- Chat -->
-          <router-link
-            to="/chat"
-            class="px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
-            :class="isActive('/chat')
-              ? 'bg-primary/10 text-primary font-semibold'
-              : 'text-secondary-text hover:text-primary-text hover:bg-primary-border/30'"
-          >
-            <span class="material-symbols-rounded text-[17px]">chat</span>
-            <span>Chat</span>
-          </router-link>
-
-          <!-- Tasks -->
-          <router-link
-            v-if="permissionsStore.canAccessArea('tasks')"
-            to="/tasks"
-            class="px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
-            :class="isActive('/tasks')
-              ? 'bg-primary/10 text-primary font-semibold'
-              : 'text-secondary-text hover:text-primary-text hover:bg-primary-border/30'"
-          >
-            <span class="material-symbols-rounded text-[17px]">task_alt</span>
-            <span>Tasks</span>
-          </router-link>
-
-          <!-- HRMS (Gated by employee.view) -->
-          <router-link
-            v-if="permissionsStore.canAccessArea('hrms')"
-            to="/hrms"
-            class="px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors"
-            :class="isActive('/hrms')
-              ? 'bg-primary/10 text-primary font-semibold'
-              : 'text-secondary-text hover:text-primary-text hover:bg-primary-border/30'"
-          >
-            <span class="material-symbols-rounded text-[17px]">badge</span>
-            <span>HRMS</span>
-          </router-link>
-
-          <!-- Admin Dropdown (Users, Roles, Audit) -->
-          <div
-            v-if="hasAdminAccess"
-            class="relative"
-            ref="adminDropdownRef"
-          >
-            <button
-              @click="isAdminOpen = !isAdminOpen"
-              type="button"
-              class="px-2.5 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
-              :class="isAdminActive
-                ? 'bg-primary/10 text-primary font-semibold'
-                : 'text-secondary-text hover:text-primary-text hover:bg-primary-border/30'"
-            >
-              <span class="material-symbols-rounded text-[17px]">admin_panel_settings</span>
-              <span>Admin</span>
-              <span class="material-symbols-rounded text-sm transition-transform" :class="{'rotate-180': isAdminOpen}">expand_more</span>
-            </button>
-
-            <!-- Admin Submenu -->
-            <div
-              v-if="isAdminOpen"
-              class="absolute left-0 mt-1.5 w-44 bg-card-background border border-primary-border/80 rounded-lg p-1 z-50 flex flex-col gap-0.5 shadow-sm animate-in fade-in duration-100"
-            >
-              <router-link
-                v-if="permissionsStore.canAccessArea('admin_users')"
-                to="/admin/users"
-                @click="isAdminOpen = false"
-                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors"
-                :class="isActive('/admin/users') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-background'"
-              >
-                <span class="material-symbols-rounded text-base">manage_accounts</span>
-                <span>Users</span>
-              </router-link>
-
-              <router-link
-                v-if="permissionsStore.canAccessArea('admin_roles')"
-                to="/admin/roles"
-                @click="isAdminOpen = false"
-                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors"
-                :class="isActive('/admin/roles') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-background'"
-              >
-                <span class="material-symbols-rounded text-base">security</span>
-                <span>Roles &amp; RBAC</span>
-              </router-link>
-
-              <router-link
-                v-if="permissionsStore.canAccessArea('admin_audit')"
-                to="/admin/audit"
-                @click="isAdminOpen = false"
-                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors"
-                :class="isActive('/admin/audit') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-background'"
-              >
-                <span class="material-symbols-rounded text-base">history</span>
-                <span>Audit Logs</span>
-              </router-link>
-
-              <router-link
-                v-if="permissionsStore.canAccessArea('admin_broadcast')"
-                to="/admin/notifications/broadcast"
-                @click="isAdminOpen = false"
-                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs transition-colors"
-                :class="isActive('/admin/notifications') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-background'"
-              >
-                <span class="material-symbols-rounded text-base">campaign</span>
-                <span>Broadcast</span>
-              </router-link>
-            </div>
-          </div>
-        </nav>
+        <!-- Stitch Global Search Bar (Desktop / Tablet) -->
+        <div class="hidden sm:flex items-center gap-2 bg-surface-subtle px-3 py-1.5 rounded-lg w-64 md:w-80 border border-primary-border/60 focus-within:border-primary transition-colors">
+          <span class="material-symbols-rounded text-secondary-text text-[18px]">search</span>
+          <input
+            type="text"
+            placeholder="Search employees, records, workflows..."
+            class="bg-transparent text-xs text-primary-text placeholder:text-secondary-text/60 outline-none w-full"
+          />
+        </div>
       </div>
 
       <!-- ── Right: Realtime Status, Bell, Theme, Profile ───── -->
@@ -328,124 +231,6 @@
           </div>
         </div>
 
-        <!-- Mobile Navigation Menu Toggle -->
-        <button
-          ref="mobileMenuButtonRef"
-          @click="toggleMobileMenu"
-          type="button"
-          class="inline-flex md:!hidden items-center justify-center p-1.5 text-secondary-text hover:text-primary-text rounded-lg hover:bg-background transition-all cursor-pointer"
-          :aria-expanded="isMobileMenuOpen"
-          aria-label="Toggle navigation menu"
-        >
-          <span
-            class="material-symbols-rounded text-[22px] transition-transform duration-200 select-none block"
-            :class="{ 'rotate-90': isMobileMenuOpen }"
-          >
-            {{ isMobileMenuOpen ? 'close' : 'menu' }}
-          </span>
-        </button>
-
-      </div>
-    </div>
-
-    <!-- Mobile Navigation Drawer Backdrop -->
-    <Transition name="mobile-backdrop">
-      <div
-        v-if="isMobileMenuOpen"
-        class="fixed inset-0 top-14 bg-black/25 backdrop-blur-2xs z-30 md:hidden"
-        @click="isMobileMenuOpen = false"
-        aria-hidden="true"
-      ></div>
-    </Transition>
-
-    <!-- Mobile Navigation Drawer -->
-    <div
-      ref="mobileMenuRef"
-      class="md:hidden absolute top-full left-0 right-0 z-40 border-b border-primary-border/80 bg-card-background/98 backdrop-blur-md shadow-xl mobile-menu-grid"
-      :class="{ 'is-open': isMobileMenuOpen }"
-    >
-      <div class="mobile-menu-inner">
-        <div class="mobile-menu-content px-4 py-3 flex flex-col gap-1">
-          <!-- Chat -->
-          <router-link
-            to="/chat"
-            @click="isMobileMenuOpen = false"
-            class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
-            :class="isActive('/chat') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
-          >
-            <span class="material-symbols-rounded text-[18px]">chat</span>
-            <span>Chat</span>
-          </router-link>
-
-          <!-- Tasks -->
-          <router-link
-            v-if="permissionsStore.canAccessArea('tasks')"
-            to="/tasks"
-            @click="isMobileMenuOpen = false"
-            class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
-            :class="isActive('/tasks') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
-          >
-            <span class="material-symbols-rounded text-[18px]">task_alt</span>
-            <span>Tasks</span>
-          </router-link>
-
-          <!-- HRMS -->
-          <router-link
-            v-if="permissionsStore.canAccessArea('hrms')"
-            to="/hrms"
-            @click="isMobileMenuOpen = false"
-            class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
-            :class="isActive('/hrms') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
-          >
-            <span class="material-symbols-rounded text-[18px]">badge</span>
-            <span>HRMS</span>
-          </router-link>
-
-          <!-- Admin Section -->
-          <div v-if="hasAdminAccess" class="pt-2 mt-1 border-t border-primary-border/60">
-            <span class="text-[10px] font-semibold text-secondary-text uppercase tracking-wider px-3">Admin</span>
-            <router-link
-              v-if="permissionsStore.canAccessArea('admin_users')"
-              to="/admin/users"
-              @click="isMobileMenuOpen = false"
-              class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
-              :class="isActive('/admin/users') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
-            >
-              <span class="material-symbols-rounded text-[18px]">manage_accounts</span>
-              <span>Users</span>
-            </router-link>
-            <router-link
-              v-if="permissionsStore.canAccessArea('admin_roles')"
-              to="/admin/roles"
-              @click="isMobileMenuOpen = false"
-              class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
-              :class="isActive('/admin/roles') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
-            >
-              <span class="material-symbols-rounded text-[18px]">security</span>
-              <span>Roles</span>
-            </router-link>
-            <router-link
-              v-if="permissionsStore.canAccessArea('admin_audit')"
-              to="/admin/audit"
-              @click="isMobileMenuOpen = false"
-              class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
-              :class="isActive('/admin/audit') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
-            >
-              <span class="material-symbols-rounded text-[18px]">history</span>
-              <span>Audit Logs</span>
-            </router-link>
-            <router-link
-              v-if="permissionsStore.canAccessArea('admin_broadcast')"
-              to="/admin/notifications/broadcast"
-              @click="isMobileMenuOpen = false"
-              class="px-3 py-2 rounded-lg text-xs font-medium flex items-center gap-2 transition-colors"
-              :class="isActive('/admin/notifications') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:bg-background hover:text-primary-text'"
-            >
-              <span class="material-symbols-rounded text-[18px]">campaign</span>
-              <span>Broadcast</span>
-            </router-link>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -463,6 +248,8 @@ import { useWsStore } from "@/stores/ws/ws";
 import { usePermissionsStore } from "@/stores/rbac/permissions";
 import { useNotificationsStore } from "@/stores/notifications/notifications";
 import PermissionsModal from "./PermissionsModal.vue";
+
+const emit = defineEmits(["toggle-sidebar"]);
 
 const route = useRoute();
 const router = useRouter();

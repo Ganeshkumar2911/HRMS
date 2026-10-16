@@ -80,7 +80,7 @@
           class="w-7 h-7 flex items-center justify-center rounded-lg border border-primary-border transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           :class="isFirst ? 'bg-background text-secondary-text' : 'bg-background text-secondary-text hover:text-primary-text hover:border-primary'"
         >
-          <ChevronsLeft class="w-3.5 h-3.5" />
+          <span class="material-symbols-rounded text-sm">first_page</span>
         </button>
 
         <!-- Previous Page -->
@@ -138,7 +138,7 @@
           class="w-7 h-7 flex items-center justify-center rounded-lg border border-primary-border transition disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           :class="isLast ? 'bg-background text-secondary-text' : 'bg-background text-secondary-text hover:text-primary-text hover:border-primary'"
         >
-          <ChevronsRight class="w-3.5 h-3.5" />
+          <span class="material-symbols-rounded text-sm">last_page</span>
         </button>
       </div>
     </div>

@@ -7,6 +7,11 @@ import { useSnackbarStore } from "@/stores/snackbar/snackbar";
 import { useWsStore } from "@/stores/ws/ws";
 import { useAuthStore } from "@/stores/auth/auth";
 
+// Auto-detect optional dummy data file (*.dummy.js)
+const dummyModules = import.meta.glob("./*.dummy.js", { eager: true });
+const dummyKey = Object.keys(dummyModules)[0];
+const dummyStore = dummyKey ? (dummyModules[dummyKey].default || dummyModules[dummyKey]) : null;
+
 export const useChatStore = defineStore("chat", () => {
   const snackbar = useSnackbarStore();
   const wsStore = useWsStore();
@@ -97,6 +102,25 @@ export const useChatStore = defineStore("chat", () => {
 
   // ─── Fetch Conversations (GET /conversations) ──────────
   const fetchConversations = (force = false) => {
+    if (dummyStore) {
+      loading.value = true;
+      conversations.value =
+        typeof dummyStore.getConversations === "function"
+          ? dummyStore.getConversations()
+          : dummyStore.dummyConversations || [];
+      if (dummyStore.dummyOnlineUserIds) {
+        onlineUserIds.value = { ...dummyStore.dummyOnlineUserIds };
+      }
+      isFetched.value.conversations = true;
+      loading.value = false;
+
+      // Auto-select first conversation if none selected
+      if (!activeConversationId.value && conversations.value.length > 0 && !router.currentRoute.value.params.conversationId) {
+        selectConversation(conversations.value[0].id);
+      }
+      return Promise.resolve(conversations.value);
+    }
+
     if (inFlight.conversations) return Promise.resolve(conversations.value);
     if (isFetched.value.conversations && !force) return Promise.resolve(conversations.value);
 
@@ -142,6 +166,15 @@ export const useChatStore = defineStore("chat", () => {
 
   // ─── Fetch Available Users (GET /users) ────────────────
   const fetchUsers = (force = false) => {
+    if (dummyStore) {
+      availableUsers.value =
+        typeof dummyStore.getUsers === "function"
+          ? dummyStore.getUsers()
+          : dummyStore.dummyUsers || [];
+      isFetched.value.users = true;
+      return Promise.resolve(availableUsers.value);
+    }
+
     if (inFlight.users) return Promise.resolve(availableUsers.value);
     if (isFetched.value.users && !force) return Promise.resolve(availableUsers.value);
 
@@ -174,6 +207,15 @@ export const useChatStore = defineStore("chat", () => {
     if (!searchTerm) {
       availableUsers.value = [];
       return Promise.resolve([]);
+    }
+
+    if (dummyStore) {
+      const results =
+        typeof dummyStore.searchUsers === "function"
+          ? dummyStore.searchUsers(searchTerm, limit)
+          : [];
+      availableUsers.value = results;
+      return Promise.resolve(results);
     }
 
     inFlight.users = true;
@@ -222,6 +264,21 @@ export const useChatStore = defineStore("chat", () => {
   // ─── Fetch Messages (GET /conversations/{id}/messages) ─
   const fetchMessages = (conversationId, cursor = null) => {
     if (!conversationId) return Promise.resolve();
+
+    if (dummyStore) {
+      messagesLoading.value = true;
+      const msgs =
+        typeof dummyStore.getMessages === "function"
+          ? dummyStore.getMessages(conversationId)
+          : dummyStore.dummyMessages?.[conversationId] || [];
+      messagesByConversation.value[conversationId] = msgs;
+      messagesLoading.value = false;
+      if (msgs.length > 0) {
+        const latest = msgs[msgs.length - 1];
+        markAsRead(conversationId, latest.id);
+      }
+      return Promise.resolve(msgs);
+    }
 
     messagesLoading.value = true;
     const params = { limit: 30 };
@@ -284,6 +341,34 @@ export const useChatStore = defineStore("chat", () => {
   }) => {
     if (!conversationId || (!content?.trim() && !attachmentId)) return;
 
+    if (dummyStore) {
+      const myId = authStore.currentUser?.id || 1;
+      const myName = authStore.currentUser?.name || "Alex Rivera";
+      const newMsg =
+        typeof dummyStore.sendMessage === "function"
+          ? dummyStore.sendMessage({
+              conversationId,
+              content,
+              messageType,
+              attachmentId,
+              currentUserId: myId,
+              currentUserName: myName,
+            })
+          : null;
+
+      if (newMsg) {
+        if (!messagesByConversation.value[conversationId]) {
+          messagesByConversation.value[conversationId] = [];
+        }
+        messagesByConversation.value[conversationId].push(newMsg);
+        conversations.value =
+          typeof dummyStore.getConversations === "function"
+            ? dummyStore.getConversations()
+            : dummyStore.dummyConversations;
+      }
+      return Promise.resolve(newMsg);
+    }
+
     const payload = {
       event: "message.send",
       conversation_id: conversationId,
@@ -306,6 +391,35 @@ export const useChatStore = defineStore("chat", () => {
   // ─── Send File / Attachment Flow ───────────────────────
   const sendFileMessage = async ({ conversationId, file, caption = "" }) => {
     if (!conversationId || !file) return;
+
+    if (dummyStore) {
+      const myId = authStore.currentUser?.id || 1;
+      const myName = authStore.currentUser?.name || "Alex Rivera";
+      const newMsg =
+        typeof dummyStore.sendMessage === "function"
+          ? dummyStore.sendMessage({
+              conversationId,
+              content: caption || file.name,
+              messageType: "FILE",
+              attachmentId: `att-${Date.now()}`,
+              currentUserId: myId,
+              currentUserName: myName,
+            })
+          : null;
+
+      if (newMsg) {
+        if (!messagesByConversation.value[conversationId]) {
+          messagesByConversation.value[conversationId] = [];
+        }
+        messagesByConversation.value[conversationId].push(newMsg);
+        conversations.value =
+          typeof dummyStore.getConversations === "function"
+            ? dummyStore.getConversations()
+            : dummyStore.dummyConversations;
+      }
+      snackbar.show("File sent successfully", "success");
+      return Promise.resolve(newMsg);
+    }
 
     inFlight.upload = true;
     actionLoading.value = true;
@@ -353,6 +467,28 @@ export const useChatStore = defineStore("chat", () => {
 
   // ─── Create Conversation (POST /conversations) ─────────
   const createDirectConversation = (targetUserId) => {
+    if (dummyStore) {
+      actionLoading.value = true;
+      const myId = authStore.currentUser?.id || 1;
+      const myName = authStore.currentUser?.name || "Alex Rivera";
+      const myEmail = authStore.currentUser?.email || "alex.rivera@example.com";
+      const newConv =
+        typeof dummyStore.createDirect === "function"
+          ? dummyStore.createDirect(targetUserId, myId, myName, myEmail)
+          : null;
+      if (newConv) {
+        conversations.value =
+          typeof dummyStore.getConversations === "function"
+            ? dummyStore.getConversations()
+            : dummyStore.dummyConversations;
+        selectConversation(newConv.id);
+        router.push(`/chat/${newConv.id}`).catch(() => {});
+      }
+      actionLoading.value = false;
+      snackbar.show("Direct chat started", "success");
+      return Promise.resolve(newConv);
+    }
+
     actionLoading.value = true;
 
     const payload = {
@@ -389,6 +525,28 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   const createGroupConversation = ({ name, memberIds }) => {
+    if (dummyStore) {
+      actionLoading.value = true;
+      const myId = authStore.currentUser?.id || 1;
+      const myName = authStore.currentUser?.name || "Alex Rivera";
+      const myEmail = authStore.currentUser?.email || "alex.rivera@example.com";
+      const newConv =
+        typeof dummyStore.createGroup === "function"
+          ? dummyStore.createGroup({ name, memberIds }, myId, myName, myEmail)
+          : null;
+      if (newConv) {
+        conversations.value =
+          typeof dummyStore.getConversations === "function"
+            ? dummyStore.getConversations()
+            : dummyStore.dummyConversations;
+        selectConversation(newConv.id);
+        router.push(`/chat/${newConv.id}`).catch(() => {});
+      }
+      actionLoading.value = false;
+      snackbar.show("Group conversation created", "success");
+      return Promise.resolve(newConv);
+    }
+
     actionLoading.value = true;
 
     const payload = {
@@ -426,11 +584,25 @@ export const useChatStore = defineStore("chat", () => {
 
   // ─── Rename Conversation (PATCH /conversations/{id}) ───
   const renameConversation = (conversationId, newName) => {
+    if (dummyStore) {
+      actionLoading.value = true;
+      if (typeof dummyStore.renameConversation === "function") {
+        dummyStore.renameConversation(conversationId, newName);
+      }
+      const target = conversations.value.find((c) => String(c.id) === String(conversationId));
+      if (target) {
+        target.name = newName;
+      }
+      actionLoading.value = false;
+      snackbar.show("Conversation renamed", "success");
+      return Promise.resolve();
+    }
+
     actionLoading.value = true;
 
     const successHandler = (res) => {
       snackbar.show("Conversation renamed", "success");
-      const target = conversations.value.find((c) => c.id === conversationId);
+      const target = conversations.value.find((c) => String(c.id) === String(conversationId));
       if (target) {
         target.name = newName;
       }
@@ -455,6 +627,26 @@ export const useChatStore = defineStore("chat", () => {
 
   // ─── Archive Conversation (DELETE /conversations/{id}) ─
   const archiveConversation = (conversationId) => {
+    if (dummyStore) {
+      actionLoading.value = true;
+      if (typeof dummyStore.archiveConversation === "function") {
+        dummyStore.archiveConversation(conversationId);
+      }
+      const target = conversations.value.find((c) => String(c.id) === String(conversationId));
+      if (target) {
+        target.archived_at = new Date().toISOString();
+      }
+      if (String(activeConversationId.value) === String(conversationId)) {
+        const remaining = conversations.value.filter(
+          (c) => String(c.id) !== String(conversationId) && !c.archived_at
+        );
+        activeConversationId.value = remaining.length > 0 ? remaining[0].id : null;
+      }
+      actionLoading.value = false;
+      snackbar.show("Conversation archived", "info");
+      return Promise.resolve();
+    }
+
     actionLoading.value = true;
 
     const successHandler = () => {
@@ -490,6 +682,22 @@ export const useChatStore = defineStore("chat", () => {
 
   // ─── Edit Message (PATCH /messages/{id}) ───────────────
   const editMessage = (messageId, conversationId, newContent) => {
+    if (dummyStore) {
+      actionLoading.value = true;
+      if (typeof dummyStore.editMessage === "function") {
+        dummyStore.editMessage(messageId, conversationId, newContent);
+      }
+      const msgs = messagesByConversation.value[conversationId] || [];
+      const item = msgs.find((m) => m.id === messageId);
+      if (item) {
+        item.content = newContent;
+        item.edited_at = new Date().toISOString();
+      }
+      actionLoading.value = false;
+      snackbar.show("Message edited", "success");
+      return Promise.resolve();
+    }
+
     actionLoading.value = true;
 
     const successHandler = (res) => {
@@ -521,6 +729,21 @@ export const useChatStore = defineStore("chat", () => {
 
   // ─── Soft Delete Message (DELETE /messages/{id}) ───────
   const deleteMessage = (messageId, conversationId) => {
+    if (dummyStore) {
+      actionLoading.value = true;
+      if (typeof dummyStore.deleteMessage === "function") {
+        dummyStore.deleteMessage(messageId, conversationId);
+      }
+      const msgs = messagesByConversation.value[conversationId] || [];
+      const item = msgs.find((m) => m.id === messageId);
+      if (item) {
+        item.deleted_at = new Date().toISOString();
+      }
+      actionLoading.value = false;
+      snackbar.show("Message deleted", "info");
+      return Promise.resolve();
+    }
+
     actionLoading.value = true;
 
     const successHandler = () => {
@@ -552,6 +775,15 @@ export const useChatStore = defineStore("chat", () => {
   const fetchMembers = (conversationId) => {
     if (!conversationId) return Promise.resolve();
 
+    if (dummyStore) {
+      const members =
+        typeof dummyStore.getMembers === "function"
+          ? dummyStore.getMembers(conversationId)
+          : [];
+      membersByConversation.value[conversationId] = members;
+      return Promise.resolve(members);
+    }
+
     const successHandler = (res) => {
       membersByConversation.value[conversationId] = Array.isArray(res) ? res : res?.data || [];
     };
@@ -564,6 +796,21 @@ export const useChatStore = defineStore("chat", () => {
 
   // ─── Add Member (POST /conversations/{id}/members) ────
   const addMember = (conversationId, userId, role = "MEMBER") => {
+    if (dummyStore) {
+      actionLoading.value = true;
+      if (typeof dummyStore.addMember === "function") {
+        dummyStore.addMember(conversationId, userId, role);
+      }
+      fetchMembers(conversationId);
+      conversations.value =
+        typeof dummyStore.getConversations === "function"
+          ? dummyStore.getConversations()
+          : dummyStore.dummyConversations;
+      actionLoading.value = false;
+      snackbar.show("Member added", "success");
+      return Promise.resolve();
+    }
+
     actionLoading.value = true;
 
     const successHandler = () => {
@@ -591,6 +838,26 @@ export const useChatStore = defineStore("chat", () => {
 
   // ─── Remove / Leave Member (DELETE .../members/{id}) ──
   const removeMember = (conversationId, userId) => {
+    if (dummyStore) {
+      actionLoading.value = true;
+      const myId = authStore.currentUser?.id || 1;
+      const isLeaving = Number(userId) === myId;
+      if (typeof dummyStore.removeMember === "function") {
+        dummyStore.removeMember(conversationId, userId);
+      }
+      if (isLeaving) {
+        conversations.value = conversations.value.filter(
+          (c) => String(c.id) !== String(conversationId)
+        );
+        activeConversationId.value = conversations.value[0]?.id || null;
+      } else {
+        fetchMembers(conversationId);
+      }
+      actionLoading.value = false;
+      snackbar.show(isLeaving ? "You left the conversation" : "Member removed", "info");
+      return Promise.resolve();
+    }
+
     actionLoading.value = true;
 
     const myId = authStore.currentUser?.id;
@@ -624,7 +891,7 @@ export const useChatStore = defineStore("chat", () => {
 
   // ─── Typing Indicators ─────────────────────────────────
   const startTyping = (conversationId) => {
-    if (!conversationId) return;
+    if (!conversationId || dummyStore) return;
     wsStore.send({
       event: "typing.start",
       conversation_id: conversationId,
@@ -632,7 +899,7 @@ export const useChatStore = defineStore("chat", () => {
   };
 
   const stopTyping = (conversationId) => {
-    if (!conversationId) return;
+    if (!conversationId || dummyStore) return;
     wsStore.send({
       event: "typing.stop",
       conversation_id: conversationId,
@@ -681,6 +948,11 @@ export const useChatStore = defineStore("chat", () => {
   // ─── Mark As Read ──────────────────────────────────────
   const markAsRead = (conversationId, messageId) => {
     if (!conversationId || !messageId) return;
+    if (dummyStore) {
+      const myId = authStore.currentUser?.id || 1;
+      applyMemberReadCursor(conversationId, myId, messageId);
+      return;
+    }
     wsStore.send({
       event: "message.read",
       conversation_id: conversationId,
