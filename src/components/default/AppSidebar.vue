@@ -26,8 +26,8 @@
             class="flex items-center gap-2.5 group cursor-pointer"
             @click="handleNavClick"
           >
-            <div class="w-7 h-7 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 shadow-xs">
-              <span class="material-symbols-rounded text-base">corporate_fare</span>
+            <div class="w-7 h-7 rounded-lg bg-primary text-btn-text-primary flex items-center justify-center shrink-0 shadow-xs">
+              <span class="material-symbols-rounded">corporate_fare</span>
             </div>
             <span class="text-base font-bold text-primary-text tracking-tight font-sans">Kora HR</span>
           </router-link>
@@ -128,7 +128,7 @@
             :class="[
               isCollapsed ? 'w-10 h-10 justify-center' : 'justify-between px-3 py-2',
               isActive('/chat')
-                ? 'bg-primary text-white font-semibold shadow-xs'
+                ? 'bg-primary text-btn-text-primary font-semibold shadow-xs'
                 : 'text-secondary-text hover:bg-surface-subtle hover:text-primary-text'
             ]"
             :title="isCollapsed ? 'Chat' : undefined"
@@ -354,7 +354,7 @@
           class="w-full p-2.5 rounded-xl bg-surface-subtle border border-primary-border/70 flex items-center justify-between cursor-pointer hover:border-primary-border transition-colors text-left"
         >
           <div class="flex items-center gap-2.5 min-w-0">
-            <div class="w-8 h-8 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+            <div class="w-8 h-8 rounded-full bg-primary text-btn-text-primary font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
               {{ userInitials }}
             </div>
             <div class="flex flex-col leading-tight min-w-0">
