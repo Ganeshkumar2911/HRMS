@@ -114,6 +114,21 @@ const routes = [
             meta: { title: "Attendance", requiredPermission: "attendance.view" },
           },
           {
+            path: "attendance/punch",
+            name: "HrmsAttendancePunch",
+            component: () => import("@/pages/hrms/attendance/punch.vue"),
+            meta: { title: "Punch", requiredPermission: "attendance.punch" },
+          },
+          {
+            path: "attendance/settings",
+            name: "HrmsAttendanceSettings",
+            component: () => import("@/pages/hrms/attendance/settings.vue"),
+            meta: {
+              title: "Attendance settings",
+              requiredPermission: "attendance.settings.manage",
+            },
+          },
+          {
             path: "leave",
             name: "HrmsLeave",
             component: () => import("@/pages/hrms/leave/index.vue"),

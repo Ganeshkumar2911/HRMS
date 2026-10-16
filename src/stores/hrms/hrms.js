@@ -23,6 +23,8 @@ export const useHrmsStore = defineStore("hrms", () => {
   const workWeekPolicies = ref([]);
   const attendanceRows = ref([]);
   const attendanceCalendar = ref([]);
+  const attendanceSettings = ref(null);
+  const myAttendance = ref(null);
   const leaveTypes = ref([]);
   const leavePolicies = ref([]);
   const leaveBalances = ref([]);
@@ -246,6 +248,63 @@ export const useHrmsStore = defineStore("hrms", () => {
     });
   };
 
+  const fetchAttendanceSettings = () =>
+    apiRequest(urls.KEYS.GET, urls.hrms.attendanceSettings, {
+      isTokenRequired: true,
+      onSuccess: (res) => {
+        attendanceSettings.value = res;
+      },
+      onFailure: (err) => {
+        if (err?.status !== 403) snackbar.show(err?.message || "Failed to load settings", "error");
+      },
+    });
+
+  const updateAttendanceSettings = (payload) => {
+    actionLoading.value = true;
+    return apiRequest(urls.KEYS.PUT, urls.hrms.attendanceSettings, {
+      data: payload,
+      isTokenRequired: true,
+      onSuccess: (res) => {
+        attendanceSettings.value = res;
+        snackbar.show("Attendance settings saved", "success");
+      },
+      onFailure: (err) => snackbar.show(err?.message || "Save failed", "error"),
+      onFinally: () => {
+        actionLoading.value = false;
+      },
+    });
+  };
+
+  const fetchMyAttendance = () =>
+    apiRequest(urls.KEYS.GET, urls.hrms.attendanceMy, {
+      isTokenRequired: true,
+      onSuccess: (res) => {
+        myAttendance.value = res;
+        if (res?.settings) attendanceSettings.value = res.settings;
+      },
+      onFailure: (err) => {
+        if (err?.status !== 403) snackbar.show(err?.message || "Failed to load punch status", "error");
+      },
+    });
+
+  const punchAttendance = (kind, formData) => {
+    actionLoading.value = true;
+    const url = kind === "out" ? urls.hrms.attendanceCheckOut : urls.hrms.attendanceCheckIn;
+    return apiRequest(urls.KEYS.POST, url, {
+      data: formData,
+      isTokenRequired: true,
+      onSuccess: () => {
+        snackbar.show(kind === "out" ? "Checked out" : "Checked in", "success");
+        fetchMyAttendance();
+        fetchAttendanceCalendar();
+      },
+      onFailure: (err) => snackbar.show(err?.message || "Punch failed", "error"),
+      onFinally: () => {
+        actionLoading.value = false;
+      },
+    });
+  };
+
   const markAttendance = (payload) => {
     actionLoading.value = true;
     return apiRequest(urls.KEYS.POST, urls.hrms.attendanceMark, {
@@ -383,6 +442,8 @@ export const useHrmsStore = defineStore("hrms", () => {
     workWeekPolicies,
     attendanceRows,
     attendanceCalendar,
+    attendanceSettings,
+    myAttendance,
     leaveTypes,
     leavePolicies,
     leaveBalances,
@@ -417,6 +478,10 @@ export const useHrmsStore = defineStore("hrms", () => {
     createWorkWeekPolicy,
     updateWorkWeekPolicy,
     fetchAttendanceCalendar,
+    fetchAttendanceSettings,
+    updateAttendanceSettings,
+    fetchMyAttendance,
+    punchAttendance,
     markAttendance,
     correctAttendance,
     fetchLeaveTypes,

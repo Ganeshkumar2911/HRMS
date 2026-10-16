@@ -11,8 +11,12 @@ export const SCOPE_AWARE_PREFIXES = [
   "leave_balance.",
 ];
 
-export const isScopeAwareCode = (code) =>
-  SCOPE_AWARE_PREFIXES.some((prefix) => String(code || "").startsWith(prefix));
+export const isScopeAwareCode = (code) => {
+  const value = String(code || "");
+  // Org-wide settings; registered scope_aware=False in the backend catalog.
+  if (value === "attendance.settings.manage") return false;
+  return SCOPE_AWARE_PREFIXES.some((prefix) => value.startsWith(prefix));
+};
 
 export const useRolesStore = defineStore("roles", () => {
   const snackbar = useSnackbarStore();

@@ -82,10 +82,14 @@ export const useNotificationsStore = defineStore("notifications", () => {
     const append = Boolean(params.append);
 
     const successHandler = (res) => {
-      const rows = Array.isArray(res) ? res : [];
+      const rows = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : [];
+      const pagination = res?.pagination;
       notifications.value = append ? [...notifications.value, ...rows] : rows;
-      listOffset.value = query.offset;
-      hasMore.value = rows.length >= query.limit;
+      listLimit.value = pagination?.limit ?? query.limit;
+      listOffset.value = pagination?.offset ?? query.offset;
+      hasMore.value = Boolean(
+        pagination?.has_more ?? rows.length >= query.limit
+      );
       isFetched.value.notifications = true;
     };
 

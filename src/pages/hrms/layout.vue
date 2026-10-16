@@ -60,11 +60,22 @@ const allNav = [
   { to: "/hrms/org/work-locations", label: "Locations", perm: "work_location.view" },
   { to: "/hrms/holidays", label: "Holidays", perm: "holiday.view" },
   { to: "/hrms/attendance", label: "Attendance", perm: "attendance.view" },
+  { to: "/hrms/attendance/punch", label: "Punch", perm: "attendance.punch" },
+  {
+    to: "/hrms/attendance/settings",
+    label: "Att. settings",
+    perm: "attendance.settings.manage",
+  },
   { to: "/hrms/leave", label: "Leave", perm: "leave_request.view" },
   { to: "/hrms/calendar", label: "Calendar", perm: "attendance.view" },
 ];
 
 const navItems = computed(() => allNav.filter((item) => permissions.can(item.perm)));
 
-const isActive = (path) => route.path === path || route.path.startsWith(`${path}/`);
+const isActive = (path) => {
+  if (path === "/hrms/attendance") {
+    return route.path === path;
+  }
+  return route.path === path || route.path.startsWith(`${path}/`);
+};
 </script>

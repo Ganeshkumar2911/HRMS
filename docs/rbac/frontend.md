@@ -1,13 +1,17 @@
 # Vue — RBAC
 
-**API:** [`docs/rbac/frontend.md`](../../../docs/rbac/frontend.md)
+**Full API / UX guide:** [`docs/rbac/frontend.md`](../../../docs/rbac/frontend.md)  
+(roles, overrides, request/response, effective formula, scope rules)
 
 | Item | Value |
 |---|---|
 | Page | `pages/admin/roles/index.vue` (`role.assign` to list) |
-| Store | `stores/rbac/roles.js` |
-| Bootstrap | `GET users/me/permissions` → `stores/rbac/permissions.js` |
+| Stores | `stores/rbac/roles.js`, `stores/rbac/permissions.js`, `stores/rbac/myPermissions.js` |
+| Bootstrap | `GET users/me/permissions` → gate nav / actions with `can(code)` / `scopeOf(code)` |
+| Catalog | `GET permissions` (`permission.override`) — flat `code` + `scope_aware` (no resource/action APIs) |
 
-Create/update with `permission_assignments: [{ code, scope }]`. Scope picker only for `employee.*`, `attendance.*`, `leave_request.*`, `leave_balance.*`.
+Create/update roles with `permission_assignments: [{ code, scope }]`. Scope picker only when catalog says `scope_aware` (HRMS: `employee.*`, `attendance.*`, `leave_request.*`, `leave_balance.*`, …).
 
-`RoleOut.is_system`: Admin is `true`. Holders get every code from `GET users/me/permissions` (backend capability bypass). Do not offer delete/rename for system roles.
+`RoleOut.is_system`: Admin is `true`. Holders get every code from bootstrap (`source: SYSTEM`). Do not offer delete/rename for system roles.
+
+User overrides: `PUT/DELETE users/{id}/permission-overrides` — see full guide.

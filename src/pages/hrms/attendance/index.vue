@@ -2,10 +2,24 @@
   <div class="space-y-4">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <p class="sub-text text-secondary-text">
-        Status calendar — no punch clock. UNMARKED is a real state.
+        Status calendar. With location attendance enabled, working days default to ABSENT until full hours are met via punch.
         Scope: {{ scope || "—" }}
       </p>
-      <div class="flex gap-2 items-center">
+      <div class="flex gap-2 items-center flex-wrap">
+        <router-link
+          v-if="permissions.can('attendance.punch')"
+          to="/hrms/attendance/punch"
+          class="btn-secondary text-xs px-3 py-1.5"
+        >
+          Punch
+        </router-link>
+        <router-link
+          v-if="permissions.can('attendance.settings.manage')"
+          to="/hrms/attendance/settings"
+          class="btn-secondary text-xs px-3 py-1.5"
+        >
+          Settings
+        </router-link>
         <input
           v-if="scope !== 'SELF'"
           v-model.number="employeeId"
@@ -35,6 +49,9 @@
         >
           <p class="font-semibold">{{ day.date?.slice?.(8) || day.date }}</p>
           <p>{{ day.status }}</p>
+          <p v-if="day.check_in_at" class="truncate opacity-80">In {{ shortTime(day.check_in_at) }}</p>
+          <p v-if="day.check_out_at" class="truncate opacity-80">Out {{ shortTime(day.check_out_at) }}</p>
+          <p v-if="day.worked_minutes != null" class="truncate opacity-80">{{ day.worked_minutes }}m</p>
           <p v-if="day.holiday_name" class="text-primary-blue truncate">{{ day.holiday_name }}</p>
         </button>
       </div>
@@ -76,6 +93,14 @@ const markForm = reactive({ status: "PRESENT", reason: "", remarks: "" });
 const markStatuses = ["PRESENT", "ABSENT", "HALF_DAY", "WFH", "ON_DUTY", "LEAVE"];
 
 const calendarEmployees = computed(() => hrms.attendanceCalendar || []);
+
+const shortTime = (iso) => {
+  try {
+    return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+};
 
 const dayCellClass = (day) => {
   if (day.week_off || day.status === "WEEK_OFF") return "border-primary-border bg-secondary-text/10 text-secondary-text";

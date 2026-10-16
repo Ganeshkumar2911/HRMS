@@ -81,6 +81,11 @@ const urls = {
     attendanceMark: "hrms/attendance/mark",
     attendanceBulkMark: "hrms/attendance/bulk-mark",
     attendanceCorrection: (id) => `hrms/attendance/${id}/correction`,
+    attendanceSettings: "hrms/attendance/settings",
+    attendanceMy: "hrms/attendance/my",
+    attendanceCheckIn: "hrms/attendance/check-in",
+    attendanceCheckOut: "hrms/attendance/check-out",
+    attendanceSelfie: (id, kind) => `hrms/attendance/selfies/${id}/${kind}`,
 
     leaveTypes: "hrms/leave/types",
     leaveTypeDetail: (id) => `hrms/leave/types/${id}`,

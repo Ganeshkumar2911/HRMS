@@ -26,7 +26,11 @@ export const useUsersStore = defineStore("users", () => {
     return apiRequest(urls.KEYS.GET, urls.users.list, {
       isTokenRequired: true,
       onSuccess: (res) => {
-        users.value = Array.isArray(res) ? res : [];
+        users.value = Array.isArray(res?.items)
+          ? res.items
+          : Array.isArray(res)
+            ? res
+            : [];
         isFetched.value.users = true;
       },
       onFailure: (err) => {

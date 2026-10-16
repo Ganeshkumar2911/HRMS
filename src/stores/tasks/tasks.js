@@ -101,9 +101,12 @@ export const useTasksStore = defineStore("tasks", () => {
     const query = compactQuery(listParams.value);
 
     const successHandler = (res) => {
-      const rows = Array.isArray(res) ? res : [];
+      const rows = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : [];
+      const pagination = res?.pagination;
       tasks.value = rows;
-      hasMore.value = rows.length >= (query.limit || 50);
+      hasMore.value = Boolean(pagination?.has_more);
+      if (pagination?.limit != null) listParams.value.limit = pagination.limit;
+      if (pagination?.offset != null) listParams.value.offset = pagination.offset;
       isFetched.value.tasks = true;
     };
 
