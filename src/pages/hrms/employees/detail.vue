@@ -25,14 +25,11 @@
       <div class="grid grid-cols-2 gap-3">
         <input v-model="form.phone" class="input-field px-3 py-2 text-sm" placeholder="Phone" />
         <input v-model="form.personal_email" class="input-field px-3 py-2 text-sm" placeholder="Personal email" />
-        <select v-model="form.employment_status" class="input-field px-3 py-2 text-sm">
-          <option>ACTIVE</option>
-          <option>INACTIVE</option>
-          <option>ON_NOTICE</option>
-          <option>ON_LEAVE</option>
-          <option>TERMINATED</option>
-          <option>RESIGNED</option>
-        </select>
+        <BaseSelect
+          v-model="form.employment_status"
+          :options="employmentStatusOptions"
+          custom-class="!py-2 text-sm"
+        />
         <input v-model.number="form.department_id" type="number" class="input-field px-3 py-2 text-sm" placeholder="Department ID" />
         <input v-model.number="form.manager_id" type="number" class="input-field px-3 py-2 text-sm" placeholder="Manager employee ID" />
         <input v-model.number="form.work_location_id" type="number" class="input-field px-3 py-2 text-sm" placeholder="Location ID" />
@@ -48,10 +45,11 @@
     </div>
 
     <div v-else-if="activeTab === 'Address'" class="space-y-3 max-w-lg">
-      <select v-model="address.address_type" class="input-field px-3 py-2 text-sm">
-        <option>CURRENT</option>
-        <option>PERMANENT</option>
-      </select>
+      <BaseSelect
+        v-model="address.address_type"
+        :options="addressTypeOptions"
+        custom-class="!py-2 text-sm"
+      />
       <input v-model="address.line1" class="input-field px-3 py-2 text-sm" placeholder="Line 1" />
       <input v-model="address.city" class="input-field px-3 py-2 text-sm" placeholder="City" />
       <button type="button" class="btn-primary text-xs px-3 py-1.5" @click="saveAddress">Add address</button>
@@ -83,8 +81,23 @@
 import { computed, onMounted, reactive, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import StatusBadge from "@/components/common/StatusBadge.vue";
+import BaseSelect from "@/components/common/BaseSelect.vue";
 import { useHrmsStore } from "@/stores/hrms/hrms";
 import { usePermissionsStore } from "@/stores/rbac/permissions";
+
+const employmentStatusOptions = [
+  { label: "ACTIVE", value: "ACTIVE" },
+  { label: "INACTIVE", value: "INACTIVE" },
+  { label: "ON_NOTICE", value: "ON_NOTICE" },
+  { label: "ON_LEAVE", value: "ON_LEAVE" },
+  { label: "TERMINATED", value: "TERMINATED" },
+  { label: "RESIGNED", value: "RESIGNED" },
+];
+
+const addressTypeOptions = [
+  { label: "CURRENT", value: "CURRENT" },
+  { label: "PERMANENT", value: "PERMANENT" },
+];
 
 const route = useRoute();
 const hrms = useHrmsStore();

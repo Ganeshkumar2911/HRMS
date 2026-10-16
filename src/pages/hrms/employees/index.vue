@@ -35,12 +35,11 @@
         <h3 class="title-text text-sm">Link employee to user</h3>
         <input v-model.number="form.user_id" type="number" class="input-field px-3 py-2 text-sm" placeholder="User ID" required />
         <input v-model="form.employee_code" class="input-field px-3 py-2 text-sm" placeholder="Employee code" required />
-        <select v-model="form.employment_type" class="input-field px-3 py-2 text-sm">
-          <option>FULL_TIME</option>
-          <option>PART_TIME</option>
-          <option>CONTRACT</option>
-          <option>INTERN</option>
-        </select>
+        <BaseSelect
+          v-model="form.employment_type"
+          :options="employmentTypeOptions"
+          custom-class="!py-2 text-sm"
+        />
         <div class="flex justify-end gap-2">
           <button type="button" class="btn-secondary text-xs px-3 py-1.5" @click="modalOpen = false">Cancel</button>
           <button type="submit" class="btn-primary text-xs px-3 py-1.5">Create</button>
@@ -54,8 +53,16 @@
 import { computed, onMounted, reactive, ref } from "vue";
 import DataTable from "@/components/common/DataTable";
 import StatusBadge from "@/components/common/StatusBadge.vue";
+import BaseSelect from "@/components/common/BaseSelect.vue";
 import { useHrmsStore } from "@/stores/hrms/hrms";
 import { usePermissionsStore } from "@/stores/rbac/permissions";
+
+const employmentTypeOptions = [
+  { label: "FULL_TIME", value: "FULL_TIME" },
+  { label: "PART_TIME", value: "PART_TIME" },
+  { label: "CONTRACT", value: "CONTRACT" },
+  { label: "INTERN", value: "INTERN" },
+];
 
 const hrms = useHrmsStore();
 const permissions = usePermissionsStore();
