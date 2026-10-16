@@ -144,41 +144,370 @@
             ></span>
           </router-link>
 
-          <!-- People / HRMS -->
-          <router-link
-            v-if="permissionsStore.canAccessArea('hrms')"
-            to="/hrms"
-            @click="handleNavClick"
-            class="flex items-center rounded-lg text-xs font-medium transition-all cursor-pointer"
-            :class="[
-              isCollapsed ? 'w-10 h-10 justify-center' : 'gap-3 px-3 py-2',
-              isActive('/hrms') && !route.path.includes('/hrms/leave') && !route.path.includes('/hrms/attendance') && !route.path.includes('/hrms/calendar')
-                ? 'bg-primary text-white font-semibold shadow-xs'
-                : 'text-secondary-text hover:bg-surface-subtle hover:text-primary-text'
-            ]"
-            :title="isCollapsed ? 'People' : undefined"
-          >
-            <span class="material-symbols-rounded text-[18px]">group</span>
-            <span v-if="!isCollapsed">People</span>
-          </router-link>
+          <!-- People / HRMS (Expanded State) -->
+          <div v-if="!isCollapsed && permissionsStore.canAccessArea('hrms')" class="space-y-1">
+            <button
+              type="button"
+              @click="isPeopleExpanded = !isPeopleExpanded"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer"
+              :class="isPeopleActive
+                ? 'bg-surface-subtle text-primary-text font-semibold'
+                : 'text-secondary-text hover:bg-surface-subtle hover:text-primary-text'"
+            >
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-rounded text-[18px]">group</span>
+                <span>People</span>
+              </div>
+              <span
+                class="material-symbols-rounded text-sm transition-transform duration-150"
+                :class="{ 'rotate-180': isPeopleExpanded }"
+              >
+                expand_more
+              </span>
+            </button>
 
-          <!-- Leave & Attendance -->
-          <router-link
-            v-if="permissionsStore.canAccessArea('hrms')"
-            to="/hrms/attendance"
-            @click="handleNavClick"
-            class="flex items-center rounded-lg text-xs font-medium transition-all cursor-pointer"
-            :class="[
-              isCollapsed ? 'w-10 h-10 justify-center' : 'gap-3 px-3 py-2',
-              isActive('/hrms/attendance') || isActive('/hrms/leave') || isActive('/hrms/calendar')
+            <!-- Nested People Links -->
+            <div v-if="isPeopleExpanded" class="pl-8 pr-1 space-y-0.5">
+              <router-link
+                v-if="permissionsStore.can('employee.view')"
+                to="/hrms/employees"
+                @click="handleNavClick"
+                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                :class="isActive('/hrms/employees')
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+              >
+                <span class="material-symbols-rounded text-sm">badge</span>
+                <span>Employees</span>
+              </router-link>
+
+              <router-link
+                v-if="permissionsStore.can('department.view')"
+                to="/hrms/org/departments"
+                @click="handleNavClick"
+                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                :class="isActive('/hrms/org/departments')
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+              >
+                <span class="material-symbols-rounded text-sm">domain</span>
+                <span>Departments</span>
+              </router-link>
+
+              <router-link
+                v-if="permissionsStore.can('designation.view')"
+                to="/hrms/org/designations"
+                @click="handleNavClick"
+                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                :class="isActive('/hrms/org/designations')
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+              >
+                <span class="material-symbols-rounded text-sm">work</span>
+                <span>Designations</span>
+              </router-link>
+
+              <router-link
+                v-if="permissionsStore.can('work_location.view')"
+                to="/hrms/org/work-locations"
+                @click="handleNavClick"
+                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                :class="isActive('/hrms/org/work-locations')
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+              >
+                <span class="material-symbols-rounded text-sm">location_on</span>
+                <span>Locations</span>
+              </router-link>
+
+              <router-link
+                v-if="permissionsStore.can('employee.view')"
+                to="/hrms/me"
+                @click="handleNavClick"
+                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                :class="isActive('/hrms/me')
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+              >
+                <span class="material-symbols-rounded text-sm">account_circle</span>
+                <span>My Profile</span>
+              </router-link>
+            </div>
+          </div>
+
+          <!-- People / HRMS (Collapsed Rail State with Flyout) -->
+          <div v-else-if="isCollapsed && permissionsStore.canAccessArea('hrms')" class="relative" ref="peopleMenuRef">
+            <button
+              type="button"
+              @click="togglePeopleFlyout"
+              class="w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative"
+              :class="isPeopleActive
                 ? 'bg-primary text-white font-semibold shadow-xs'
-                : 'text-secondary-text hover:bg-surface-subtle hover:text-primary-text'
-            ]"
-            :title="isCollapsed ? 'Leave & Attendance' : undefined"
-          >
-            <span class="material-symbols-rounded text-[18px]">date_range</span>
-            <span v-if="!isCollapsed">Leave &amp; Attendance</span>
-          </router-link>
+                : (isPeopleFlyoutOpen ? 'bg-surface-subtle text-primary-text' : 'text-secondary-text hover:bg-surface-subtle hover:text-primary-text')"
+              title="People"
+              aria-label="People"
+            >
+              <span class="material-symbols-rounded text-[18px]">group</span>
+              <span v-if="isPeopleActive" class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white"></span>
+            </button>
+
+            <!-- People Flyout Popover -->
+            <Transition name="fade">
+              <div
+                v-if="isPeopleFlyoutOpen"
+                class="fixed left-16 ml-2 bg-card-background border border-primary-border rounded-xl p-1.5 shadow-xl z-50 w-48 space-y-0.5"
+                :style="{ top: peopleFlyoutTop + 'px' }"
+              >
+                <div class="px-2.5 py-1.5 border-b border-primary-border/60 mb-1">
+                  <span class="text-[11px] font-semibold text-secondary-text uppercase tracking-wider">People</span>
+                </div>
+                <router-link
+                  v-if="permissionsStore.can('employee.view')"
+                  to="/hrms/employees"
+                  @click="closePeopleFlyout"
+                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+                  :class="isActive('/hrms/employees') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                >
+                  <span class="material-symbols-rounded text-sm">badge</span>
+                  <span>Employees</span>
+                </router-link>
+                <router-link
+                  v-if="permissionsStore.can('department.view')"
+                  to="/hrms/org/departments"
+                  @click="closePeopleFlyout"
+                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+                  :class="isActive('/hrms/org/departments') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                >
+                  <span class="material-symbols-rounded text-sm">domain</span>
+                  <span>Departments</span>
+                </router-link>
+                <router-link
+                  v-if="permissionsStore.can('designation.view')"
+                  to="/hrms/org/designations"
+                  @click="closePeopleFlyout"
+                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+                  :class="isActive('/hrms/org/designations') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                >
+                  <span class="material-symbols-rounded text-sm">work</span>
+                  <span>Designations</span>
+                </router-link>
+                <router-link
+                  v-if="permissionsStore.can('work_location.view')"
+                  to="/hrms/org/work-locations"
+                  @click="closePeopleFlyout"
+                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+                  :class="isActive('/hrms/org/work-locations') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                >
+                  <span class="material-symbols-rounded text-sm">location_on</span>
+                  <span>Locations</span>
+                </router-link>
+                <router-link
+                  v-if="permissionsStore.can('employee.view')"
+                  to="/hrms/me"
+                  @click="closePeopleFlyout"
+                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+                  :class="isActive('/hrms/me') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                >
+                  <span class="material-symbols-rounded text-sm">account_circle</span>
+                  <span>My Profile</span>
+                </router-link>
+              </div>
+            </Transition>
+          </div>
+
+          <!-- Leave & Attendance (Expanded State) -->
+          <div v-if="!isCollapsed && permissionsStore.canAccessArea('hrms')" class="space-y-1">
+            <button
+              type="button"
+              @click="isAttendanceExpanded = !isAttendanceExpanded"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer"
+              :class="isAttendanceActive
+                ? 'bg-surface-subtle text-primary-text font-semibold'
+                : 'text-secondary-text hover:bg-surface-subtle hover:text-primary-text'"
+            >
+              <div class="flex items-center gap-3">
+                <span class="material-symbols-rounded text-[18px]">date_range</span>
+                <span>Attendance &amp; Leave</span>
+              </div>
+              <span
+                class="material-symbols-rounded text-sm transition-transform duration-150"
+                :class="{ 'rotate-180': isAttendanceExpanded }"
+              >
+                expand_more
+              </span>
+            </button>
+
+            <!-- Nested Attendance Links -->
+            <div v-if="isAttendanceExpanded" class="pl-8 pr-1 space-y-0.5">
+              <router-link
+                v-if="permissionsStore.can('attendance.view')"
+                to="/hrms/attendance"
+                @click="handleNavClick"
+                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                :class="isActive('/hrms/attendance') && !isActive('/hrms/attendance/punch') && !isActive('/hrms/attendance/settings')
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+              >
+                <span class="material-symbols-rounded text-sm">event_available</span>
+                <span>Attendance</span>
+              </router-link>
+
+              <router-link
+                v-if="permissionsStore.can('attendance.punch')"
+                to="/hrms/attendance/punch"
+                @click="handleNavClick"
+                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                :class="isActive('/hrms/attendance/punch')
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+              >
+                <span class="material-symbols-rounded text-sm">touch_app</span>
+                <span>Punch In/Out</span>
+              </router-link>
+
+              <router-link
+                v-if="permissionsStore.can('attendance.settings.manage')"
+                to="/hrms/attendance/settings"
+                @click="handleNavClick"
+                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                :class="isActive('/hrms/attendance/settings')
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+              >
+                <span class="material-symbols-rounded text-sm">tune</span>
+                <span>Settings</span>
+              </router-link>
+
+              <router-link
+                v-if="permissionsStore.can('leave_request.view')"
+                to="/hrms/leave"
+                @click="handleNavClick"
+                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                :class="isActive('/hrms/leave')
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+              >
+                <span class="material-symbols-rounded text-sm">event_busy</span>
+                <span>Leave</span>
+              </router-link>
+
+              <router-link
+                v-if="permissionsStore.can('attendance.view')"
+                to="/hrms/calendar"
+                @click="handleNavClick"
+                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                :class="isActive('/hrms/calendar')
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+              >
+                <span class="material-symbols-rounded text-sm">calendar_month</span>
+                <span>Calendar</span>
+              </router-link>
+
+              <router-link
+                v-if="permissionsStore.can('holiday.view')"
+                to="/hrms/holidays"
+                @click="handleNavClick"
+                class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
+                :class="isActive('/hrms/holidays')
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+              >
+                <span class="material-symbols-rounded text-sm">celebration</span>
+                <span>Holidays</span>
+              </router-link>
+            </div>
+          </div>
+
+          <!-- Leave & Attendance (Collapsed Rail State with Flyout) -->
+          <div v-else-if="isCollapsed && permissionsStore.canAccessArea('hrms')" class="relative" ref="attendanceMenuRef">
+            <button
+              type="button"
+              @click="toggleAttendanceFlyout"
+              class="w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative"
+              :class="isAttendanceActive
+                ? 'bg-primary text-white font-semibold shadow-xs'
+                : (isAttendanceFlyoutOpen ? 'bg-surface-subtle text-primary-text' : 'text-secondary-text hover:bg-surface-subtle hover:text-primary-text')"
+              title="Attendance & Leave"
+              aria-label="Attendance & Leave"
+            >
+              <span class="material-symbols-rounded text-[18px]">date_range</span>
+              <span v-if="isAttendanceActive" class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white"></span>
+            </button>
+
+            <!-- Attendance Flyout Popover -->
+            <Transition name="fade">
+              <div
+                v-if="isAttendanceFlyoutOpen"
+                class="fixed left-16 ml-2 bg-card-background border border-primary-border rounded-xl p-1.5 shadow-xl z-50 w-52 space-y-0.5"
+                :style="{ top: attendanceFlyoutTop + 'px' }"
+              >
+                <div class="px-2.5 py-1.5 border-b border-primary-border/60 mb-1">
+                  <span class="text-[11px] font-semibold text-secondary-text uppercase tracking-wider">Attendance &amp; Leave</span>
+                </div>
+                <router-link
+                  v-if="permissionsStore.can('attendance.view')"
+                  to="/hrms/attendance"
+                  @click="closeAttendanceFlyout"
+                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+                  :class="isActive('/hrms/attendance') && !isActive('/hrms/attendance/punch') && !isActive('/hrms/attendance/settings') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                >
+                  <span class="material-symbols-rounded text-sm">event_available</span>
+                  <span>Attendance</span>
+                </router-link>
+                <router-link
+                  v-if="permissionsStore.can('attendance.punch')"
+                  to="/hrms/attendance/punch"
+                  @click="closeAttendanceFlyout"
+                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+                  :class="isActive('/hrms/attendance/punch') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                >
+                  <span class="material-symbols-rounded text-sm">touch_app</span>
+                  <span>Punch In/Out</span>
+                </router-link>
+                <router-link
+                  v-if="permissionsStore.can('attendance.settings.manage')"
+                  to="/hrms/attendance/settings"
+                  @click="closeAttendanceFlyout"
+                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+                  :class="isActive('/hrms/attendance/settings') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                >
+                  <span class="material-symbols-rounded text-sm">tune</span>
+                  <span>Settings</span>
+                </router-link>
+                <router-link
+                  v-if="permissionsStore.can('leave_request.view')"
+                  to="/hrms/leave"
+                  @click="closeAttendanceFlyout"
+                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+                  :class="isActive('/hrms/leave') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                >
+                  <span class="material-symbols-rounded text-sm">event_busy</span>
+                  <span>Leave</span>
+                </router-link>
+                <router-link
+                  v-if="permissionsStore.can('attendance.view')"
+                  to="/hrms/calendar"
+                  @click="closeAttendanceFlyout"
+                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+                  :class="isActive('/hrms/calendar') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                >
+                  <span class="material-symbols-rounded text-sm">calendar_month</span>
+                  <span>Calendar</span>
+                </router-link>
+                <router-link
+                  v-if="permissionsStore.can('holiday.view')"
+                  to="/hrms/holidays"
+                  @click="closeAttendanceFlyout"
+                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
+                  :class="isActive('/hrms/holidays') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                >
+                  <span class="material-symbols-rounded text-sm">celebration</span>
+                  <span>Holidays</span>
+                </router-link>
+              </div>
+            </Transition>
+          </div>
 
           <!-- Section Divider -->
           <div
@@ -515,6 +844,12 @@ const authStore = useAuthStore();
 const permissionsStore = usePermissionsStore();
 
 const isUserMenuOpen = ref(false);
+const isPeopleExpanded = ref(false);
+const isPeopleFlyoutOpen = ref(false);
+const peopleFlyoutTop = ref(120);
+const isAttendanceExpanded = ref(false);
+const isAttendanceFlyoutOpen = ref(false);
+const attendanceFlyoutTop = ref(160);
 const isAdminExpanded = ref(false);
 const isAdminFlyoutOpen = ref(false);
 const adminFlyoutTop = ref(180);
@@ -522,11 +857,43 @@ const isPermissionsModalOpen = ref(false);
 
 const userMenuRef = ref(null);
 const userCollapsedBtnRef = ref(null);
+const peopleMenuRef = ref(null);
+const attendanceMenuRef = ref(null);
 const adminMenuRef = ref(null);
 
 const toggleCollapse = () => {
   emit("toggle-collapse");
   emit("update:isCollapsed", !props.isCollapsed);
+};
+
+const togglePeopleFlyout = () => {
+  if (peopleMenuRef.value) {
+    const rect = peopleMenuRef.value.getBoundingClientRect();
+    peopleFlyoutTop.value = Math.max(16, rect.top);
+  }
+  isPeopleFlyoutOpen.value = !isPeopleFlyoutOpen.value;
+  isAttendanceFlyoutOpen.value = false;
+  isAdminFlyoutOpen.value = false;
+};
+
+const closePeopleFlyout = () => {
+  isPeopleFlyoutOpen.value = false;
+  emit("close-mobile");
+};
+
+const toggleAttendanceFlyout = () => {
+  if (attendanceMenuRef.value) {
+    const rect = attendanceMenuRef.value.getBoundingClientRect();
+    attendanceFlyoutTop.value = Math.max(16, rect.top);
+  }
+  isAttendanceFlyoutOpen.value = !isAttendanceFlyoutOpen.value;
+  isPeopleFlyoutOpen.value = false;
+  isAdminFlyoutOpen.value = false;
+};
+
+const closeAttendanceFlyout = () => {
+  isAttendanceFlyoutOpen.value = false;
+  emit("close-mobile");
 };
 
 const toggleAdminFlyout = () => {
@@ -535,6 +902,8 @@ const toggleAdminFlyout = () => {
     adminFlyoutTop.value = Math.max(16, rect.top);
   }
   isAdminFlyoutOpen.value = !isAdminFlyoutOpen.value;
+  isPeopleFlyoutOpen.value = false;
+  isAttendanceFlyoutOpen.value = false;
 };
 
 const closeAdminFlyout = () => {
@@ -556,6 +925,25 @@ const hasAdminAccess = computed(() => {
     permissionsStore.canAccessArea("admin_audit") ||
     permissionsStore.can("broadcast.send") ||
     permissionsStore.can("broadcast.view")
+  );
+});
+
+const isPeopleActive = computed(() => {
+  return (
+    route.path.startsWith("/hrms/employees") ||
+    route.path.startsWith("/hrms/org") ||
+    route.path.startsWith("/hrms/me") ||
+    route.path === "/hrms" ||
+    route.path === "/hrms/"
+  );
+});
+
+const isAttendanceActive = computed(() => {
+  return (
+    route.path.startsWith("/hrms/attendance") ||
+    route.path.startsWith("/hrms/leave") ||
+    route.path.startsWith("/hrms/calendar") ||
+    route.path.startsWith("/hrms/holidays")
   );
 });
 
@@ -610,6 +998,12 @@ const handleOutsideClick = (event) => {
   ) {
     isUserMenuOpen.value = false;
   }
+  if (peopleMenuRef.value && !peopleMenuRef.value.contains(event.target)) {
+    isPeopleFlyoutOpen.value = false;
+  }
+  if (attendanceMenuRef.value && !attendanceMenuRef.value.contains(event.target)) {
+    isAttendanceFlyoutOpen.value = false;
+  }
   if (adminMenuRef.value && !adminMenuRef.value.contains(event.target)) {
     isAdminFlyoutOpen.value = false;
   }
@@ -629,6 +1023,8 @@ const handleKeyDown = (event) => {
 watch(
   () => props.isCollapsed,
   () => {
+    isPeopleFlyoutOpen.value = false;
+    isAttendanceFlyoutOpen.value = false;
     isAdminFlyoutOpen.value = false;
     isUserMenuOpen.value = false;
   }
@@ -637,6 +1033,12 @@ watch(
 onMounted(() => {
   document.addEventListener("mousedown", handleOutsideClick);
   window.addEventListener("keydown", handleKeyDown);
+  if (isPeopleActive.value) {
+    isPeopleExpanded.value = true;
+  }
+  if (isAttendanceActive.value) {
+    isAttendanceExpanded.value = true;
+  }
   if (isAdminActive.value) {
     isAdminExpanded.value = true;
   }
