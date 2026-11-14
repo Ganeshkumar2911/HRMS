@@ -4,16 +4,10 @@ import router from "../router";
 
 // ─── Base URL Resolution ──────────────────────────────────────────
 
+const API_BASE_ORIGIN = "https://zpj8dpf6-8000.inc1.devtunnels.ms";
+
 export const getBaseOrigin = () => {
-  // Prefer project env so a leftover localStorage override (e.g. old Dev Tunnel)
-  // cannot silently point the SPA at the wrong API.
-  const envUrl = import.meta.env?.VITE_API_URL;
-  if (envUrl) {
-    return envUrl.trim().replace(/\/+$/, "");
-  }
-  return typeof window !== "undefined"
-    ? window.location.origin
-    : "http://localhost:8000/";
+  return API_BASE_ORIGIN;
 };
 
 export const getBaseURL = () => {
@@ -34,12 +28,8 @@ export const getWsURL = (token = "") => {
     wsProto = parsed.protocol === "https:" ? "wss:" : "ws:";
     host = parsed.host;
   } catch (_) {
-    wsProto =
-      typeof window !== "undefined" && window.location.protocol === "https:"
-        ? "wss:"
-        : "ws:";
-    host =
-      typeof window !== "undefined" ? window.location.host : "localhost:8000";
+    wsProto = "wss:";
+    host = new URL(API_BASE_ORIGIN).host;
   }
 
   const tokenParam = token ? `?token=${encodeURIComponent(token)}` : "";
