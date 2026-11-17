@@ -458,3 +458,55 @@ When creating or updating a module (such as the **Commission Engine**), follow t
 
 - Use the `DataTable` component (`@/components/common/DataTable/DataTable.vue`) to render tables.
 - The `DataTable` component has an automatic columns generation feature. You can just pass the list of array data to the `:data` prop (without needing to define `:columns` manually), and it will automatically plot the table headers and rows based on the keys in the data objects.
+
+
+---
+
+## 10. Global `PageTopBar` & Search Usage (`src/components/default/PageTopBar.vue`)
+
+`PageTopBar` is globally registered in `src/main.js` and **must** be used as the top header on all list/detail pages instead of custom page headers. It sticks flush beneath the viewport top (`sticky top-0`) and aligns with `AppSidebar`.
+
+### Props
+- `title` (`String`): Page title (falls back to `route.meta.title`).
+- `description` (`String`): Optional subtitle (falls back to `route.meta.description`).
+- `showBackButton` (`Boolean`): Shows a back button (falls back to `route.meta.showBackButton`).
+- `showSearch` (`Boolean`, default `false`): Enables the built-in search input wired to `useGlobalSearchStore`.
+- `searchPlaceholder` (`String`, default `"Search..."`): Placeholder for the search input.
+- `activeFilterCount` (`Number`, default `0`): Badge count shown on the filter toggle button.
+- `filtersOpen` (`Boolean`): Optional `v-model:filters-open` for controlled filter panel state. When omitted, `PageTopBar` persists open/closed state per route in `localStorage`.
+
+### Slots
+- `#actions`: Page-level action buttons (e.g., `New Task`, `New employee`, `Export Log`).
+- `#filters`: Expandable filter bar rendered below the header with a smooth grid-row animation. The filter toggle button appears automatically when `#filters` is provided.
+
+### Wiring Global Search (`useGlobalSearchStore`)
+When `show-search` is enabled on `<PageTopBar>`, register the page's list API search handler in `onMounted` and clean it up in `onUnmounted`:
+
+```js
+import { onMounted, onUnmounted } from "vue";
+import { useGlobalSearchStore } from "@/stores/ui/globalSearch";
+
+const globalSearch = useGlobalSearchStore();
+let unregisterGlobalSearch = null;
+
+onMounted(() => {
+  unregisterGlobalSearch = globalSearch.register((q) => {
+    // Call your page's list API with the search query `q`
+  }, "Search ...");
+});
+
+onUnmounted(() => {
+  if (unregisterGlobalSearch) unregisterGlobalSearch();
+});
+```
+
+
+---
+
+## 11. Loading States & Skeleton Loaders
+
+Never render plain text placeholders (e.g., `"Loading..."`, `"Loading employee…"`) or full-screen blocking text for initial page/detail loading states.
+
+- **Use Skeleton Loaders**: Match the layout geometry of the loaded content (header, tabs, cards, form grids, or table rows) using `animate-pulse` and theme surface tokens (`bg-surface-subtle`, `bg-surface-container`, `border-primary-border/60`).
+- **Accessibility**: Include `aria-busy="true"` and a descriptive `aria-label` on the skeleton container.
+- **Tables**: `DataTable` handles its own loading skeleton/state via `:loading="store.loading"`.

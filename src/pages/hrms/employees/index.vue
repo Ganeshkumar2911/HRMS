@@ -1,19 +1,22 @@
 <template>
   <div class="space-y-4">
-    <div class="flex flex-wrap items-center justify-between gap-2">
-      <p class="sub-text text-secondary-text">
-        Data scope: <strong>{{ scope || "—" }}</strong>
-        <span v-if="scope === 'SELF'"> — employee picker hidden</span>
-      </p>
-      <button
-        v-if="permissions.can('employee.create')"
-        type="button"
-        class="btn-primary text-xs px-3 py-1.5"
-        @click="modalOpen = true"
-      >
-        New employee
-      </button>
-    </div>
+    <PageTopBar
+      title="Employees"
+      :description="`Data scope: ${scope || '—'}${scope === 'SELF' ? ' — employee picker hidden' : ''}`"
+      show-search
+      search-placeholder="Search employees..."
+    >
+      <template #actions>
+        <button
+          v-if="permissions.can('employee.create')"
+          type="button"
+          class="btn-primary text-xs px-3 py-1.5"
+          @click="modalOpen = true"
+        >
+          New employee
+        </button>
+      </template>
+    </PageTopBar>
 
     <DataTable :data="hrms.employees" :columns="columns" :loading="hrms.loading" row-key="id">
       <template #cell-employment_status="{ row }">
@@ -50,7 +53,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
+import { useGlobalSearchStore } from "@/stores/ui/globalSearch";
 import DataTable from "@/components/common/DataTable";
 import StatusBadge from "@/components/common/StatusBadge.vue";
 import BaseSelect from "@/components/common/BaseSelect.vue";
@@ -88,5 +92,17 @@ const create = async () => {
   modalOpen.value = false;
 };
 
-onMounted(() => hrms.fetchEmployees({}, true));
+const globalSearch = useGlobalSearchStore();
+let unregisterGlobalSearch = null;
+
+onMounted(() => {
+  hrms.fetchEmployees({}, true);
+  unregisterGlobalSearch = globalSearch.register((q) => {
+    hrms.fetchEmployees(q ? { q } : {}, true);
+  }, "Search employees...");
+});
+
+onUnmounted(() => {
+  if (unregisterGlobalSearch) unregisterGlobalSearch();
+});
 </script>

@@ -14,13 +14,10 @@
       class="flex-1 flex flex-col min-w-0 transition-[padding] duration-200 ease-in-out"
       :class="isSidebarCollapsed ? 'lg:pl-16' : 'lg:pl-64'"
     >
-      <!-- Top App Header -->
-      <TopBar @toggle-sidebar="isMobileSidebarOpen = !isMobileSidebarOpen" />
-
       <!-- Main Content Page -->
       <main
         class="flex-1 w-full"
-        :class="isChatRoute ? 'h-[calc(100vh-4rem)] p-0 max-w-none overflow-hidden flex flex-col' : 'px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto overflow-y-auto no-scrollbar'"
+        :class="isChatRoute ? 'h-screen p-0 max-w-none overflow-hidden flex flex-col' : 'px-2 sm:px-4 lg:px-6 py-6 max-w-7xl mx-auto'"
       >
         <router-view />
       </main>
@@ -31,7 +28,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRoute } from "vue-router";
-import TopBar from "@/components/default/TopBar.vue";
 import AppSidebar from "@/components/default/AppSidebar.vue";
 import { useAuthStore } from "@/stores/auth/auth";
 import { useWsStore } from "@/stores/ws/ws";

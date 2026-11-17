@@ -74,7 +74,37 @@
       <p v-if="!hrms.employeeHistory.length" class="text-xs text-secondary-text">No history.</p>
     </div>
   </div>
-  <div v-else class="text-sm text-secondary-text">Loading employee…</div>
+  <div v-else class="space-y-4 animate-pulse" aria-busy="true" aria-label="Loading employee">
+    <!-- Header Skeleton -->
+    <div class="flex items-center justify-between gap-2">
+      <div class="space-y-1.5">
+        <div class="h-4 w-32 rounded bg-surface-container"></div>
+        <div class="h-3 w-48 rounded bg-surface-subtle"></div>
+      </div>
+      <div class="h-6 w-20 rounded-full bg-surface-container"></div>
+    </div>
+
+    <!-- Tabs Skeleton -->
+    <div class="flex gap-2 border-b border-primary-border/60 pb-2">
+      <div class="h-5 w-16 rounded bg-surface-container"></div>
+      <div class="h-5 w-20 rounded bg-surface-subtle"></div>
+      <div class="h-5 w-20 rounded bg-surface-subtle"></div>
+      <div class="h-5 w-16 rounded bg-surface-subtle"></div>
+    </div>
+
+    <!-- Form Grid Skeleton -->
+    <div class="space-y-3 max-w-lg">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="h-9 rounded-lg bg-surface-subtle"></div>
+        <div class="h-9 rounded-lg bg-surface-subtle"></div>
+        <div class="h-9 rounded-lg bg-surface-subtle"></div>
+        <div class="h-9 rounded-lg bg-surface-subtle"></div>
+        <div class="h-9 rounded-lg bg-surface-subtle"></div>
+        <div class="h-9 rounded-lg bg-surface-subtle"></div>
+      </div>
+      <div class="h-8 w-24 rounded-lg bg-surface-container"></div>
+    </div>
+  </div>
 </template>
 
 <script setup>

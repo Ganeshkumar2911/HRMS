@@ -1,5 +1,5 @@
 <template>
-  <header class="w-full bg-card-background/90 backdrop-blur-md sticky top-0 z-30 transition-colors duration-200 shadow-sm">
+  <header class="w-full bg-card-background/90 backdrop-blur-md sticky top-0 z-30 transition-colors duration-200">
     <div class="px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
       
       <!-- ── Left: Mobile Toggle & Global Search Bar ─────────── -->
@@ -16,7 +16,7 @@
 
         <!-- Mobile Brand (Visible only when sidebar is hidden on small screens) -->
         <router-link to="/tasks" class="flex lg:hidden items-center gap-2">
-          <div class="w-7 h-7 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 shadow-xs">
+          <div class="w-7 h-7 rounded-lg bg-primary text-btn-text-primary flex items-center justify-center shrink-0 shadow-xs">
             <span class="material-symbols-rounded text-base">corporate_fare</span>
           </div>
           <span class="font-bold text-sm text-primary-text tracking-tight">Kora HR</span>
@@ -26,220 +26,35 @@
         <div class="hidden sm:flex items-center gap-2 bg-surface-subtle px-3 py-1.5 rounded-lg w-64 md:w-80 border border-primary-border/60 focus-within:border-primary transition-colors">
           <span class="material-symbols-rounded text-secondary-text text-[18px]">search</span>
           <input
+            :value="globalSearch.query"
             type="text"
-            placeholder="Search employees, records, workflows..."
+            :placeholder="globalSearch.placeholder"
+            @input="globalSearch.triggerSearch($event.target.value)"
+            @keydown.enter="globalSearch.triggerSearch($event.target.value, true)"
+            @keydown.esc="globalSearch.clear()"
             class="bg-transparent text-xs text-primary-text placeholder:text-secondary-text/60 outline-none w-full"
           />
-        </div>
-      </div>
-
-      <!-- ── Right: Realtime Status, Bell, Theme, Profile ───── -->
-      <div class="flex items-center gap-2 sm:gap-3">
-        <!-- WebSocket Health Pill -->
-        <button
-          type="button"
-          @click="handleWsClick"
-          class="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors cursor-pointer"
-          :class="wsStatusClasses"
-          :title="wsTooltip"
-        >
-          <span class="w-2 h-2 rounded-full relative flex items-center justify-center">
-            <span
-              v-if="wsStore.isConnected"
-              class="w-2 h-2 rounded-full bg-primary-green inline-block"
-            ></span>
-            <span
-              v-else-if="wsStore.isReconnecting"
-              class="w-2 h-2 rounded-full bg-primary-yellow inline-block animate-ping"
-            ></span>
-            <span
-              v-else
-              class="w-2 h-2 rounded-full bg-primary-red inline-block"
-            ></span>
-          </span>
-          <span class="hidden sm:inline">{{ wsStatusLabel }}</span>
-        </button>
-
-        <!-- Notifications Bell -->
-        <div
-          v-if="permissionsStore.canAccessArea('notifications')"
-          class="relative"
-          ref="notificationsDropdownRef"
-        >
           <button
-            @click="toggleNotificationsDropdown"
+            v-if="globalSearch.query"
             type="button"
-            class="btn-icon relative p-1.5 text-secondary-text hover:text-primary-text rounded-lg hover:bg-background transition-colors cursor-pointer"
-            title="Notifications"
+            @click="globalSearch.clear()"
+            class="text-secondary-text hover:text-primary-text p-0.5 rounded cursor-pointer shrink-0"
+            title="Clear search"
+            aria-label="Clear search"
           >
-            <span class="material-symbols-rounded text-[20px]">notifications</span>
-            <!-- Red Unread Badge -->
-            <span
-              v-if="notificationsStore.unreadCount > 0"
-              class="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full bg-primary-red text-white text-[10px] font-bold flex items-center justify-center shadow-xs"
-            >
-              {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
-            </span>
+            <span class="material-symbols-rounded text-sm block">close</span>
           </button>
-
-          <!-- Notifications Popover -->
-          <div
-            v-if="isNotificationsOpen"
-            class="absolute right-0 mt-1.5 w-80 bg-card-background border border-primary-border/80 rounded-xl p-3 z-50 shadow-lg flex flex-col gap-2 animate-in fade-in duration-100"
-          >
-            <div class="flex items-center justify-between pb-2 border-b border-primary-border/60">
-              <span class="text-xs font-semibold text-primary-text">Notifications</span>
-              <button
-                v-if="notificationsStore.unreadCount > 0"
-                @click="notificationsStore.markAllAsRead"
-                type="button"
-                class="text-[11px] text-primary hover:underline font-medium cursor-pointer"
-              >
-                Mark all read
-              </button>
-            </div>
-
-            <!-- List of preview notifications -->
-            <div class="max-h-64 overflow-y-auto no-scrollbar space-y-1.5">
-              <div
-                v-if="notificationsStore.notifications.length === 0"
-                class="py-6 text-center text-xs text-secondary-text"
-              >
-                No notifications right now
-              </div>
-
-              <div
-                v-for="item in notificationsStore.notifications.slice(0, 5)"
-                :key="item.id"
-                @click="handleNotificationClick(item)"
-                class="p-2 rounded-lg text-xs cursor-pointer transition-colors flex items-start gap-2"
-                :class="item.is_read ? 'hover:bg-background text-secondary-text' : 'bg-primary/5 text-primary-text font-medium'"
-              >
-                <span class="material-symbols-rounded text-sm mt-0.5 text-primary">circle_notifications</span>
-                <div class="flex-1">
-                  <p class="text-xs leading-tight font-medium">{{ item.title }}</p>
-                  <p class="text-[11px] text-secondary-text mt-0.5 line-clamp-2">{{ item.body || item.message }}</p>
-                </div>
-              </div>
-            </div>
-
-            <router-link
-              to="/notifications"
-              @click="isNotificationsOpen = false"
-              class="pt-2 text-center text-xs text-primary hover:underline font-medium border-t border-primary-border/60 block"
-            >
-              View all notifications &rarr;
-            </router-link>
-          </div>
         </div>
-
-        <!-- Theme Toggle -->
-        <button
-          @click="handleToggleTheme"
-          type="button"
-          class="btn-icon p-1.5 text-secondary-text hover:text-primary-text rounded-lg hover:bg-background transition-colors cursor-pointer"
-          :title="currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-        >
-          <span class="material-symbols-rounded text-[19px]">
-            {{ currentTheme === 'dark' ? 'light_mode' : 'dark_mode' }}
-          </span>
-        </button>
-
-        <!-- Vertical Divider -->
-        <div class="h-4 w-px bg-primary-border/80 hidden sm:block"></div>
-
-        <!-- User Profile Dropdown -->
-        <div class="relative" ref="profileDropdownRef">
-          <button
-            @click="toggleProfileDropdown"
-            type="button"
-            class="flex items-center gap-2 py-1 px-1.5 rounded-lg hover:bg-background transition-colors cursor-pointer text-left"
-          >
-            <!-- User Avatar with Initials -->
-            <div class="w-7 h-7 rounded-full bg-primary/10 text-primary font-semibold text-xs flex items-center justify-center border border-primary-border/60">
-              {{ userInitials }}
-            </div>
-
-            <!-- Name & Status -->
-            <div class="hidden sm:flex flex-col">
-              <span class="text-xs font-semibold text-primary-text leading-tight">
-                {{ authStore.currentUser?.name || 'Authorized User' }}
-              </span>
-              <span class="text-[10px] text-secondary-text leading-tight flex items-center gap-1">
-                <span class="w-1.5 h-1.5 rounded-full bg-primary-green"></span>
-                <span>{{ permissionSummary }}</span>
-              </span>
-            </div>
-
-            <span
-              class="material-symbols-rounded text-base text-secondary-text transition-transform duration-150"
-              :class="{'rotate-180': isProfileOpen}"
-            >
-              expand_more
-            </span>
-          </button>
-
-          <!-- Profile Dropdown Menu -->
-          <div
-            v-if="isProfileOpen"
-            class="absolute right-0 mt-1.5 w-60 bg-card-background border border-primary-border/80 rounded-xl p-1.5 z-50 flex flex-col gap-0.5 shadow-lg animate-in fade-in duration-100"
-          >
-            <!-- User Info Card -->
-            <div class="px-3 py-2 border-b border-primary-border/60">
-              <p class="text-xs font-semibold text-primary-text">
-                {{ authStore.currentUser?.name || 'User' }}
-              </p>
-              <p class="text-[11px] text-secondary-text truncate">
-                {{ authStore.currentUser?.email || 'No email' }}
-              </p>
-              <!-- Employee Profile Notice -->
-              <div v-if="authStore.currentEmployee" class="mt-1.5 pt-1.5 border-t border-primary-border/40 text-[10px] text-secondary-text flex items-center gap-1">
-                <span class="material-symbols-rounded text-xs text-primary">badge</span>
-                <span>{{ authStore.currentEmployee.employee_code || 'Employee' }} (#{{ authStore.currentEmployee.id }})</span>
-              </div>
-            </div>
-
-            <router-link
-              to="/profile"
-              @click="isProfileOpen = false"
-              class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-secondary-text hover:text-primary-text hover:bg-background transition-colors"
-            >
-              <span class="material-symbols-rounded text-base text-primary">person</span>
-              <span>My profile</span>
-            </router-link>
-
-            <button
-              @click="openPermissionsModal"
-              type="button"
-              class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-secondary-text hover:text-primary-text hover:bg-background transition-colors text-left cursor-pointer"
-            >
-              <span class="material-symbols-rounded text-base text-primary">shield</span>
-              <span>Permissions &amp; Scopes</span>
-            </button>
-
-            <div class="my-1 border-t border-primary-border/60"></div>
-
-            <!-- Sign Out -->
-            <button
-              @click="handleLogout"
-              type="button"
-              class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs text-primary-red hover:bg-primary-red/10 transition-colors text-left cursor-pointer"
-            >
-              <span class="material-symbols-rounded text-base">logout</span>
-              <span>Sign out</span>
-            </button>
-          </div>
-        </div>
-
       </div>
     </div>
-
-    <!-- Permissions & Scopes Inspector Modal -->
     <PermissionsModal v-model="isPermissionsModalOpen" />
   </header>
 </template>
 
 <script setup>
+import { useGlobalSearchStore } from "@/stores/ui/globalSearch";
+
+const globalSearch = useGlobalSearchStore();
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { initTheme, toggleTheme, getTheme } from "@/utils/theme";

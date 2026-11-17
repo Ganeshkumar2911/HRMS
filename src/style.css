@@ -282,7 +282,7 @@ button:disabled,
 }
 
 .btn-primary {
-  @apply flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition-all active:scale-95 cursor-pointer sm:flex-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
+  @apply flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-btn-text-primary text-xs font-semibold transition-all active:scale-95 cursor-pointer sm:flex-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
 }
 
 .btn-secondary {

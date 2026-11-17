@@ -189,7 +189,7 @@
                           type="button"
                           :disabled="!hasOverride(perm.code)"
                           class="px-1.5 py-0.5 text-[9px] font-semibold rounded transition-colors cursor-pointer disabled:opacity-40"
-                          :class="getOverrideScope(perm.code) === s ? 'bg-primary text-white' : 'text-secondary-text'"
+                          :class="getOverrideScope(perm.code) === s ? 'bg-primary text-btn-text-primary' : 'text-secondary-text'"
                           @click.stop="setOverrideScope(perm.code, s)"
                         >
                           {{ s }}
@@ -219,7 +219,7 @@
                 v-if="activeTab === 'overrides'"
                 type="button"
                 :disabled="saving"
-                class="px-5 py-2 rounded-xl text-xs font-medium text-white bg-primary hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 shadow-xs disabled:opacity-60 cursor-pointer"
+                class="px-5 py-2 rounded-xl text-xs font-medium text-btn-text-primary bg-primary hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 shadow-xs disabled:opacity-60 cursor-pointer"
                 @click="saveOverrides"
               >
                 <Loader2 v-if="saving" class="w-3.5 h-3.5 animate-spin" />

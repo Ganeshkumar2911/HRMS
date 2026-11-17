@@ -28,7 +28,7 @@
           <button
             v-if="permissions.can('user.update')"
             type="button"
-            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white transition-all duration-150 cursor-pointer shadow-2xs"
+            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-btn-text-primary transition-all duration-150 cursor-pointer shadow-2xs"
             @click="openEdit(row)"
           >
             <Pencil class="w-3 h-3" />

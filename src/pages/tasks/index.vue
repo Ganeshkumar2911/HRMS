@@ -1,27 +1,18 @@
 <template>
   <div class="space-y-6">
-    <!-- ── 1. Top Meta & Title Bar (Stitch Specification) ────────────────── -->
-    <div class="flex flex-col md:flex-row md:items-end justify-between pb-2 gap-4">
-      <div class="flex flex-col gap-1.5">
-        <div class="flex items-center gap-2">
-          <span class="text-[11px] uppercase tracking-wider font-semibold text-secondary-text">Task Orchestration</span>
-          <span class="w-1 h-1 rounded-full bg-secondary-text/50"></span>
-          <span class="text-[11px] text-secondary-text font-medium">HR Operations</span>
-        </div>
-        <h1 class="text-2xl sm:text-3xl font-bold text-primary-text tracking-tight font-sans">
-          Tasks &amp; Assignments
-        </h1>
-        <p class="text-xs text-secondary-text max-w-xl leading-relaxed">
-          Review, triage, and audit workflow requests and operational delegations across team nodes.
-        </p>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="flex items-center gap-2.5 shrink-0">
+    <!-- ── 1. Global PageTopBar with Expandable Filters ────────────────── -->
+    <PageTopBar
+      title="Tasks & Assignments"
+      description="Review, triage, and audit workflow requests and operational delegations across team nodes."
+      :active-filter-count="activeFilterCount"
+      show-search
+      search-placeholder="Search tasks by title, creator, assignee..."
+    >
+      <template #actions>
         <button
           type="button"
           @click="exportTasksLog"
-          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-card-background hover:bg-surface-hover text-primary-text text-xs font-semibold transition-all cursor-pointer active:scale-95"
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-surface-subtle hover:bg-surface-container text-primary-text border border-primary-border/60 text-xs font-semibold transition-all cursor-pointer active:scale-95"
           title="Export current tasks as JSON"
         >
           <span class="material-symbols-rounded text-base text-secondary-text">file_download</span>
@@ -32,13 +23,117 @@
           v-if="permissions.can('task.create')"
           type="button"
           @click="openCreate"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold transition-all cursor-pointer active:scale-95"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary-hover text-btn-text-primary text-xs font-semibold transition-all cursor-pointer active:scale-95"
         >
           <span class="material-symbols-rounded text-base">add</span>
           <span>New Task</span>
         </button>
-      </div>
-    </div>
+      </template>
+
+      <template #filters>
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <!-- Left Filters -->
+          <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
+            <!-- Status Filter Pill -->
+            <div class="w-32 sm:w-36">
+              <BaseSelect
+                v-model="filters.status"
+                :options="statusOptions"
+                allow-all
+                all-label="Status: All"
+                custom-class="!h-9 !py-1 text-xs rounded-lg bg-card-background border border-primary-border/60"
+                @update:model-value="applyFilters"
+              />
+            </div>
+
+            <!-- Priority Filter Pill -->
+            <div class="w-32 sm:w-36">
+              <BaseSelect
+                v-model="filters.priority"
+                :options="priorityOptions"
+                allow-all
+                all-label="Priority: All"
+                custom-class="!h-9 !py-1 text-xs rounded-lg bg-card-background border border-primary-border/60"
+                @update:model-value="applyFilters"
+              />
+            </div>
+
+            <!-- Date Range Calendar Filter -->
+            <div class="w-56 sm:w-64 min-w-[210px]">
+              <BaseDatePicker
+                v-model="dateRangeValue"
+                mode="range"
+                :disable-future="false"
+                :disable-future-dates="false"
+                :block-future="false"
+                :presets="taskDatePresets"
+                placeholder="Date range (from - to)"
+                custom-class="!h-9 !py-1 text-xs rounded-lg bg-card-background border border-primary-border/60"
+                @change="handleDateRangeChange"
+                @clear="handleDateRangeClear"
+              />
+            </div>
+
+            <!-- Assigned to Me Filter Toggle -->
+            <button
+              type="button"
+              @click="toggleOnlyMyTasks"
+              class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-medium rounded-lg transition-all cursor-pointer select-none border"
+              :class="onlyMyTasks
+                ? 'bg-primary text-btn-text-primary font-semibold border-primary'
+                : 'bg-card-background text-secondary-text hover:text-primary-text border-primary-border/60'"
+              title="Filter tasks assigned to me"
+            >
+              <span class="material-symbols-rounded text-sm">person</span>
+              <span>Assigned to me</span>
+            </button>
+
+            <!-- Reset Filters Button -->
+            <button
+              v-if="hasActiveFilters"
+              type="button"
+              @click="resetFilters"
+              class="h-9 inline-flex items-center gap-1 px-2.5 text-xs text-secondary-text hover:text-primary-red transition-colors cursor-pointer rounded-lg hover:bg-card-background shrink-0"
+              title="Reset all filters"
+            >
+              <span class="material-symbols-rounded text-sm">restart_alt</span>
+              <span>Reset</span>
+            </button>
+          </div>
+
+          <!-- Right Controls: View Switcher (Table / Clean Cards) -->
+          <div class="flex items-center justify-between lg:justify-end gap-3 shrink-0">
+            <div class="h-9 inline-flex items-center p-0.5 bg-card-background border border-primary-border/60 rounded-lg gap-0.5">
+              <button
+                type="button"
+                @click="viewMode = 'table'"
+                title="Table view"
+                aria-label="Table view"
+                class="w-8 h-7.5 flex items-center justify-center rounded-md transition-all cursor-pointer"
+                :class="viewMode === 'table'
+                  ? 'bg-primary text-btn-text-primary'
+                  : 'text-secondary-text hover:text-primary-text'"
+              >
+                <span class="material-symbols-rounded text-[18px]">table_rows</span>
+              </button>
+
+              <button
+                type="button"
+                @click="viewMode = 'cards'"
+                title="Clean Cards view"
+                aria-label="Clean Cards view"
+                class="w-8 h-7.5 flex items-center justify-center rounded-md transition-all cursor-pointer"
+                :class="viewMode === 'cards'
+                  ? 'bg-primary text-btn-text-primary'
+                  : 'text-secondary-text hover:text-primary-text'"
+              >
+                <span class="material-symbols-rounded text-[18px]">view_agenda</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </PageTopBar>
 
     <!-- ── 2. API Summary Stats Strip (6 Metric Cards - Stitch Design) ───── -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -143,131 +238,6 @@
         </div>
       </div>
     </div>
-
-    <!-- ── 3. Operational Filter & View Bar (Stitch Design) ──────────────── -->
-    <div
-      class="bg-card-background p-3 rounded-xl flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3"
-    >
-      <!-- Left Filters -->
-      <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 flex-1 min-w-0">
-        <!-- Search Input -->
-        <div class="flex items-center gap-2 bg-surface-subtle px-3 py-1.5 rounded-lg focus-within:ring-1 focus-within:ring-primary/20 transition-colors flex-1 min-w-[200px] sm:min-w-[240px] max-w-sm">
-          <span class="material-symbols-rounded text-secondary-text text-[18px]">search</span>
-          <input
-            v-model="filters.q"
-            type="text"
-            class="bg-transparent text-xs text-primary-text placeholder:text-secondary-text/60 outline-none w-full"
-            placeholder="Filter by title, creator, assignee..."
-            @input="handleSearchInput"
-          />
-          <button
-            v-if="filters.q"
-            type="button"
-            @click="clearSearch"
-            class="text-secondary-text hover:text-primary-text p-0.5 rounded cursor-pointer"
-          >
-            <span class="material-symbols-rounded text-sm">close</span>
-          </button>
-        </div>
-
-        <!-- Status Filter Pill -->
-        <div class="w-32 sm:w-36">
-          <BaseSelect
-            v-model="filters.status"
-            :options="statusOptions"
-            allow-all
-            all-label="Status: All"
-            custom-class="!h-9 !py-1 text-xs rounded-lg bg-surface-subtle border-none"
-            @update:model-value="applyFilters"
-          />
-        </div>
-
-        <!-- Priority Filter Pill -->
-        <div class="w-32 sm:w-36">
-          <BaseSelect
-            v-model="filters.priority"
-            :options="priorityOptions"
-            allow-all
-            all-label="Priority: All"
-            custom-class="!h-9 !py-1 text-xs rounded-lg bg-surface-subtle border-none"
-            @update:model-value="applyFilters"
-          />
-        </div>
-
-        <!-- Date Range Calendar Filter -->
-        <div class="w-56 sm:w-64 min-w-[210px]">
-          <BaseDatePicker
-            v-model="dateRangeValue"
-            mode="range"
-            :disable-future="false"
-            :disable-future-dates="false"
-            :block-future="false"
-            :presets="taskDatePresets"
-            placeholder="Date range (from - to)"
-            custom-class="!h-9 !py-1 text-xs rounded-lg bg-surface-subtle border-none"
-            @change="handleDateRangeChange"
-            @clear="handleDateRangeClear"
-          />
-        </div>
-
-        <!-- Assigned to Me Filter Toggle -->
-        <button
-          type="button"
-          @click="toggleOnlyMyTasks"
-          class="h-9 inline-flex items-center gap-1.5 px-3 text-xs font-medium rounded-lg transition-all cursor-pointer select-none"
-          :class="onlyMyTasks
-            ? 'bg-primary text-white font-semibold'
-            : 'bg-surface-subtle text-secondary-text hover:text-primary-text'"
-          title="Filter tasks assigned to me"
-        >
-          <span class="material-symbols-rounded text-sm">person</span>
-          <span>Assigned to me</span>
-        </button>
-
-        <!-- Reset Filters Button -->
-        <button
-          v-if="hasActiveFilters"
-          type="button"
-          @click="resetFilters"
-          class="h-9 inline-flex items-center gap-1 px-2.5 text-xs text-secondary-text hover:text-primary-red transition-colors cursor-pointer rounded-lg hover:bg-surface-subtle shrink-0"
-          title="Reset all filters"
-        >
-          <span class="material-symbols-rounded text-sm">restart_alt</span>
-          <span>Reset</span>
-        </button>
-      </div>
-
-      <!-- Right Controls: Sort Label & View Switcher (Table / Clean Cards) -->
-      <div class="flex items-center justify-between lg:justify-end gap-3 shrink-0">
-        <!-- Segmented Pill Toggle -->
-        <div class="inline-flex p-1 bg-surface-subtle rounded-lg gap-1">
-          <button
-            type="button"
-            @click="viewMode = 'table'"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer"
-            :class="viewMode === 'table'
-              ? 'bg-primary text-white'
-              : 'text-secondary-text hover:text-primary-text'"
-          >
-            <span class="material-symbols-rounded text-[16px]">table_rows</span>
-            <span>Table</span>
-          </button>
-
-          <button
-            type="button"
-            @click="viewMode = 'cards'"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer"
-            :class="viewMode === 'cards'
-              ? 'bg-primary text-white'
-              : 'text-secondary-text hover:text-primary-text'"
-          >
-            <span class="material-symbols-rounded text-[16px]">view_agenda</span>
-            <span>Clean Cards</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- ── 4A. View 1: Data Table View (Default) ─────────────────────────── -->
     <div v-if="viewMode === 'table'">
       <DataTable
@@ -630,7 +600,7 @@
         <!-- Modal Header -->
         <div class="flex items-center justify-between pb-3">
           <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center shrink-0">
+            <div class="w-8 h-8 rounded-lg bg-primary text-btn-text-primary flex items-center justify-center shrink-0">
               <span class="material-symbols-rounded text-base">{{ editing ? 'edit_note' : 'add_task' }}</span>
             </div>
             <div>
@@ -736,7 +706,7 @@
 
           <!-- Current Selected Assignee Card -->
           <div class="flex items-center gap-2 p-2 rounded-lg bg-card-background">
-            <div class="w-7 h-7 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center shrink-0">
+            <div class="w-7 h-7 rounded-full bg-primary text-btn-text-primary font-bold text-xs flex items-center justify-center shrink-0">
               {{ getInitials(form.assigned_to_name) }}
             </div>
             <div class="min-w-0 flex-1">
@@ -872,7 +842,8 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import { useGlobalSearchStore } from "@/stores/ui/globalSearch";
 import moment from "moment";
 import DataTable from "@/components/common/DataTable";
 import ConfirmationDialog from "@/components/common/ConfirmationDialog.vue";
@@ -1228,6 +1199,16 @@ const hasActiveFilters = computed(() => {
   );
 });
 
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (filters.status) count++;
+  if (filters.priority) count++;
+  if (filters.q) count++;
+  if (filters.from_date || filters.to_date) count++;
+  if (onlyMyTasks.value) count++;
+  return count;
+});
+
 // Pagination Calculations
 const totalCount = computed(() => store.pagination?.total ?? store.tasks.length);
 const startCount = computed(() => (totalCount.value === 0 ? 0 : filters.offset + 1));
@@ -1429,8 +1410,18 @@ const doDelete = async () => {
   reloadList();
 };
 
+const globalSearch = useGlobalSearchStore();
+let unregisterGlobalSearch = null;
+
 onMounted(() => {
+  unregisterGlobalSearch = globalSearch.register((q) => {
+    filters.q = q;
+    applyFilters();
+  }, "Search tasks by title, creator, assignee...");
   store.fetchSummary(true);
   reloadList();
+});
+onUnmounted(() => {
+  if (unregisterGlobalSearch) unregisterGlobalSearch();
 });
 </script>

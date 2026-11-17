@@ -4,7 +4,7 @@ import router from "../router";
 
 // ─── Base URL Resolution ──────────────────────────────────────────
 
-const API_BASE_ORIGIN = "https://zpj8dpf6-8000.inc1.devtunnels.ms";
+const API_BASE_ORIGIN = "https://zpj8dpf6-8001.inc1.devtunnels.ms";
 
 export const getBaseOrigin = () => {
   return API_BASE_ORIGIN;

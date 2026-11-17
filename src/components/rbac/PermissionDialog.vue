@@ -203,7 +203,7 @@
                         :disabled="!isAssigned(perm.code)"
                         class="px-2 py-0.5 text-[10px] font-semibold rounded transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                         :class="getScope(perm.code) === scopeOption
-                          ? 'bg-primary text-white shadow-xs'
+                          ? 'bg-primary text-btn-text-primary shadow-xs'
                           : 'text-secondary-text hover:text-primary-text'"
                         @click.stop="setScope(perm.code, scopeOption)"
                       >
@@ -237,7 +237,7 @@
               <button
                 type="button"
                 :disabled="store.actionLoading"
-                class="px-5 py-2 rounded-xl text-xs font-medium text-white bg-primary hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 shadow-xs disabled:opacity-60 cursor-pointer"
+                class="px-5 py-2 rounded-xl text-xs font-medium text-btn-text-primary bg-primary hover:bg-primary-hover transition-colors flex items-center justify-center gap-2 shadow-xs disabled:opacity-60 cursor-pointer"
                 @click="savePermissions"
               >
                 <Loader2 v-if="store.actionLoading" class="w-3.5 h-3.5 animate-spin" />

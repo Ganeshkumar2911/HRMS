@@ -66,7 +66,7 @@
         <div v-else class="flex flex-col items-center gap-2 px-2">
           <router-link
             to="/tasks"
-            class="w-7 h-7 rounded-lg bg-primary text-white flex items-center justify-center shrink-0 shadow-xs cursor-pointer group"
+            class="w-7 h-7 rounded-lg bg-primary text-btn-text-primary flex items-center justify-center shrink-0 shadow-xs cursor-pointer group"
             title="Kora HR"
             @click="handleNavClick"
           >
@@ -111,7 +111,7 @@
             :class="[
               isCollapsed ? 'w-10 h-10 justify-center' : 'gap-3 px-3 py-2',
               isActive('/tasks')
-                ? 'bg-primary text-white font-semibold shadow-xs'
+                ? 'bg-primary text-btn-text-primary font-semibold shadow-xs'
                 : 'text-secondary-text hover:bg-surface-subtle hover:text-primary-text'
             ]"
             :title="isCollapsed ? 'Tasks' : undefined"
@@ -174,7 +174,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/hrms/employees')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span class="material-symbols-rounded text-sm">badge</span>
@@ -187,7 +187,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/hrms/org/departments')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span class="material-symbols-rounded text-sm">domain</span>
@@ -200,7 +200,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/hrms/org/designations')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span class="material-symbols-rounded text-sm">work</span>
@@ -213,7 +213,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/hrms/org/work-locations')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span class="material-symbols-rounded text-sm">location_on</span>
@@ -226,7 +226,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/hrms/me')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span class="material-symbols-rounded text-sm">account_circle</span>
@@ -242,7 +242,7 @@
               @click="togglePeopleFlyout"
               class="w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative"
               :class="isPeopleActive
-                ? 'bg-primary text-white font-semibold shadow-xs'
+                ? 'bg-primary text-btn-text-primary font-semibold shadow-xs'
                 : (isPeopleFlyoutOpen ? 'bg-surface-subtle text-primary-text' : 'text-secondary-text hover:bg-surface-subtle hover:text-primary-text')"
               title="People"
               aria-label="People"
@@ -266,7 +266,7 @@
                   to="/hrms/employees"
                   @click="closePeopleFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/hrms/employees') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/hrms/employees') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span class="material-symbols-rounded text-sm">badge</span>
                   <span>Employees</span>
@@ -276,7 +276,7 @@
                   to="/hrms/org/departments"
                   @click="closePeopleFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/hrms/org/departments') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/hrms/org/departments') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span class="material-symbols-rounded text-sm">domain</span>
                   <span>Departments</span>
@@ -286,7 +286,7 @@
                   to="/hrms/org/designations"
                   @click="closePeopleFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/hrms/org/designations') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/hrms/org/designations') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span class="material-symbols-rounded text-sm">work</span>
                   <span>Designations</span>
@@ -296,7 +296,7 @@
                   to="/hrms/org/work-locations"
                   @click="closePeopleFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/hrms/org/work-locations') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/hrms/org/work-locations') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span class="material-symbols-rounded text-sm">location_on</span>
                   <span>Locations</span>
@@ -306,7 +306,7 @@
                   to="/hrms/me"
                   @click="closePeopleFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/hrms/me') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/hrms/me') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span class="material-symbols-rounded text-sm">account_circle</span>
                   <span>My Profile</span>
@@ -345,7 +345,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/hrms/attendance') && !isActive('/hrms/attendance/punch') && !isActive('/hrms/attendance/settings')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span class="material-symbols-rounded text-sm">event_available</span>
@@ -358,7 +358,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/hrms/attendance/punch')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span class="material-symbols-rounded text-sm">touch_app</span>
@@ -371,7 +371,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/hrms/attendance/settings')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span class="material-symbols-rounded text-sm">tune</span>
@@ -384,7 +384,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/hrms/leave')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span class="material-symbols-rounded text-sm">event_busy</span>
@@ -397,7 +397,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/hrms/calendar')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span class="material-symbols-rounded text-sm">calendar_month</span>
@@ -410,7 +410,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/hrms/holidays')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span class="material-symbols-rounded text-sm">celebration</span>
@@ -426,7 +426,7 @@
               @click="toggleAttendanceFlyout"
               class="w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative"
               :class="isAttendanceActive
-                ? 'bg-primary text-white font-semibold shadow-xs'
+                ? 'bg-primary text-btn-text-primary font-semibold shadow-xs'
                 : (isAttendanceFlyoutOpen ? 'bg-surface-subtle text-primary-text' : 'text-secondary-text hover:bg-surface-subtle hover:text-primary-text')"
               title="Attendance & Leave"
               aria-label="Attendance & Leave"
@@ -450,7 +450,7 @@
                   to="/hrms/attendance"
                   @click="closeAttendanceFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/hrms/attendance') && !isActive('/hrms/attendance/punch') && !isActive('/hrms/attendance/settings') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/hrms/attendance') && !isActive('/hrms/attendance/punch') && !isActive('/hrms/attendance/settings') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span class="material-symbols-rounded text-sm">event_available</span>
                   <span>Attendance</span>
@@ -460,7 +460,7 @@
                   to="/hrms/attendance/punch"
                   @click="closeAttendanceFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/hrms/attendance/punch') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/hrms/attendance/punch') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span class="material-symbols-rounded text-sm">touch_app</span>
                   <span>Punch In/Out</span>
@@ -470,7 +470,7 @@
                   to="/hrms/attendance/settings"
                   @click="closeAttendanceFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/hrms/attendance/settings') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/hrms/attendance/settings') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span class="material-symbols-rounded text-sm">tune</span>
                   <span>Settings</span>
@@ -480,7 +480,7 @@
                   to="/hrms/leave"
                   @click="closeAttendanceFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/hrms/leave') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/hrms/leave') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span class="material-symbols-rounded text-sm">event_busy</span>
                   <span>Leave</span>
@@ -490,7 +490,7 @@
                   to="/hrms/calendar"
                   @click="closeAttendanceFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/hrms/calendar') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/hrms/calendar') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span class="material-symbols-rounded text-sm">calendar_month</span>
                   <span>Calendar</span>
@@ -500,7 +500,7 @@
                   to="/hrms/holidays"
                   @click="closeAttendanceFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/hrms/holidays') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/hrms/holidays') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span class="material-symbols-rounded text-sm">celebration</span>
                   <span>Holidays</span>
@@ -545,7 +545,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/admin/users')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span>Users</span>
@@ -557,7 +557,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/admin/roles')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span>Roles &amp; Scopes</span>
@@ -569,7 +569,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/admin/audit')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span>Audit Logs</span>
@@ -581,7 +581,7 @@
                 @click="handleNavClick"
                 class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] font-medium transition-colors"
                 :class="isActive('/admin/notifications/broadcast')
-                  ? 'bg-primary/10 text-primary font-semibold'
+                  ? 'bg-primary text-btn-text-primary font-semibold'
                   : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
               >
                 <span>Broadcasts</span>
@@ -596,7 +596,7 @@
               @click="toggleAdminFlyout"
               class="w-10 h-10 rounded-lg flex items-center justify-center transition-all cursor-pointer relative"
               :class="isAdminActive
-                ? 'bg-primary text-white font-semibold shadow-xs'
+                ? 'bg-primary text-btn-text-primary font-semibold shadow-xs'
                 : (isAdminFlyoutOpen ? 'bg-surface-subtle text-primary-text' : 'text-secondary-text hover:bg-surface-subtle hover:text-primary-text')"
               title="Admin"
               aria-label="Admin settings"
@@ -620,7 +620,7 @@
                   to="/admin/users"
                   @click="closeAdminFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/admin/users') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/admin/users') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span>Users</span>
                 </router-link>
@@ -629,7 +629,7 @@
                   to="/admin/roles"
                   @click="closeAdminFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/admin/roles') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/admin/roles') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span>Roles &amp; Scopes</span>
                 </router-link>
@@ -638,7 +638,7 @@
                   to="/admin/audit"
                   @click="closeAdminFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/admin/audit') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/admin/audit') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span>Audit Logs</span>
                 </router-link>
@@ -647,7 +647,7 @@
                   to="/admin/notifications/broadcast"
                   @click="closeAdminFlyout"
                   class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors"
-                  :class="isActive('/admin/notifications/broadcast') ? 'bg-primary/10 text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
+                  :class="isActive('/admin/notifications/broadcast') ? 'bg-primary text-btn-text-primary font-semibold' : 'text-secondary-text hover:text-primary-text hover:bg-surface-subtle'"
                 >
                   <span>Broadcasts</span>
                 </router-link>
@@ -663,7 +663,7 @@
             :class="[
               isCollapsed ? 'w-10 h-10 justify-center' : 'gap-3 px-3 py-2',
               isActive('/profile')
-                ? 'bg-primary text-white font-semibold shadow-xs'
+                ? 'bg-primary text-btn-text-primary font-semibold shadow-xs'
                 : 'text-secondary-text hover:bg-surface-subtle hover:text-primary-text'
             ]"
             :title="isCollapsed ? 'Settings' : undefined"
@@ -736,6 +736,45 @@
               <span>Permissions &amp; Scopes</span>
             </button>
 
+            <router-link
+              v-if="permissionsStore.canAccessArea('notifications')"
+              to="/notifications"
+              @click="closeUserMenu"
+              class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs text-secondary-text hover:text-primary-text hover:bg-surface-subtle transition-colors cursor-pointer"
+            >
+              <span class="flex items-center gap-2">
+                <span class="material-symbols-rounded text-base">notifications</span>
+                <span>Notifications</span>
+              </span>
+              <span
+                v-if="notificationsStore.unreadCount > 0"
+                class="min-w-4 h-4 px-1 rounded-full bg-primary-red text-white text-[10px] font-bold flex items-center justify-center"
+              >
+                {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
+              </span>
+            </router-link>
+
+            <button
+              type="button"
+              @click="toggleTheme()"
+              class="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs text-secondary-text hover:text-primary-text hover:bg-surface-subtle transition-colors cursor-pointer text-left"
+            >
+              <span class="flex items-center gap-2">
+                <span class="material-symbols-rounded text-base">{{ isDark ? 'light_mode' : 'dark_mode' }}</span>
+                <span>{{ isDark ? 'Light Mode' : 'Dark Mode' }}</span>
+              </span>
+            </button>
+
+            <div class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-[11px] text-secondary-text">
+              <span class="flex items-center gap-2">
+                <span
+                  class="w-2 h-2 rounded-full inline-block"
+                  :class="wsStore.isConnected ? 'bg-primary-green' : wsStore.isReconnecting ? 'bg-primary-yellow animate-ping' : 'bg-primary-red'"
+                ></span>
+                <span>{{ wsStore.isConnected ? 'Realtime Connected' : wsStore.isReconnecting ? 'Reconnecting...' : 'Disconnected' }}</span>
+              </span>
+            </div>
+
             <div class="my-1 border-t border-primary-border/60"></div>
 
             <button
@@ -755,7 +794,7 @@
         <button
           type="button"
           @click="isUserMenuOpen = !isUserMenuOpen"
-          class="w-10 h-10 rounded-full bg-primary text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all"
+          class="w-10 h-10 rounded-full bg-primary text-btn-text-primary font-bold text-xs flex items-center justify-center shrink-0 shadow-xs cursor-pointer hover:ring-2 hover:ring-primary/20 transition-all"
           :title="authStore.currentUser?.name || 'User Profile'"
           aria-label="User profile menu"
         >
@@ -795,6 +834,45 @@
               <span>Permissions &amp; Scopes</span>
             </button>
 
+            <router-link
+              v-if="permissionsStore.canAccessArea('notifications')"
+              to="/notifications"
+              @click="closeUserMenu"
+              class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs text-secondary-text hover:text-primary-text hover:bg-surface-subtle transition-colors cursor-pointer"
+            >
+              <span class="flex items-center gap-2">
+                <span class="material-symbols-rounded text-base">notifications</span>
+                <span>Notifications</span>
+              </span>
+              <span
+                v-if="notificationsStore.unreadCount > 0"
+                class="min-w-4 h-4 px-1 rounded-full bg-primary-red text-white text-[10px] font-bold flex items-center justify-center"
+              >
+                {{ notificationsStore.unreadCount > 99 ? '99+' : notificationsStore.unreadCount }}
+              </span>
+            </router-link>
+
+            <button
+              type="button"
+              @click="toggleTheme()"
+              class="w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs text-secondary-text hover:text-primary-text hover:bg-surface-subtle transition-colors cursor-pointer text-left"
+            >
+              <span class="flex items-center gap-2">
+                <span class="material-symbols-rounded text-base">{{ isDark ? 'light_mode' : 'dark_mode' }}</span>
+                <span>{{ isDark ? 'Light Mode' : 'Dark Mode' }}</span>
+              </span>
+            </button>
+
+            <div class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-[11px] text-secondary-text">
+              <span class="flex items-center gap-2">
+                <span
+                  class="w-2 h-2 rounded-full inline-block"
+                  :class="wsStore.isConnected ? 'bg-primary-green' : wsStore.isReconnecting ? 'bg-primary-yellow animate-ping' : 'bg-primary-red'"
+                ></span>
+                <span>{{ wsStore.isConnected ? 'Realtime Connected' : wsStore.isReconnecting ? 'Reconnecting...' : 'Disconnected' }}</span>
+              </span>
+            </div>
+
             <div class="my-1 border-t border-primary-border/60"></div>
 
             <button
@@ -819,6 +897,18 @@
 </template>
 
 <script setup>
+import { useNotificationsStore } from "@/stores/notifications/notifications";
+import { useWsStore } from "@/stores/ws/ws";
+import { getTheme, setTheme } from "@/utils/theme";
+
+const notificationsStore = useNotificationsStore();
+const wsStore = useWsStore();
+const isDark = ref(document.documentElement.classList.contains("dark") || getTheme() === "dark");
+const toggleTheme = () => {
+  const next = isDark.value ? "light" : "dark";
+  setTheme(next);
+  isDark.value = next === "dark";
+};
 import { computed, ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth/auth";
