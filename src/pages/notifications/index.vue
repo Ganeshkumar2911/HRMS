@@ -36,7 +36,15 @@
     </div>
 
     <div class="rounded-xl border border-primary-border bg-card-background divide-y divide-primary-border/60">
-      <div v-if="store.loading" class="p-8 text-center text-sm text-secondary-text">Loading…</div>
+      <div v-if="store.loading" class="p-4 space-y-3 animate-pulse" aria-busy="true" aria-label="Loading notifications">
+        <div v-for="i in 5" :key="i" class="flex items-start gap-3 p-3 rounded-lg bg-surface-subtle/50">
+          <div class="w-8 h-8 rounded-full bg-surface-container shrink-0"></div>
+          <div class="flex-1 space-y-2">
+            <div class="h-3.5 w-1/3 rounded bg-surface-container"></div>
+            <div class="h-3 w-2/3 rounded bg-surface-subtle"></div>
+          </div>
+        </div>
+      </div>
       <div v-else-if="store.notifications.length === 0" class="p-8 text-center text-sm text-secondary-text">
         No notifications.
       </div>

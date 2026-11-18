@@ -70,7 +70,11 @@
             <span class="material-symbols-rounded">close</span>
           </button>
         </div>
-        <div v-if="auditStore.detailLoading" class="text-xs text-secondary-text">Loading…</div>
+        <div v-if="auditStore.detailLoading" class="space-y-3 animate-pulse" aria-busy="true" aria-label="Loading audit details">
+          <div class="h-4 w-40 rounded bg-surface-container"></div>
+          <div class="h-3 w-64 rounded bg-surface-subtle"></div>
+          <div class="h-24 rounded-lg bg-surface-subtle"></div>
+        </div>
         <template v-else-if="auditStore.activeLog">
           <p class="text-xs text-secondary-text">
             {{ auditStore.activeLog.module }} / {{ auditStore.activeLog.action }} ·

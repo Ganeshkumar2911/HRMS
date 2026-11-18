@@ -19,6 +19,24 @@
     </PageTopBar>
 
     <DataTable :data="hrms.employees" :columns="columns" :loading="hrms.loading" row-key="id">
+      <template #cell-user="{ row }">
+        <div class="leading-tight">
+          <div class="text-xs font-medium text-primary-text">{{ row.user?.name }}</div>
+          <div class="text-[11px] text-secondary-text">{{ row.user?.email }}</div>
+        </div>
+      </template>
+      <template #cell-department="{ row }">
+        <span>{{ row.department?.name ?? "—" }}</span>
+      </template>
+      <template #cell-designation="{ row }">
+        <span>{{ row.designation?.name ?? "—" }}</span>
+      </template>
+      <template #cell-work_location="{ row }">
+        <span>{{ row.work_location?.name ?? "—" }}</span>
+      </template>
+      <template #cell-manager="{ row }">
+        <span>{{ row.manager?.user?.name ?? "—" }}</span>
+      </template>
       <template #cell-employment_status="{ row }">
         <StatusBadge :status="row.employment_status" />
       </template>
@@ -74,10 +92,13 @@ const scope = computed(() => permissions.scopeOf("employee.view"));
 const columns = [
   { key: "id", label: "ID", width: 60 },
   { key: "employee_code", label: "Code" },
-  { key: "user_id", label: "User" },
+  { key: "user", label: "Employee" },
+  { key: "department", label: "Department" },
+  { key: "designation", label: "Designation" },
+  { key: "work_location", label: "Location" },
+  { key: "manager", label: "Manager" },
+  { key: "joining_date", label: "Joined" },
   { key: "employment_status", label: "Status" },
-  { key: "department_id", label: "Dept" },
-  { key: "manager_id", label: "Manager" },
 ];
 
 const modalOpen = ref(false);

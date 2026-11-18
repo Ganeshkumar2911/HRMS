@@ -1,6 +1,7 @@
 import axios from "axios";
 import authToken from "../common/authToken";
 import router from "../router";
+import { useApiLoaderStore } from "@/stores/ui/apiLoader";
 
 // ─── Base URL Resolution ──────────────────────────────────────────
 
@@ -82,8 +83,19 @@ const axiosInstance = axios.create({
 
 // ─── Request Interceptor ──────────────────────────────────────────
 
+const stopLoader = (config) => {
+  if (config?._loaderTracked) {
+    config._loaderTracked = false;
+    useApiLoaderStore().stop();
+  }
+};
+
 axiosInstance.interceptors.request.use(
   (config) => {
+    if (config.skipLoader !== true) {
+      useApiLoaderStore().start();
+      config._loaderTracked = true;
+    }
     if (config.isTokenRequired !== false) {
       const accessToken = authToken.getAccessToken();
       if (accessToken) {
@@ -117,10 +129,14 @@ const onTokenRefreshFailed = (err) => {
 // ─── Response Interceptor ─────────────────────────────────────────
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    stopLoader(response.config);
+    return response;
+  },
 
   async (error) => {
     const originalRequest = error.config;
+    stopLoader(originalRequest);
 
     // ── 401 Handling: Token Refresh Cycle
     if (error.response?.status === 401 && originalRequest) {
