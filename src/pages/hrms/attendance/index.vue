@@ -1,56 +1,55 @@
 <template>
   <div class="space-y-5 pb-12">
-    <!-- Top Bar & Persona Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3 bg-card-background border border-primary-border rounded-2xl p-4 shadow-xs">
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary font-bold text-sm">
-            📅
-          </span>
-          <div>
-            <h2 class="title-text text-base font-semibold text-primary-text">Attendance Central</h2>
-            <p class="text-xs text-secondary-text">
-              {{ isAdminOrManager ? "Monitor organization attendance, handle exceptions, and manage corrections." : "Review your monthly attendance, daily punch times, and submit correction requests." }}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Quick Action Navigation -->
-      <div class="flex items-center gap-2 flex-wrap">
-        <!-- Punch station button (for employees and self) -->
+    <PageTopBar
+      title="Attendance Central"
+      :description="isAdminOrManager ? 'Monitor organization attendance, handle exceptions, and manage corrections.' : 'Review your monthly attendance, daily punch times, and submit correction requests.'"
+      show-search
+      show-refresh
+      search-placeholder="Search employee name, code, email..."
+      :active-filter-count="filterEmployeeId ? 1 : 0"
+      @refresh="reload"
+    >
+      <template #actions>
         <router-link
           v-if="permissions.can('attendance.punch')"
           to="/hrms/attendance/punch"
           class="btn-primary text-xs px-3.5 py-2 rounded-lg flex items-center gap-1.5 shadow-xs"
         >
-          <span>📍</span> Punch In / Out
+          Punch In / Out
         </router-link>
 
-        <!-- Bulk Mark Button (Admin/HR) -->
         <button
           v-if="permissions.can('attendance.mark') && isAdminOrManager"
           type="button"
           class="btn-secondary text-xs px-3 py-2 rounded-lg flex items-center gap-1.5"
           @click="openBulkMarkModal = true"
         >
-          <span>⚡</span> Bulk Mark
+          Bulk Mark
         </button>
+      </template>
 
-        <!-- Settings Button (Admin) -->
-        <router-link
-          v-if="permissions.can('attendance.settings.manage')"
-          to="/hrms/attendance/settings"
-          class="btn-secondary text-xs px-3 py-2 rounded-lg flex items-center gap-1.5"
-        >
-          <span>⚙️</span> Geofence Settings
-        </router-link>
-
-        <button type="button" class="btn-secondary text-xs px-3 py-2 rounded-lg flex items-center gap-1" @click="reload">
-          <span>🔄</span> Refresh
-        </button>
-      </div>
-    </div>
+      <template #filters>
+        <div class="flex flex-wrap items-center gap-3">
+          <span class="text-xs font-semibold text-secondary-text">Period:</span>
+          <div class="w-28">
+            <BaseSelect
+              v-model="hrms.hrmsMonth"
+              :options="monthOptions"
+              custom-class="!h-8.5 !py-1 text-xs rounded-lg bg-card-background border border-primary-border/60"
+              @update:model-value="reload"
+            />
+          </div>
+          <div class="w-24">
+            <BaseSelect
+              v-model="hrms.hrmsYear"
+              :options="yearOptions"
+              custom-class="!h-8.5 !py-1 text-xs rounded-lg bg-card-background border border-primary-border/60"
+              @update:model-value="reload"
+            />
+          </div>
+        </div>
+      </template>
+    </PageTopBar>
 
     <!-- Admin / Manager KPI Summary Bar (when user has view scope ALL or TEAM) -->
     <div v-if="isAdminOrManager && attendanceSummary" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -82,7 +81,7 @@
         :class="activeTab === 'calendar' ? 'text-primary border-b-2 border-primary font-semibold' : 'text-secondary-text hover:text-primary-text'"
         @click="activeTab = 'calendar'"
       >
-        📅 Calendar Grid
+        Calendar Grid
       </button>
       <button
         type="button"
@@ -90,7 +89,7 @@
         :class="activeTab === 'records' ? 'text-primary border-b-2 border-primary font-semibold' : 'text-secondary-text hover:text-primary-text'"
         @click="switchToRecordsTab"
       >
-        📋 Records Log
+        Records Log
       </button>
       <button
         type="button"
@@ -98,98 +97,140 @@
         :class="activeTab === 'petitions' ? 'text-primary border-b-2 border-primary font-semibold' : 'text-secondary-text hover:text-primary-text'"
         @click="switchToPetitionsTab"
       >
-        📝 Correction Petitions
+        <span class="inline-flex items-center gap-1.5">
+          <FilePenLine class="w-3.5 h-3.5" />
+          <span>Correction Petitions</span>
+        </span>
       </button>
     </div>
 
     <!-- ── TAB 1: CALENDAR VIEW ── -->
     <div v-if="activeTab === 'calendar'" class="space-y-4">
-      <!-- Controls / Filters Header -->
-      <div class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl border border-primary-border bg-card-background">
-        <div class="flex items-center gap-2">
-          <span class="text-xs font-semibold text-secondary-text">Month / Year:</span>
-          <div class="w-24">
-            <BaseSelect
-              v-model="hrms.hrmsMonth"
-              :options="monthOptions"
-              custom-class="!py-1 text-xs rounded-lg"
-            />
-          </div>
-          <input v-model.number="hrms.hrmsYear" type="number" class="input-field px-2.5 py-1 text-xs w-20 rounded-lg" />
+      <!-- LEVEL 1: Employee Monthly Summary List + Daily Strip -->
+      <template v-if="!selectedCalendarEmployeeId">
+        <div v-if="!hrms.attendanceEmployeeSummaries?.items?.length" class="p-10 text-center text-sm text-secondary-text border border-primary-border rounded-2xl bg-card-background">
+          No attendance records found for this period.
         </div>
 
-        <!-- Filter by Employee ID for Admin/Manager -->
-        <div v-if="scope !== 'SELF'" class="flex items-center gap-2">
-          <span class="text-xs text-secondary-text">Employee:</span>
-          <input
-            v-model.number="filterEmployeeId"
-            type="number"
-            class="input-field px-2.5 py-1 text-xs w-36 rounded-lg"
-            placeholder="All / ID..."
-            @change="reload"
-          />
-          <button v-if="filterEmployeeId" type="button" class="text-xs text-secondary-text hover:underline" @click="filterEmployeeId = null; reload()">
-            Clear
-          </button>
-        </div>
-      </div>
-
-      <!-- Empty state -->
-      <div v-if="!calendarEmployees.length" class="p-10 text-center text-sm text-secondary-text border border-primary-border rounded-2xl bg-card-background">
-        No attendance records found for this period.
-      </div>
-
-      <!-- Calendar Employee Grid(s) -->
-      <div v-for="emp in calendarEmployees" :key="emp.employee_id" class="border border-primary-border rounded-2xl p-4 bg-card-background space-y-3">
-        <div class="flex items-center justify-between border-b border-primary-border/60 pb-2">
-          <div class="flex items-center gap-2">
-            <span class="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
-              #
-            </span>
-            <span class="text-xs font-semibold text-primary-text">
-              Employee #{{ emp.employee_id }}
-              <span v-if="emp.employee_name" class="font-normal text-secondary-text">({{ emp.employee_name }})</span>
-            </span>
-          </div>
-          <span class="text-[11px] text-secondary-text">
-            Days tracked: {{ emp.days?.length || 0 }}
-          </span>
-        </div>
-
-        <!-- 7-column day cell grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+        <div v-else class="space-y-3">
           <div
-            v-for="day in emp.days"
-            :key="day.date"
-            class="p-2.5 rounded-xl border text-left text-xs min-h-[76px] transition-all flex flex-col justify-between cursor-pointer hover:shadow-xs"
-            :class="dayCellClass(day)"
-            @click="selectDay(emp.employee_id, day)"
+            v-for="item in hrms.attendanceEmployeeSummaries.items"
+            :key="item.employee_id"
+            class="border border-primary-border rounded-2xl p-4 bg-card-background hover:border-primary/50 transition-all cursor-pointer space-y-3"
+            @click="selectCalendarEmployee(item.employee_id)"
           >
-            <div>
-              <div class="flex items-center justify-between">
-                <span class="font-bold text-xs">{{ day.date?.slice?.(8) || day.date }}</span>
-                <span class="text-[9px] font-semibold uppercase px-1 py-0.5 rounded" :class="statusBadgeMiniClass(day.status)">
-                  {{ day.status }}
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-sm font-semibold text-primary-text truncate">
+                    {{ item.employee?.user?.name ?? `Employee #${item.employee_id}` }}
+                  </span>
+                  <span v-if="item.employee?.employee_code" class="text-[11px] font-medium text-secondary-text bg-surface-subtle px-2 py-0.5 rounded">
+                    {{ item.employee.employee_code }}
+                  </span>
+                </div>
+                <p class="text-[11px] text-secondary-text truncate mt-0.5">
+                  {{ [item.employee?.designation?.name, item.employee?.department?.name, item.employee?.work_location?.name].filter(Boolean).join(" · ") || item.employee?.user?.email }}
+                </p>
+              </div>
+
+              <!-- Summary Pills -->
+              <div class="flex items-center gap-2 flex-wrap text-[11px]">
+                <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold">P: {{ item.summary?.present ?? 0 }}</span>
+                <span class="px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 font-semibold">A: {{ item.summary?.absent ?? 0 }}</span>
+                <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 font-semibold">HD: {{ item.summary?.half_day ?? 0 }}</span>
+                <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-semibold">L: {{ item.summary?.leave ?? 0 }}</span>
+                <span class="px-2 py-0.5 rounded-full bg-surface-subtle text-secondary-text font-medium">
+                  {{ Math.round((item.summary?.total_worked_minutes ?? 0) / 60) }}h
                 </span>
               </div>
-              <p v-if="day.holiday_name" class="text-[10px] text-primary-blue truncate font-medium mt-1">
-                🎉 {{ day.holiday_name }}
-              </p>
             </div>
 
-            <div class="space-y-0.5 text-[10px] opacity-80 pt-1 border-t border-primary-border/30">
-              <div v-if="day.check_in_at" class="truncate">In: {{ shortTime(day.check_in_at) }}</div>
-              <div v-if="day.check_out_at" class="truncate">Out: {{ shortTime(day.check_out_at) }}</div>
-              <div v-if="day.worked_minutes != null" class="font-medium text-primary-text">
-                Worked: {{ day.worked_minutes }}m
+            <!-- Compact Daily Strip -->
+            <div v-if="item.daily_strip?.length" class="flex items-center gap-1 flex-wrap pt-2 border-t border-primary-border/50">
+              <span
+                v-for="d in item.daily_strip"
+                :key="d.date"
+                class="w-3 h-3 rounded-xs"
+                :class="stripDotClass(d.status)"
+                :title="`${d.date}: ${d.status}`"
+              ></span>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- LEVEL 2: Selected Employee Month Calendar Detail -->
+      <template v-else>
+        <div class="border border-primary-border rounded-2xl p-4 bg-card-background space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-primary-border/60 pb-3">
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                class="btn-secondary text-xs px-2.5 py-1.5 rounded-lg"
+                @click="clearSelectedCalendarEmployee"
+              >
+                ← Back
+              </button>
+              <div>
+                <h3 class="text-sm font-semibold text-primary-text">
+                  {{ hrms.employeeMonthCalendar?.employee?.user?.name ?? `Employee #${selectedCalendarEmployeeId}` }}
+                  <span v-if="hrms.employeeMonthCalendar?.employee?.employee_code" class="text-xs font-normal text-secondary-text">
+                    ({{ hrms.employeeMonthCalendar.employee.employee_code }})
+                  </span>
+                </h3>
+                <p class="text-[11px] text-secondary-text">
+                  {{ [hrms.employeeMonthCalendar?.employee?.designation?.name, hrms.employeeMonthCalendar?.employee?.department?.name].filter(Boolean).join(" · ") }}
+                </p>
               </div>
-              <div v-if="!day.check_in_at && !day.holiday_name && day.status === 'ABSENT'" class="text-red-500">
-                No Punch
+            </div>
+
+            <div v-if="hrms.employeeMonthCalendar?.summary" class="flex items-center gap-2 flex-wrap text-[11px]">
+              <span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold">Present: {{ hrms.employeeMonthCalendar.summary.present }}</span>
+              <span class="px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 font-semibold">Absent: {{ hrms.employeeMonthCalendar.summary.absent }}</span>
+              <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 font-semibold">Half Day: {{ hrms.employeeMonthCalendar.summary.half_day }}</span>
+              <span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 font-semibold">Leave: {{ hrms.employeeMonthCalendar.summary.leave }}</span>
+            </div>
+          </div>
+
+          <!-- 7-column day cell grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+            <div
+              v-for="day in hrms.employeeMonthCalendar?.days || []"
+              :key="day.date"
+              class="p-2.5 rounded-xl border text-left text-xs min-h-[76px] transition-all flex flex-col justify-between cursor-pointer hover:shadow-xs"
+              :class="dayCellClass(day)"
+              @click="selectDay(selectedCalendarEmployeeId, day)"
+            >
+              <div>
+                <div class="flex items-center justify-between">
+                  <span class="font-bold text-xs">{{ day.date?.slice?.(8) || day.date }}</span>
+                  <span class="text-[9px] font-semibold uppercase px-1 py-0.5 rounded" :class="statusBadgeMiniClass(day.status)">
+                    {{ day.status }}
+                  </span>
+                </div>
+                <p v-if="day.holiday_name" class="text-[10px] text-primary-blue truncate font-medium mt-1">
+                  {{ day.holiday_name }}
+                </p>
+                <p v-else-if="day.leave_type" class="text-[10px] text-blue-600 truncate font-medium mt-1">
+                  {{ day.leave_type }}
+                </p>
+              </div>
+
+              <div class="space-y-0.5 text-[10px] opacity-80 pt-1 border-t border-primary-border/30">
+                <div v-if="day.check_in_at" class="truncate">In: {{ shortTime(day.check_in_at) }}</div>
+                <div v-if="day.check_out_at" class="truncate">Out: {{ shortTime(day.check_out_at) }}</div>
+                <div v-if="day.worked_minutes != null" class="font-medium text-primary-text">
+                  Worked: {{ day.worked_minutes }}m
+                </div>
+                <div v-if="!day.check_in_at && !day.holiday_name && day.status === 'ABSENT'" class="text-red-500">
+                  No Punch
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </template>
     </div>
 
     <!-- ── TAB 2: RECORDS LOG (ADMIN/MANAGER TABLE) ── -->
@@ -213,16 +254,22 @@
                 <th class="px-4 py-3">Check-Out</th>
                 <th class="px-4 py-3">Minutes</th>
                 <th class="px-4 py-3">Source</th>
+                <th class="px-4 py-3">Reason</th>
                 <th class="px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-primary-border/60">
               <tr v-if="!hrms.attendanceRows?.length" class="text-center">
-                <td colspan="8" class="py-8 text-secondary-text">No attendance records found.</td>
+                <td colspan="9" class="py-8 text-secondary-text">No attendance records found.</td>
               </tr>
-              <tr v-for="row in hrms.attendanceRows" :key="row.id || row.attendance_id" class="hover:bg-primary-background/20">
-                <td class="px-4 py-3 font-medium">{{ row.attendance_date }}</td>
-                <td class="px-4 py-3 font-semibold text-primary-text">#{{ row.employee_id }}</td>
+              <tr v-for="row in hrms.attendanceRows" :key="row.id" class="hover:bg-primary-background/20">
+                <td class="px-4 py-3 font-medium whitespace-nowrap">{{ row.attendance_date }}</td>
+                <td class="px-4 py-3">
+                  <div class="leading-tight">
+                    <div class="font-semibold text-primary-text">{{ row.employee?.user?.name ?? `#${row.employee_id}` }}</div>
+                    <div v-if="row.employee?.employee_code" class="text-[11px] text-secondary-text">{{ row.employee.employee_code }}</div>
+                  </div>
+                </td>
                 <td class="px-4 py-3">
                   <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold border" :class="statusBadgeMiniClass(row.status)">
                     {{ row.status }}
@@ -231,7 +278,13 @@
                 <td class="px-4 py-3">{{ row.check_in_at ? shortTime(row.check_in_at) : "—" }}</td>
                 <td class="px-4 py-3">{{ row.check_out_at ? shortTime(row.check_out_at) : "—" }}</td>
                 <td class="px-4 py-3">{{ row.worked_minutes != null ? row.worked_minutes + "m" : "—" }}</td>
-                <td class="px-4 py-3 text-secondary-text">{{ row.source || "SYSTEM" }}</td>
+                <td class="px-4 py-3">
+                  <div class="leading-tight">
+                    <div class="text-primary-text">{{ row.source }}</div>
+                    <div v-if="row.marker?.name" class="text-[11px] text-secondary-text">by {{ row.marker.name }}</div>
+                  </div>
+                </td>
+                <td class="px-4 py-3 text-secondary-text max-w-[180px] truncate">{{ row.reason || row.remarks || "—" }}</td>
                 <td class="px-4 py-3 text-right">
                   <button
                     v-if="permissions.can('attendance.correct')"
@@ -268,15 +321,35 @@
             :key="p.id"
             class="p-4 flex flex-wrap items-center justify-between gap-3 hover:bg-primary-background/20"
           >
-            <div>
-              <div class="flex items-center gap-2">
-                <span class="font-semibold text-xs text-primary-text">Employee #{{ p.employee_id }}</span>
-                <span class="text-[10px] px-2 py-0.5 rounded-full border" :class="p.status === 'PENDING' ? 'bg-amber-500/10 text-amber-600 border-amber-500/30' : 'bg-secondary-background text-secondary-text border-primary-border'">
+            <div class="space-y-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-semibold text-xs text-primary-text">
+                  {{ p.employee?.user?.name ?? `Employee #${p.employee_id}` }}
+                </span>
+                <span v-if="p.employee?.employee_code" class="text-[11px] text-secondary-text bg-surface-subtle px-1.5 py-0.5 rounded">
+                  {{ p.employee.employee_code }}
+                </span>
+                <span
+                  class="text-[10px] px-2 py-0.5 rounded-full border font-semibold"
+                  :class="p.status === 'PENDING'
+                    ? 'bg-amber-500/10 text-amber-600 border-amber-500/30'
+                    : p.status === 'REJECTED'
+                      ? 'bg-red-500/10 text-red-600 border-red-500/30'
+                      : 'bg-surface-subtle text-secondary-text border-primary-border'"
+                >
                   {{ p.status }}
                 </span>
               </div>
-              <p class="text-xs text-secondary-text mt-1">
-                Requested Status: <strong class="text-primary-text">{{ p.requested_status }}</strong> · Reason: {{ p.reason || "—" }}
+              <p class="text-xs text-secondary-text">
+                <span v-if="p.old_status" class="line-through opacity-70 mr-1">{{ p.old_status }}</span>
+                <span v-if="p.old_status" class="mr-1">→</span>
+                <strong class="text-primary-text">{{ p.proposed_status || p.requested_status }}</strong>
+                <span v-if="p.reason"> · {{ p.reason }}</span>
+              </p>
+              <p v-if="p.remarks || p.requester?.name" class="text-[11px] text-secondary-text">
+                <span v-if="p.remarks">{{ p.remarks }}</span>
+                <span v-if="p.remarks && p.requester?.name"> · </span>
+                <span v-if="p.requester?.name">Requested by {{ p.requester.name }}</span>
               </p>
             </div>
 
@@ -366,10 +439,14 @@
 
         <form class="space-y-3" @submit.prevent="submitBulkMark">
           <div class="grid grid-cols-2 gap-3">
-            <label class="block space-y-1">
+            <div class="block space-y-1">
               <span class="text-xs font-medium text-secondary-text">Attendance Date</span>
-              <input v-model="bulkForm.date" type="date" class="input-field px-3 py-2 text-xs w-full rounded-lg" required />
-            </label>
+              <BaseDatePicker
+                v-model="bulkForm.date"
+                placeholder="Select date"
+                custom-class="!py-2 text-xs w-full rounded-lg"
+              />
+            </div>
             <div class="block space-y-1">
               <span class="text-xs font-medium text-secondary-text">Status</span>
               <BaseSelect
@@ -380,10 +457,18 @@
             </div>
           </div>
 
-          <label class="block space-y-1">
-            <span class="text-xs font-medium text-secondary-text">Employee IDs (comma separated, e.g. 1, 2, 5)</span>
-            <input v-model="bulkForm.employeeIds" class="input-field px-3 py-2 text-xs w-full rounded-lg" placeholder="1, 2, 3" required />
-          </label>
+          <div class="block space-y-1">
+            <span class="text-xs font-medium text-secondary-text">Employees</span>
+            <BaseSelect
+              v-model="bulkForm.employeeIds"
+              :options="employeeSelectOptions"
+              multiple
+              searchable
+              placeholder="Search and select employees..."
+              custom-class="!py-1.5 text-xs w-full rounded-lg"
+              @search="searchEmployeesForBulk"
+            />
+          </div>
 
           <label class="block space-y-1">
             <span class="text-xs font-medium text-secondary-text">Reason / Remarks</span>
@@ -403,13 +488,34 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from "vue";
+import { FilePenLine } from "lucide-vue-next";
+import { useGlobalSearchStore } from "@/stores/ui/globalSearch";
 import BaseSelect from "@/components/common/BaseSelect.vue";
+import BaseDatePicker from "@/components/common/BaseDatePicker.vue";
 import { useHrmsStore } from "@/stores/hrms/hrms";
 import { usePermissionsStore } from "@/stores/rbac/permissions";
 import { useAuthStore } from "@/stores/auth/auth";
 
 const hrms = useHrmsStore();
+const globalSearch = useGlobalSearchStore();
+let unregisterGlobalSearch = null;
+
+const currentYear = new Date().getFullYear();
+const yearOptions = Array.from({ length: 5 }, (_, i) => {
+  const y = currentYear - 2 + i;
+  return { label: String(y), value: y };
+});
+
+onMounted(() => {
+  unregisterGlobalSearch = globalSearch.register((q) => {
+    hrms.fetchAttendanceEmployeeSummaries(q ? { q } : {});
+  }, "Search employee name, code, email...");
+});
+
+onUnmounted(() => {
+  if (unregisterGlobalSearch) unregisterGlobalSearch();
+});
 const permissions = usePermissionsStore();
 const auth = useAuthStore();
 
@@ -424,7 +530,28 @@ const isCorrection = ref(false);
 
 const selected = reactive({ employee_id: null, date: "", attendance_id: null });
 const markForm = reactive({ status: "PRESENT", reason: "", remarks: "" });
-const bulkForm = reactive({ date: new Date().toISOString().slice(0, 10), status: "PRESENT", employeeIds: "", reason: "" });
+const bulkForm = reactive({ date: new Date().toISOString().slice(0, 10), status: "PRESENT", employeeIds: [], reason: "" });
+
+const employeeSelectOptions = computed(() =>
+  (hrms.employees || []).map((emp) => ({
+    label: `${emp.user?.name || emp.employee_code} (${emp.employee_code})`,
+    value: emp.id,
+  }))
+);
+
+let empSearchTimer = null;
+const searchEmployeesForBulk = (q) => {
+  if (empSearchTimer) clearTimeout(empSearchTimer);
+  empSearchTimer = setTimeout(() => {
+    hrms.fetchEmployees({ limit: 10, ...(q ? { q } : {}) }, true);
+  }, 250);
+};
+
+watch(openBulkMarkModal, (open) => {
+  if (open && !hrms.employees?.length) {
+    hrms.fetchEmployees({ limit: 10 }, true);
+  }
+});
 
 const markStatuses = ["PRESENT", "ABSENT", "HALF_DAY", "WFH", "ON_DUTY", "LEAVE"];
 const markStatusOptions = markStatuses.map((s) => ({ label: s, value: s }));
@@ -491,10 +618,34 @@ const openCorrectionModalForRow = (row) => {
   markOpen.value = true;
 };
 
+const selectedCalendarEmployeeId = ref(null);
+
+const selectCalendarEmployee = (employeeId) => {
+  selectedCalendarEmployeeId.value = employeeId;
+  hrms.fetchEmployeeMonthCalendar(employeeId);
+};
+
+const clearSelectedCalendarEmployee = () => {
+  selectedCalendarEmployeeId.value = null;
+  hrms.employeeMonthCalendar = null;
+};
+
+const stripDotClass = (status) => {
+  if (status === "PRESENT") return "bg-emerald-500";
+  if (status === "ABSENT") return "bg-red-500";
+  if (status === "HALF_DAY") return "bg-amber-500";
+  if (status === "LEAVE") return "bg-blue-500";
+  if (status === "HOLIDAY") return "bg-purple-500";
+  return "bg-surface-container";
+};
+
 const reload = () => {
   const params = {};
   if (filterEmployeeId.value) params.employee_id = filterEmployeeId.value;
-  hrms.fetchAttendanceCalendar(params);
+  hrms.fetchAttendanceEmployeeSummaries(params);
+  if (selectedCalendarEmployeeId.value) {
+    hrms.fetchEmployeeMonthCalendar(selectedCalendarEmployeeId.value);
+  }
   if (isAdminOrManager.value) {
     hrms.fetchAttendanceSummary(params);
   }
@@ -559,10 +710,9 @@ const submitDayAction = async () => {
 };
 
 const submitBulkMark = async () => {
-  const ids = bulkForm.employeeIds
-    .split(",")
-    .map((s) => Number(s.trim()))
-    .filter(Boolean);
+  const ids = Array.isArray(bulkForm.employeeIds)
+    ? bulkForm.employeeIds.map(Number).filter(Boolean)
+    : [];
   if (!ids.length) {
     alert("Please enter at least one valid Employee ID.");
     return;

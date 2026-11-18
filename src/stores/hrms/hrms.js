@@ -230,6 +230,51 @@ export const useHrmsStore = defineStore("hrms", () => {
   const updateWorkWeekPolicy = (id, payload) =>
     saveOrg(urls.KEYS.PATCH, urls.hrms.workWeekPolicyDetail(id), payload, fetchWorkWeekPolicies);
 
+  const attendanceEmployeeSummaries = ref({ items: [], pagination: null, working_days: 0 });
+  const employeeMonthCalendar = ref(null);
+
+  const fetchAttendanceEmployeeSummaries = (params = {}) => {
+    inFlight.attendance = true;
+    return apiRequest(urls.KEYS.GET, "hrms/attendance/summary/employees", {
+      params: {
+        year: hrmsYear.value,
+        month: hrmsMonth.value,
+        ...params,
+      },
+      isTokenRequired: true,
+      onSuccess: (res) => {
+        attendanceEmployeeSummaries.value = res || { items: [], pagination: null, working_days: 0 };
+      },
+      onFailure: (err) => {
+        if (err?.status !== 403) snackbar.show(err?.message || "Failed", "error");
+      },
+      onFinally: () => {
+        inFlight.attendance = false;
+      },
+    });
+  };
+
+  const fetchEmployeeMonthCalendar = (employeeId, params = {}) => {
+    inFlight.attendance = true;
+    return apiRequest(urls.KEYS.GET, `hrms/attendance/employees/${employeeId}/calendar`, {
+      params: {
+        year: hrmsYear.value,
+        month: hrmsMonth.value,
+        ...params,
+      },
+      isTokenRequired: true,
+      onSuccess: (res) => {
+        employeeMonthCalendar.value = res || null;
+      },
+      onFailure: (err) => {
+        if (err?.status !== 403) snackbar.show(err?.message || "Failed", "error");
+      },
+      onFinally: () => {
+        inFlight.attendance = false;
+      },
+    });
+  };
+
   const fetchAttendanceCalendar = (params = {}) => {
     inFlight.attendance = true;
     return apiRequest(urls.KEYS.GET, urls.hrms.attendanceCalendar, {
@@ -607,6 +652,10 @@ export const useHrmsStore = defineStore("hrms", () => {
     deleteHoliday,
     createWorkWeekPolicy,
     updateWorkWeekPolicy,
+    attendanceEmployeeSummaries,
+    employeeMonthCalendar,
+    fetchAttendanceEmployeeSummaries,
+    fetchEmployeeMonthCalendar,
     fetchAttendanceCalendar,
     fetchAttendanceRows,
     fetchAttendanceSummary,

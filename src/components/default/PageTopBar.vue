@@ -62,9 +62,13 @@ const props = defineProps({
     type: String,
     default: "Search...",
   },
+  showRefresh: {
+    type: Boolean,
+    default: false,
+  },
 });
 
-const emit = defineEmits(["update:filtersOpen", "toggle-filters", "back"]);
+const emit = defineEmits(["update:filtersOpen", "toggle-filters", "back", "refresh"]);
 
 const route = useRoute();
 const router = useRouter();
@@ -236,6 +240,17 @@ const handleBack = () => {
           >
             {{ activeFilterCount }}
           </span>
+        </button>
+
+        <button
+          v-if="showRefresh"
+          type="button"
+          @click="emit('refresh')"
+          title="Refresh"
+          aria-label="Refresh"
+          class="inline-flex items-center justify-center w-8.5 h-8.5 rounded-lg text-secondary-text hover:text-primary-text bg-surface-subtle hover:bg-surface-container border border-primary-border/60 transition-all cursor-pointer active:scale-95"
+        >
+          <span class="material-symbols-rounded text-[18px]">refresh</span>
         </button>
 
         <slot name="actions" />
